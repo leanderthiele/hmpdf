@@ -1,3 +1,6 @@
+PATHTOCLASS = /usr/local/share/CLASS/class_public
+
+
 CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
@@ -7,9 +10,9 @@ OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
-INCLUDE += -I/usr/local/share/CLASS/class_public/include
+INCLUDE += -I$(PATHTOCLASS)/include
 
-LINKER = -L/usr/local/share/CLASS/class_public
+LINKER = -L$(PATHTOCLASS)
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
 
 SRCDIR = ./src
