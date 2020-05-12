@@ -105,6 +105,9 @@ struct halo
 {//{{{
     int inited_halo;
 
+    double *Duffy08_params;
+    double *Tinker10_params;
+
     double *hmf;
     double *bias;
 
@@ -115,6 +118,8 @@ struct halo
 struct profiles
 {//{{{
     int inited_profiles;
+
+    double *Battaglia12_params;
 
     signaltype stype;
 

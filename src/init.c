@@ -22,7 +22,7 @@ typedef enum
     int_type,
     intptr_type,
     dbl_type,
-    dblptr_type,
+    dptr_type,
     mdef_type,
     integr_type,
     vptr_type, // void *
@@ -125,6 +125,12 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
             &(d->n->Mintegr_alpha), dbl_type,     0, {&(def.Mintegr_alpha), }},
         {hmpdf_Mintegr_beta,
             &(d->n->Mintegr_beta),  dbl_type,     0, {&(def.Mintegr_beta), }},
+        {hmpdf_Duffy08_conc_params,
+            &(d->h->Duffy08_params), dptr_type,   0, {&(def.Duffy08_p), }},
+        {hmpdf_Tinker10_hmf_params,
+            &(d->h->Tinker10_params),dptr_type,   0, {&(def.Tinker10_p), }},
+        {hmpdf_Battaglia12_tsz_params,
+            &(d->p->Battaglia12_params), dbl_type,0, {&(def.Battaglia12_p), }},
     };//}}}
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)
@@ -150,6 +156,8 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
             case (int_type)    : *((int *)(p[c].target)) = va_arg(valist, int);
                                  break;
             case (dbl_type)    : *((double *)(p[c].target)) = va_arg(valist, double);
+                                 break;
+            case (dptr_type)   : *((double **)(p[c].target)) = va_arg(valist, double *);
                                  break;
             case (mdef_type)   : *((mdef *)(p[c].target)) = va_arg(valist, mdef);
                                  break;
@@ -195,6 +203,11 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
                                         (p[ii].depends_on_stype) ? 
                                         *((double *)(p[ii].def[stype]))
                                         : *((double *)(p[ii].def[0]));
+                                   break;
+            case (dptr_type)     : *((double **)(p[ii].target)) =
+                                        (p[ii].depends_on_stype) ? 
+                                        *((double **)(p[ii].def[stype]))
+                                        : *((double **)(p[ii].def[0]));
                                    break;
             case (mdef_type)     : *((mdef *)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 

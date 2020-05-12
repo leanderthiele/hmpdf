@@ -85,7 +85,8 @@ struct DEFAULTS {int Ncores; char *class_pre;
                  double phijitter; double phipwr; int regularize_tp;
                  int monotonize;
                  integr_mode zintegr_type; double zintegr_alpha; double zintegr_beta;
-                 integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta; };
+                 integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
+                 double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p; };
 
 struct DEFAULTS def;
 

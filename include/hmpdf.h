@@ -68,6 +68,9 @@ typedef enum//{{{
     hmpdf_Mintegr_type,
     hmpdf_Mintegr_alpha,
     hmpdf_Mintegr_beta,
+    hmpdf_Duffy08_conc_params,
+    hmpdf_Tinker10_hmf_params,
+    hmpdf_Battaglia12_tsz_params,
     hmpdf_end_configs, // keep this last
 }//}}}
 configs;
