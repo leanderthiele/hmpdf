@@ -82,6 +82,7 @@ void null_data(all_data *d)
 
     d->f->inited_filters = 0;
     d->f->ffilters = NULL;
+    d->f->z_dependent = NULL;
     d->f->quadraticpixel_interp = NULL;
     d->f->quadraticpixel_accel = NULL;
     d->f->quadraticpixel_ellmin = NULL;
@@ -245,14 +246,8 @@ void reset_data(all_data *d)
     }
     if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
 
-    if (d->f->ffilters != NULL)
-    {
-        for (int ii=0; ii<d->f->Nfilters; ii++)
-        {
-            free(d->f->ffilters[ii].params);
-        }
-        free(d->f->ffilters);
-    }
+    if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
+    if (d->f->ffilters != NULL) { free(d->f->ffilters); }
     if (d->f->quadraticpixel_interp != NULL)
     {
         if (d->f->quadraticpixel_interp[0] != NULL) { gsl_spline_free(d->f->quadraticpixel_interp[0]); }

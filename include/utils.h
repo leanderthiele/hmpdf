@@ -27,9 +27,22 @@ typedef enum//{{{
 }//}}}
 interp_mode;
 
-typedef struct gnuplot_s gnuplot;
+typedef enum//{{{
+{
+    interp2d_bilinear,
+    interp2d_bicubic,
+}//}}}
+interp2d_mode;
 
-typedef struct interp1d_s interp1d;
+typedef enum//{{{
+{
+    filter_pdf,
+    filter_ps,
+    filter_end,
+}//}}}
+filter_mode;
+
+typedef double (*filter_fct)(void * /*all_data*/, double /*ell*/, filter_mode /*pdf or ps*/, int * /*z_index*/);
 
 int ispwr2(int N, int *k);
 
@@ -40,6 +53,8 @@ void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
 
 int wait(void);
+
+typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
 gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode);
 void show(gnuplot *gp);
@@ -53,11 +68,25 @@ int isfile(char *fname);
 int num_cores(void);
 int this_core(void);
 
+typedef struct interp1d_s interp1d;
 interp1d *new_interp1d(int N, double *x, double *y, double ylo, double yhi,
                        interp_mode m, gsl_interp_accel *a);
 void delete_interp1d(interp1d *interp);
 double interp1d_eval(interp1d *interp, double x);
 double interp1d_eval_deriv(interp1d *interp, double x);
 double interp1d_eval_integ(interp1d *interp, double a, double b);
+
+typedef struct interp2d_s interp2d;
+interp2d *new_interp2d(int N, double *x, double *z,
+                       double zlo, double zhi,
+                       interp2d_mode m, gsl_interp_accel *a);
+void delete_interp2d(interp2d *interp);
+double interp2d_eval(interp2d *interp, double x, double y);
+
+void bin_1d(int N, double *x, double *y,
+            int Nbins, double *binedges, double *out, interp_mode m);
+
+void bin_2d(int N, double *x, double *z, int Nsample,
+            int Nbins, double *binedges, double *out, interp2d_mode m);
 
 #endif

@@ -25,6 +25,9 @@ typedef enum
     dblptr_type,
     mdef_type,
     integr_type,
+    vptr_type, // void *
+    lf_type, // ell filter
+    kf_type, // k filter
 }//}}}
 dtype;
 
@@ -88,6 +91,14 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
             &(d->f->tophat_radius), dbl_type,     0, {&(def.tophat_radius), }},
         {hmpdf_gaussian_fwhm,
             &(d->f->gaussian_sigma),dbl_type,     0, {&(def.gaussian_fwhm), }},
+        {hmpdf_custom_ell_filter,
+            &(d->f->custom_ell),    lf_type,      0, {&(def.custom_ell_filter), }},
+        {hmpdf_custom_ell_filter_params,
+            &(d->f->custom_ell_p),  vptr_type,    0, {&(def.custom_ell_filter_params), }},
+        {hmpdf_custom_k_filter,
+            &(d->f->custom_k),      kf_type,      0, {&(def.custom_k_filter), }},
+        {hmpdf_custom_k_filter_params,
+            &(d->f->custom_k_p),    vptr_type,    0, {&(def.custom_k_filter_params), }},
         {hmpdf_N_phi,
             &(d->n->gr->Nphi),      int_type,     0, {&(def.Nphi), }},
         {hmpdf_phi_max,
@@ -118,7 +129,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)
     {
-        if (ii != p[ii].indx) { printf("Indx not matching at %d.\n", ii); }
+        if (ii != p[ii].indx) { printf("ERROR : Indx not matching at %d.\n", ii); return; }
         p[ii].set = 0;
     }
 
@@ -133,7 +144,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         }
         p[c].set = 1;
         switch (p[c].dt)
-        {
+        {//{{{
             case (str_type)   : *((char **)(p[c].target)) = va_arg(valist, char *);
                                  break;
             case (int_type)    : *((int *)(p[c].target)) = va_arg(valist, int);
@@ -144,9 +155,15 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
                                  break;
             case (integr_type) : *((integr_mode *)(p[c].target)) = va_arg(valist, integr_mode);
                                  break;
+            case (lf_type)     : *((ell_filter *)(p[c].target)) = va_arg(valist, ell_filter);
+                                 break;
+            case (kf_type)     : *((k_filter *)(p[c].target)) = va_arg(valist, k_filter);
+                                 break;
+            case (vptr_type)   : *((void **)(p[c].target)) = va_arg(valist, void *);
+                                 break;
             default            : fprintf(stderr, "Not implemented : dtype.\n");
                                  break;
-        }
+        }//}}}
     }
     va_end(valist);
 
@@ -163,7 +180,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         }
         p[ii].set = 1;
         switch (p[ii].dt)
-        {
+        {//{{{
             case (str_type)      : *((char **)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 
                                         *((char **)(p[ii].def[stype]))
@@ -189,9 +206,24 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
                                         *((integr_mode *)(p[ii].def[stype]))
                                         : *((integr_mode *)(p[ii].def[0]));
                                    break;
+            case (lf_type)       : *((ell_filter *)(p[ii].target)) =
+                                        (p[ii].depends_on_stype) ? 
+                                        *((ell_filter *)(p[ii].def[stype]))
+                                        : *((ell_filter *)(p[ii].def[0]));
+                                   break;
+            case (kf_type)       : *((k_filter *)(p[ii].target)) =
+                                        (p[ii].depends_on_stype) ? 
+                                        *((k_filter *)(p[ii].def[stype]))
+                                        : *((k_filter *)(p[ii].def[0]));
+                                   break;
+            case (vptr_type)     : *((void **)(p[ii].target)) =
+                                        (p[ii].depends_on_stype) ? 
+                                        *((void **)(p[ii].def[stype]))
+                                        : *((void **)(p[ii].def[0]));
+                                   break;
             default              : fprintf(stderr, "Not implemented : dtype.\n");
                                    break;
-        }
+        }//}}}
     }
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)
