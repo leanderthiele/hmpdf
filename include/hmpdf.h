@@ -87,8 +87,11 @@ typedef double (*k_filter)(double /*k comoving 1/Mpc*/,
                            void * /*user parameters*/);
 
 typedef struct all_data_s all_data;
+
 all_data *new_data(void);
+
 void delete_data(all_data *d);
+
 void init(all_data *d, char *class_ini, signaltype stype, ...);
 
 typedef enum//{{{

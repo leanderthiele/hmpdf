@@ -17,6 +17,7 @@
 
 void null_data(all_data *d)
 {//{{{
+    printf("\tnull_data\n");
     d->n->inited_numerics = 0;
     d->n->gr->zgrid = NULL;
     d->n->gr->zweights = NULL;

@@ -20,7 +20,6 @@ typedef enum
 {//{{{
     str_type,
     int_type,
-    intptr_type,
     dbl_type,
     dptr_type,
     mdef_type,
