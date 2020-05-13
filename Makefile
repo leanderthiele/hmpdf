@@ -7,9 +7,9 @@ OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
-INCLUDE += -I/usr/local/share/CLASS/class_public/include
+INCLUDE += -I/home/lthiele/class_public/include
 
-LINKER = -L/usr/local/share/CLASS/class_public
+LINKER = -L/home/lthiele/class_public
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
 
 SRCDIR = ./src
