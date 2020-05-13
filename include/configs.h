@@ -88,6 +88,6 @@ struct DEFAULTS {int Ncores; char *class_pre;
                  integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p; };
 
-struct DEFAULTS def;
+extern struct DEFAULTS def;
 
 #endif
