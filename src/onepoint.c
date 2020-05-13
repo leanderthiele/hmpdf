@@ -215,10 +215,6 @@ void create_op(all_data *d)
     // compute the mean of the distributions if needed later
     get_mean_signal(d);
 
-    // FIXME for testing
-    tofile("opref_cl.bin", d->n->gr->Nsignal, 1, d->op->PDFc);
-    tofile("opref_uncl.bin", d->n->gr->Nsignal, 1, d->op->PDFu);
-    
     d->op->created_op = 1;
 }//}}}
 
