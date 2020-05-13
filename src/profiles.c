@@ -96,18 +96,13 @@ typedef struct
     double rproj;
 }
 Battmodel_params;
-                                  //   A0    alpham  alphaz
-double Battmodel_fitparams[][3] = {{ 18.1,    0.154, -0.758}, // P0
-                                   {0.497, -0.00865,  0.731}, // xc
-                                   {  1.0,      0.0,    0.0}, // alpha
-                                   { 4.35,   0.0393,  0.415}, // beta
-                                   { -0.3,      0.0,    0.0}};// gamma
+
 static
-double Battmodel_primitive(double M200c, double z, int numparam)
+double _Battmodel_primitive(all_data *d, double M200c, double z, int n)
 {
-    return Battmodel_fitparams[numparam][0]
-           * pow(M200c/1e14, Battmodel_fitparams[numparam][1])
-           * pow(1.0+z, Battmodel_fitparams[numparam][2]);
+    return d->p->Battaglia12_params[n*3+0]
+           * pow(M200c/1e14, d->p->Battaglia12_params[n*3+1])
+           * pow(1.0+z, d->p->Battaglia12_params[n*3+2]);
 }
 static
 double Battmodel_integrand(double z, void *params)
@@ -123,14 +118,14 @@ void tsz_profile(all_data *d, int z_index, int M_index,
     // convert to 200c
     double M200c, R200c, c200c;
     M200c = Mconv(d, z_index, M_index, mdef_c, &R200c, &c200c);
-    double P0 = Battmodel_primitive(M200c, d->n->gr->zgrid[z_index], 0);
-    double xc = Battmodel_primitive(M200c, d->n->gr->zgrid[z_index], 1);
+    double P0 = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 0);
+    double xc = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 1);
     Rout /= R200c * xc;
     // prepare the integration
     Battmodel_params par;
-    par.alpha = Battmodel_primitive(M200c, d->n->gr->zgrid[z_index], 2);
-    par.beta  = Battmodel_primitive(M200c, d->n->gr->zgrid[z_index], 3);
-    par.gamma = Battmodel_primitive(M200c, d->n->gr->zgrid[z_index], 4);
+    par.alpha = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 2);
+    par.beta  = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 3);
+    par.gamma = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 4);
     gsl_function integrand;
     integrand.function = &Battmodel_integrand;
     integrand.params = &par;
@@ -237,7 +232,9 @@ void create_filtered_profiles(all_data *d)
             {
                 ell[ii] = d->p->reci_tgrid[ii] * d->p->conj_profiles[z_index][M_index][0];
             }
-            apply_filters(d, d->p->Ntheta, ell, d->p->conj_profiles[z_index][M_index]+1, temp, filter_pdf);
+            // multiply with the window functions
+            apply_filters(d, d->p->Ntheta, ell, d->p->conj_profiles[z_index][M_index]+1, temp, filter_pdf, &z_index);
+            // transform back to real space
             gsl_dht_apply(d->p->dht_ws, temp, d->p->profiles[z_index][M_index]+1);
             // reverse the profile
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, d->p->profiles[z_index][M_index]+1);
@@ -382,7 +379,15 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 static
 void create_breakpoints_or_monotonize(all_data *d)
 {//{{{
-    printf("\tcreate_breakpoints\n");
+    printf("\tcreate_breakpoints_or_monotonize\n");
+    if (d->n->monotonize)
+    {
+        printf("\t\tmonotonizing\n");
+    }
+    else
+    {
+        printf("\t\tcreating breakpoints (no monotonizing requested)\n");
+    }
     d->p->breakpoints = (int *)malloc(d->n->gr->Nz * sizeof(int));
     for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
     {

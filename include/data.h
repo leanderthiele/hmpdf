@@ -105,6 +105,9 @@ struct halo
 {//{{{
     int inited_halo;
 
+    double *Duffy08_params;
+    double *Tinker10_params;
+
     double *hmf;
     double *bias;
 
@@ -115,6 +118,8 @@ struct halo
 struct profiles
 {//{{{
     int inited_profiles;
+
+    double *Battaglia12_params;
 
     signaltype stype;
 
@@ -147,7 +152,8 @@ struct filters
     int inited_filters;
 
     int Nfilters;
-    gsl_function *ffilters;
+    int *z_dependent;
+    filter_fct *ffilters;
 
     double pixelside;
     gsl_spline **quadraticpixel_interp;
@@ -157,6 +163,11 @@ struct filters
 
     double tophat_radius;
     double gaussian_sigma;
+
+    ell_filter custom_ell;
+    void *custom_ell_p;
+    k_filter custom_k;
+    void *custom_k_p;
 };//}}}
 
 struct onepoint

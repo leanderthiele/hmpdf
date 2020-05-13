@@ -12,6 +12,7 @@
 #include "data.h"
 #include "power.h"
 #include "profiles.h"
+#include "onepoint.h"
 
 #include "hmpdf.h"
 
@@ -384,8 +385,12 @@ void prepare_tp(all_data *d, double phi)
         printf("Twopoint only possible if monotonize=1.\n");
         return;
     }
+
+    // run necessary code from other modules
     create_corr(d);
     create_phi_indep(d);
+    create_op(d);
+
     if (d->tp->ws == NULL)
     {
         d->tp->ws = new_tp_ws(d->n->gr->Nsignal);
@@ -395,12 +400,38 @@ void prepare_tp(all_data *d, double phi)
             return;
         }
     }
+
     create_tp(d, phi, d->tp->ws);
 }//}}}
 
-// TODO add more arguments and bin the result
-void get_tp(all_data *d, double phi)
+void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out)
 {//{{{
     prepare_tp(d, phi);
+
+    double _binedges[Nbins+1];
+    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
+    // shift bins if physically motivated
+    if (d->p->stype == kappa)
+    {
+        for (int ii=0; ii<= Nbins; ii++)
+        {
+            _binedges[ii] += d->op->signalmeanc;
+        }
+    }
+
+    // copy PDF into contiguous array (tp->pdf_real has padding from the FFTs)
+    double *temp_tp = (double *)malloc(d->n->gr->Nsignal*d->n->gr->Nsignal*sizeof(double));
+    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    {
+        memcpy(temp_tp+ii*d->n->gr->Nsignal,
+               d->tp->ws->pdf_real+ii*(d->n->gr->Nsignal+2),
+               d->n->gr->Nsignal * sizeof(double));
+    }
+
+    printf("\t\tbinning the twopoint pdf\n");
+    bin_2d(d->n->gr->Nsignal, d->n->gr->signalgrid, temp_tp, TPINTEGR_N,
+           Nbins, _binedges, out, TPINTERP_TYPE);
+
+    free(temp_tp);
 }//}}}
 

@@ -326,7 +326,7 @@ static
 void prepare_cov(all_data *d)
 {//{{{
     printf("In covariance.h -> prepare_cov :\n");
-    // run necessary code from other mdules
+    // run necessary code from other modules
     create_corr(d);
     create_phi_indep(d);
     create_op(d);
@@ -346,13 +346,6 @@ void prepare_cov(all_data *d)
     // create covariance matrix
     create_cov(d);
 }//}}}
-
-static
-void bin_cov(all_data *d, int Nbins, double *binedges, double *out)
-{
-    // TODO
-    return;
-}
 
 static
 void load_cov(all_data *d, char *fname)
@@ -383,6 +376,12 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
 {//{{{
     char covfile[512];
     char corrfile[512];
+    if (Nbins == 0 && name == NULL)
+    {
+        printf("ERROR : both Nbins=0 and name=NULL,\nnothing to do in get_cov.\n");
+        return;
+    }
+
     if (name != NULL)
     {
         sprintf(covfile, "%s_cov.bin", name);
@@ -391,10 +390,17 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
 
     int to_compute = 1;
     if (name != NULL)
-    // covariance matrix has already been computed, we just need binning
     {
         if (isfile(covfile))
+        // covariance matrix has already been computed, we just need binning
         {
+            if (Nbins == 0)
+            {
+                printf("ERROR : covariance matrix named %s already exists,\n"
+                       "and you requested no binning.\n"
+                       "Nothing to do in get_cov.\n", covfile);
+                return;
+            }
             load_cov(d, covfile);
             to_compute = 0;
         }
@@ -417,16 +423,24 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
                d->n->gr->phiweights, d->cov->corr_diagn);
     }
 
-    // if kappa, adjust the bins
-    double _binedges[Nbins+1];
-    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    if (d->p->stype == kappa)
+    if (Nbins > 0)
+    // binning requested
     {
-        for (int ii=0; ii<=Nbins; ii++)
+        // if kappa, adjust the bins
+        double _binedges[Nbins+1];
+        memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
+        if (d->p->stype == kappa)
         {
-            _binedges[ii] += d->op->signalmeanc;
+            for (int ii=0; ii<=Nbins; ii++)
+            {
+                _binedges[ii] += d->op->signalmeanc;
+            }
         }
+
+        // perform the binning
+        printf("\t\tbinning the covariance matrix\n");
+        bin_2d(d->n->gr->Nsignal, d->n->gr->signalgrid, d->cov->Cov, COVINTEGR_N,
+               Nbins, _binedges, out, TPINTERP_TYPE);
     }
 
-    bin_cov(d, Nbins, _binedges, out);
 }//}}}

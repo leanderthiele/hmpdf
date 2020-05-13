@@ -3,6 +3,8 @@
 
 #include "utils.h"
 
+#include "hmpdf.h"
+
 // defines{{{
 #define LOGK // if this macro is defined, integrals over k are evaluated on log grid
 #define LOGELL
@@ -45,7 +47,12 @@
 
 #define PRTILDE_INTEGR_NTHETA 257
 
-#define PDFINTERP_TYPE interp_cspline
+#define OPINTERP_TYPE interp_cspline
+#define TPINTERP_TYPE interp2d_bilinear
+#define TPINTEGR_N 30 // sqrt of sample points per pixel
+                      // -- verified that this gives sub-percent accuracy
+#define COVINTEGR_N 100 // this is slow but we want to be sure that we pick out
+                        //   possible oscillatory behaviour
 
 // TODO go to fixed point integration here
 #define BATTINTEGR_EPSABS 0.0
@@ -72,25 +79,15 @@ struct DEFAULTS {int Ncores; char *class_pre;
                  int Npoints_signal; double signal_min; double max_kappa; double max_tsz;
                  int Npoints_theta; double rout_scale; mdef rout_rdef;
                  double pixel_sidelength; double tophat_radius; double gaussian_fwhm;
+                 ell_filter custom_ell_filter; void *custom_ell_filter_params;
+                 k_filter custom_k_filter; void *custom_k_filter_params;
                  int Nphi; double phimax; int pixelexactmax;
                  double phijitter; double phipwr; int regularize_tp;
                  int monotonize;
                  integr_mode zintegr_type; double zintegr_alpha; double zintegr_beta;
-                 integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta; };
+                 integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
+                 double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p; };
 
-static
-struct DEFAULTS def = { .Ncores=1, .class_pre="none",
-                        .Npoints_z=65, .z_min=0.005, .z_max=6.0, .z_source=-1.0,
-                        .Npoints_M=65, .M_min=1e11, .M_max=1e16,
-                        .Npoints_signal=1024, .signal_min=0.0, .max_kappa=1.0, .max_tsz=2e-4,
-                        .Npoints_theta=200, .rout_scale=2.0, .rout_rdef=mdef_v,
-                        .pixel_sidelength=-1.0, .tophat_radius=-1.0, .gaussian_fwhm=-1.0,
-                        .Nphi=10000, .phimax=150.0, .pixelexactmax=20,
-                        .phijitter=0.02, .phipwr=2.0, .regularize_tp=1,
-                        .monotonize=1,
-                        /* the integr_types have little influence,
-                         * but can be varied to assess precision of integrations */
-                        .zintegr_type=legendre, .zintegr_alpha=0.0, .zintegr_beta=0.0,
-                        .Mintegr_type=legendre, .Mintegr_alpha=0.0, .Mintegr_beta=0.0, };
+extern struct DEFAULTS def;
 
 #endif

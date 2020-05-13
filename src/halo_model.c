@@ -43,18 +43,14 @@ double MofR(all_data *d, int z_index, double R, mdef mdef)
     return 4.0*M_PI*density_threshold(d, z_index, mdef)*gsl_pow_3(R)/3.0;
 }//}}}
 
-                                  //   A       B      C
-double Duffy08_fit_params[][3] = {{ 5.71, -0.087, -0.47},  // M200c//{{{
-                                  { 7.85, -0.081, -0.71},  // Mvir
-                                  {10.14, -0.081, -1.01}}; // M200m//}}}
 static
 double _c_Duffy08(all_data *d, double z, double M, mdef mdef)
 {//{{{
     // convert to Msun/h
     M *= d->c->h;
-    return Duffy08_fit_params[mdef][0]
-           * pow(M/2.0e12, Duffy08_fit_params[mdef][1])
-           * pow(1.0 + z,  Duffy08_fit_params[mdef][2]);
+    return d->h->Duffy08_params[(int)mdef*3+0]
+           * pow(M/2.0e12, d->h->Duffy08_params[(int)mdef*3+1])
+           * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
 }//}}}
 static
 double c_Duffy08(all_data *d, int z_index, int M_index)
@@ -114,14 +110,21 @@ double Mconv(all_data *d, int z_index, int M_index, mdef mdef_out, double *R, do
 }//}}}
 
 static
-double fnu_Tinker10(double nu, double z)
+double _fnu_Tinker10_primitive(all_data *d, int n, double z)
+{//{{{
+    return d->h->Tinker10_params[n*2]
+           *pow(1.0+z, d->h->Tinker10_params[n*2 + 1]);
+}//}}}
+
+static
+double fnu_Tinker10(all_data *d, double nu, double z)
 {//{{{
     z = (z<3.0) ? z : 3.0;
-    double beta  =  0.589 * pow(1.0+z,  0.20);
-    double phi   = -0.729 * pow(1.0+z, -0.08);
-    double eta   = -0.243 * pow(1.0+z,  0.27);
-    double gamma =  0.864 * pow(1.0+z, -0.01);
-    double alpha =  0.368;
+    double beta  = _fnu_Tinker10_primitive(d, 0, z);
+    double phi   = _fnu_Tinker10_primitive(d, 1, z);
+    double eta   = _fnu_Tinker10_primitive(d, 2, z);
+    double gamma = _fnu_Tinker10_primitive(d, 3, z);
+    double alpha = _fnu_Tinker10_primitive(d, 4, z);
     return nu * alpha*(1.0+pow(beta*nu, -2.0*phi))*pow(nu, 2.0*eta)*exp(-0.5*gamma*gsl_pow_2(nu));
 }//}}}
 
@@ -145,7 +148,7 @@ double _dndlogM(all_data *d, int z_index, int M_index, double *bias)
     double sigma_squared_prime = d->pwr->ssq[M_index][1];
     double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
-    double fnu = fnu_Tinker10(nu, d->n->gr->zgrid[z_index]);
+    double fnu = fnu_Tinker10(d, nu, d->n->gr->zgrid[z_index]);
     double hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
                  / (2.0 * sigma_squared * d->n->gr->Mgrid[M_index]);
     *bias = bnu_Tinker10(nu);

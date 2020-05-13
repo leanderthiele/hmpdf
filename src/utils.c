@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_integration.h>
 
 #include "utils.h"
 
@@ -43,6 +45,26 @@ void logspace(int N, double xmin, double xmax, double *x)
     for (int ii=0; ii<N; ii++)
     {
         x[ii] = exp(log(xmin) + (double)(ii)*log(xmax/xmin)/(double)(N-1));
+    }
+}//}}}
+
+void reverse(int N, double *in, double *out)
+{//{{{
+    if (in == out)
+    {
+        for (int ii=0; ii<N/2; ii++)
+        {
+            double temp = in[ii];
+            in[ii] = in[N-1-ii];
+            in[N-1-ii] = temp;
+        }
+    }
+    else
+    {
+        for (int ii=0; ii<N; ii++)
+        {
+            out[ii] = in[N-1-ii];
+        }
     }
 }//}}}
 
@@ -79,19 +101,6 @@ struct gnuplot_s
 {//{{{
     FILE *gp;
     int Nlines;
-};//}}}
-
-struct interp1d_s
-{//{{{
-    gsl_interp *i;
-    gsl_interp_accel *a;
-    int alloced_accel;
-    int N;
-    double *x;
-    double *y;
-    // values requested below xmin/above xmax are replaced by ylo/yhi
-    double ylo;
-    double yhi;
 };//}}}
 
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y)
@@ -339,6 +348,19 @@ int this_core(void)
     #endif
 }//}}}
 
+struct interp1d_s
+{//{{{
+    gsl_interp *i;
+    gsl_interp_accel *a;
+    int alloced_accel;
+    int N;
+    double *x;
+    double *y;
+    // values requested below xmin/above xmax are replaced by ylo/yhi
+    double ylo;
+    double yhi;
+};//}}}
+
 interp1d *new_interp1d(int N, double *x, double *y, double ylo, double yhi,
                        interp_mode m, gsl_interp_accel *a)
 {//{{{
@@ -432,23 +454,127 @@ double interp1d_eval_integ(interp1d *interp, double a, double b)
     }
 }//}}}
 
-void reverse(int N, double *in, double *out)
+struct interp2d_s
+// on symmetric 2d grid
 {//{{{
-    if (in == out)
+    gsl_interp2d *i;
+    gsl_interp_accel *a;
+    int alloced_accel;
+    int N;
+    double *x;
+    double *z;
+    double zlo;
+    double zhi;
+};//}}}
+
+interp2d *new_interp2d(int N, double *x, double *z,
+                       double zlo, double zhi,
+                       interp2d_mode m, gsl_interp_accel *a)
+{//{{{
+    const gsl_interp2d_type *T;
+    switch (m)
     {
-        for (int ii=0; ii<N/2; ii++)
-        {
-            double temp = in[ii];
-            in[ii] = in[N-1-ii];
-            in[N-1-ii] = temp;
-        }
+        case interp2d_bilinear : T = gsl_interp2d_bilinear; break;
+        case interp2d_bicubic  : T = gsl_interp2d_bicubic; break;
+        default                : printf("Unknown gsl_interp2d_type.\n");
+                                 return NULL;
+    }
+    interp2d *out = malloc(sizeof(interp2d));
+    out->N = N;
+    out->x = x;
+    out->z = z;
+    out->zlo = zlo;
+    out->zhi = zhi;
+    out->i = gsl_interp2d_alloc(T, out->N, out->N);
+    if (a == NULL)
+    {
+        out->alloced_accel = 1;
+        out->a = gsl_interp_accel_alloc();
     }
     else
     {
-        for (int ii=0; ii<N; ii++)
-        {
-            out[ii] = in[N-1-ii];
-        }
+        out->alloced_accel = 0;
+        out->a = a;
+    }
+    gsl_interp2d_init(out->i, out->x, out->x, out->z, out->N, out->N);
+    return out;
+}//}}}
+
+void delete_interp2d(interp2d *interp)
+{//{{{
+    gsl_interp2d_free(interp->i);
+    if (interp->alloced_accel)
+    {
+        gsl_interp_accel_free(interp->a);
     }
 }//}}}
 
+double interp2d_eval(interp2d *interp, double x, double y)
+{//{{{
+    if (x < interp->x[0] || y < interp->x[0])
+    {
+        return interp->zlo;
+    }
+    else if (x > interp->x[interp->N-1] || y > interp->x[interp->N-1])
+    {
+        return interp->zhi;
+    }
+    else
+    {
+        return gsl_interp2d_eval(interp->i, interp->x, interp->x, interp->z,
+                                 x, y, interp->a, interp->a);
+    }
+}//}}}
+
+// CAUTION : these binning functions assume that x is equally spaced,
+//           and that y,z are normalized to unit sum.
+//           They normalize the output accordingly.
+
+void bin_1d(int N, double *x, double *y,
+            int Nbins, double *binedges, double *out, interp_mode m)
+{//{{{
+    interp1d *interp = new_interp1d(N, x, y, 0.0, 0.0, m, NULL);
+    for (int ii=0; ii<Nbins; ii++)
+    {
+        // TODO normalization
+        out[ii] = interp1d_eval_integ(interp, binedges[ii], binedges[ii+1])
+                  / (x[1] - x[0]);
+    }
+    delete_interp1d(interp);
+}//}}}
+
+void bin_2d(int N, double *x, double *z, int Nsample,
+            int Nbins, double *binedges, double *out, interp2d_mode m)
+{//{{{
+    interp2d *interp = new_interp2d(N, x, z, 0.0, 0.0, m, NULL);
+    gsl_integration_glfixed_table *t = gsl_integration_glfixed_table_alloc(Nsample);
+
+    for (int ii=0; ii<Nbins; ii++)
+    {
+        for (int jj=0; jj<Nbins; jj++)
+        {
+            double *res = out + ii*Nbins + jj;
+            *res = 0.0;
+
+            for (int kk=0; kk<Nsample; kk++)
+            {
+                double node_i, weight_i;
+                gsl_integration_glfixed_point(binedges[ii], binedges[ii+1],
+                                              kk, &node_i, &weight_i, t);
+
+                for (int ll=0; ll<Nsample; ll++)
+                {
+                    double node_j, weight_j;
+                    gsl_integration_glfixed_point(binedges[jj], binedges[jj+1],
+                                                  ll, &node_j, &weight_j, t);
+
+                    *res += weight_i * weight_j * interp2d_eval(interp, node_i, node_j)
+                            / gsl_pow_2(x[1] - x[0]);
+                }
+            }
+        }
+    }
+
+    gsl_integration_glfixed_table_free(t);
+    delete_interp2d(interp);
+}//}}}

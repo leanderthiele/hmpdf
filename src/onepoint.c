@@ -230,33 +230,6 @@ void prepare_op(all_data *d)
     create_op(d);
 }//}}}
 
-static
-void bin_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode)
-// assumes binedges are monotonic increasing
-// FIXME normalization incorrect
-{//{{{
-    interp1d *interp = new_interp1d(d->n->gr->Nsignal, d->n->gr->signalgrid,
-                                    (mode==uncl) ? d->op->PDFu : d->op->PDFc,
-                                    0.0, 0.0, PDFINTERP_TYPE, NULL);
-
-    // bin the PDF
-    double norm = 0.0;
-    for (int ii=0; ii<Nbins; ii++)
-    {
-        out[ii] = interp1d_eval_integ(interp, binedges[ii], binedges[ii+1]);
-        norm += out[ii];
-    }
-
-    // normalize
-    for (int ii=0; ii<Nbins; ii++)
-    {
-        out[ii] /= norm;
-    }
-
-    // free the interpolator
-    delete_interp1d(interp);
-}//}}}
-
 void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode)
 {//{{{
     prepare_op(d);
@@ -267,10 +240,12 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
     {
         for (int ii=0; ii<=Nbins; ii++)
         {
-            _binedges[ii] += ((mode == uncl) ? d->op->signalmeanu : d->op->signalmeanc);
+            _binedges[ii] += ((mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc);
         }
     }
 
-    bin_op(d, Nbins, _binedges, out, mode);
+    bin_1d(d->n->gr->Nsignal, d->n->gr->signalgrid,
+           (mode==uncl) ? d->op->PDFu : d->op->PDFc,
+           Nbins, _binedges, out, OPINTERP_TYPE);
 }//}}}
 

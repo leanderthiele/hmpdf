@@ -75,7 +75,7 @@ void fill_background(all_data *d)
 
         d->c->hubble[z_index] = pvecback[_c->ba->index_bg_H]; // 1/Mpc
         d->c->comoving[z_index] = pvecback[_c->ba->index_bg_conf_distance]; // Mpc
-        d->c->angular_diameter[z_index] = pvecback[_c->ba->index_bg_ang_distance]; // Mpc
+        d->c->angular_diameter[z_index] = pvecback[_c->ba->index_bg_ang_distance]; // Mpc, physical
         d->c->Dsq[z_index] = gsl_pow_2(pvecback[_c->ba->index_bg_D]); // squared growth factor
         d->c->Om[z_index] = pvecback[_c->ba->index_bg_Omega_m];
         d->c->rho_c[z_index] = 3.0*gsl_pow_2(SPEEDOFLIGHT)/8.0/M_PI/GNEWTON

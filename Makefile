@@ -1,3 +1,6 @@
+PATHTOCLASS = /usr/local/share/CLASS/class_public
+
+
 CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
@@ -10,6 +13,9 @@ INCLUDE = -I./include
 INCLUDE += -I/home/lthiele/class_public/include
 
 LINKER = -L/home/lthiele/class_public
+INCLUDE += -I$(PATHTOCLASS)/include
+
+LINKER = -L$(PATHTOCLASS)
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
 
 SRCDIR = ./src
