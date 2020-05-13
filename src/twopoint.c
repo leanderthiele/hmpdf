@@ -322,18 +322,6 @@ void create_tp(all_data *d, double phi, twopoint_workspace *ws)
 
     // perform backward FFT pdf_comp -> pdf_real
     fftw_execute(ws->ppdf_c2r);
-
-    // TODO testing output
-    double *temp_pdf = malloc(d->n->gr->Nsignal * d->n->gr->Nsignal * sizeof(double));
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
-    {
-        for (int jj=0; jj<d->n->gr->Nsignal; jj++)
-        {
-            temp_pdf[ii*d->n->gr->Nsignal+jj] = ws->pdf_real[ii*(d->n->gr->Nsignal+2)+jj];
-        }
-    }
-    tofile("tp.bin", d->n->gr->Nsignal*d->n->gr->Nsignal, 1, temp_pdf);
-    free(temp_pdf);
 }//}}}
 
 twopoint_workspace *new_tp_ws(int N)
