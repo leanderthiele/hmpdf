@@ -264,8 +264,34 @@ void status_update(time_t t1, time_t t0, int done, int tot)
     int hrs = (int)floor(remains/60.0/60.0);
     int min = (int)round(remains/60.0 - 60.0*(double)(hrs));
     int done_perc = (int)round(100.0*(double)(done)/(double)(tot));
-    printf("\t\t%.2d %% done, %.2d : %.2d hrs remaining in create_cov.\n",
+    printf("\t\t%3d %% done, %.2d hrs %.2d min remaining in create_cov.\n",
            done_perc, hrs, min);
+}//}}}
+
+static
+void add_shotnoise(all_data *d)
+// adds the zero-separation contribution to the covariance matrix
+{//{{{
+    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    {
+        d->cov->Cov[ii*d->n->gr->Nsignal+ii] += d->op->PDFc[ii];
+        for (int jj=0; jj<d->n->gr->Nsignal; jj++)
+        {
+            d->cov->Cov[ii*d->n->gr->Nsignal+jj]
+                -= d->op->PDFc[ii] * d->op->PDFc[jj];
+        }
+    }
+}//}}}
+
+static
+void rescale_to_fsky1(all_data *d)
+// divides covariance matrix by number of pixels in the sky
+{//{{{
+    double Npixels = 4.0*M_PI/gsl_pow_2(d->f->pixelside);
+    for (int ii=0; ii<d->n->gr->Nsignal*d->n->gr->Nsignal; ii++)
+    {
+        d->cov->Cov[ii] /= Npixels;
+    }
 }//}}}
 
 static
@@ -320,6 +346,9 @@ void create_cov(all_data *d)
             }
         }
     }
+
+    add_shotnoise(d);
+    rescale_to_fsky1(d);
 }//}}}
 
 static
