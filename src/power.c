@@ -34,7 +34,6 @@ struct class_interface_s
 
 typedef struct class_interface_s cls;
 
-static
 double Pk_linear(all_data *d, double k)
 // k is logk if LOGK is defined
 {//{{{
@@ -43,8 +42,11 @@ double Pk_linear(all_data *d, double k)
     #endif
     double out;
     cls *_c = (cls *)d->cls;
-    nonlinear_pk_at_k_and_z(_c->ba, _c->pm, _c->nl, pk_linear,
-                            k, 0.0, _c->nl->index_pk_total, &out, NULL);
+    SAFECLASS(nonlinear_pk_at_k_and_z(_c->ba, _c->pm, _c->nl,
+                                      pk_linear, k, 0.0,
+                                      _c->nl->index_pk_total,
+                                      &out, NULL),
+              _c->nl->error_message)
     return out;
 }//}}}
 

@@ -224,6 +224,7 @@ void apply_filters(all_data *d, int N, double *ell, double *in, double *out, fil
 // (1) if *z_index == NULL, applies only the z-independent filters
 // (2) if *z_index != NULL and mode == filter_pdf, apply all filters
 // (3)                     and mode == filter_ps,  apply only the z-dependent filters
+// NOTE : function is safe if in and out point to same memory
 {//{{{
     if (in != out)
     {

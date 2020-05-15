@@ -214,7 +214,6 @@ struct twopoint
     twopoint_workspace *ws;
 };//}}}
 
-#ifdef XXX
 struct powerspectrum
 {//{{{
     int Nell;
@@ -228,14 +227,10 @@ struct powerspectrum
 
     int created_Cphi;
     double *phi;
-    double *Cphi;
-    
-    // keep these interpolators in memory, since we
-    // want to call Cphi often during covariance matrix coputation
-    gsl_interp *Cphi_interp;
-    gsl_interp_accel *Cphi_accel;
+    double *Cphi_1h;
+    double *Cphi_2h;
+    double *Cphi_tot;
 };//}}}
-#endif
 
 struct covariance
 {//{{{
@@ -263,7 +258,7 @@ struct all_data_s
     struct profiles *p;
     struct onepoint *op;
     struct twopoint *tp;
-//    powerspectrum *ps;
+    struct powerspectrum *ps;
     struct covariance *cov;
 };//}}}
 
