@@ -11,7 +11,7 @@
 
 #define ERRLOC printf("Error in %s line %d: \n\t", __FILE__, __LINE__);
 #define SAFECLASS(expr, errmsg) if (expr==_FAILURE_) \
-                                { ERRLOC; printf("CLASS error %s\n", errmsg); exit(-1); }
+                                { ERRLOC; printf("CLASS error %s\n", errmsg); exit(1); }
 
 #include <complex.h>
 
@@ -55,6 +55,7 @@ void logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
 void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
+int not_monotonic(int N, double *x, int *problems);
 
 int wait(void);
 

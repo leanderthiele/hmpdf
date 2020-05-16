@@ -57,8 +57,8 @@ void create_phi_indep(all_data *d)
             dtsq_of_s(d, z_index, M_index, d->tp->dtsq[z_index][M_index]);
             t_of_s(d, z_index, M_index, d->tp->t[z_index][M_index]);
             
-            double n = d->h->hmf[z_index*d->n->gr->NM + M_index];
-            double b = d->h->bias[z_index*d->n->gr->NM + M_index];
+            double n = d->h->hmf[z_index][M_index];
+            double b = d->h->bias[z_index][M_index];
             for (int ii=0; ii<d->n->gr->Nsignal; ii++)
             {
                 au_real[ii] -= M_PI * n * d->tp->dtsq[z_index][M_index][ii]
@@ -113,8 +113,8 @@ void tp_Mint(all_data *d, int z_index, double phi, twopoint_workspace *ws)
 
     for (int M_index=0; M_index<d->n->gr->NM; M_index++)
     {
-        double n = d->h->hmf[z_index*d->n->gr->NM + M_index];
-        double b = d->h->bias[z_index*d->n->gr->NM + M_index];
+        double n = d->h->hmf[z_index][M_index];
+        double b = d->h->bias[z_index][M_index];
         for (int ii=0; ii<d->n->gr->Nsignal; ii++)
         // loop over the direction that is Nsignal long
         {
@@ -376,6 +376,12 @@ void prepare_tp(all_data *d, double phi)
 
     // run necessary code from other modules
     create_corr(d);
+    if (d->f->Nfilters > 0)
+    {
+        create_conj_profiles(d);
+        create_filtered_profiles(d);
+    }
+    create_breakpoints_or_monotonize(d);
     create_phi_indep(d);
     create_op(d);
 

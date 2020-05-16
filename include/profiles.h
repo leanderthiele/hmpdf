@@ -5,13 +5,14 @@
 
 #include "hmpdf.h"
 
-int breakpoints(all_data *d, int z_index);
-// TODO remove this function
+void init_profiles(all_data *d);
 void create_conj_profiles(all_data *d);
+void create_filtered_profiles(all_data *d);
+void create_breakpoints_or_monotonize(all_data *d);
+
 void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s);
-void s_of_l(all_data *d, int z_index, int M_index, int Nl, double *l, double *s);
+void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, double *s);
 void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq);
 void t_of_s(all_data *d, int z_index, int M_index, double *t);
-void init_profiles(all_data *d);
 
 #endif

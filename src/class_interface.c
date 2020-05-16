@@ -84,8 +84,8 @@ void init_class(all_data *d)
     cls *_c = (cls *)d->cls;
     SAFECLASS(input_init_from_arguments(argc, argv, _c->pr, _c->ba, _c->th,
                                        _c->pt, _c->tr, _c->pm, _c->sp,
-                                       _c->nl, _c->le, _c->op,
-                                       _c->errmsg), _c->errmsg)
+                                       _c->nl, _c->le, _c->op, _c->errmsg),
+              _c->errmsg)
 
     run_class(d);
 }//}}}

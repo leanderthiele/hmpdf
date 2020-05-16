@@ -159,15 +159,17 @@ static
 void create_dndlogM(all_data *d)
 {//{{{
     printf("\tcreate_dndlogM\n");
-    d->h->hmf = (double *)malloc(d->n->gr->Nz * d->n->gr->NM * sizeof(double));
-    d->h->bias = (double *)malloc(d->n->gr->Nz * d->n->gr->NM * sizeof(double));
+    d->h->hmf = (double **)malloc(d->n->gr->Nz * sizeof(double *));
+    d->h->bias = (double **)malloc(d->n->gr->Nz * sizeof(double *));
     for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
     {
+        d->h->hmf[z_index] = (double *)malloc(d->n->gr->NM * sizeof(double));
+        d->h->bias[z_index] = (double *)malloc(d->n->gr->NM * sizeof(double));
         for (int M_index=0; M_index<d->n->gr->NM; M_index++)
         {
-            d->h->hmf[z_index*d->n->gr->NM + M_index] =
+            d->h->hmf[z_index][M_index] =
                 _dndlogM(d, z_index, M_index,
-                         d->h->bias+(z_index*d->n->gr->NM+M_index));
+                         d->h->bias[z_index]+M_index);
         }
     }
 }//}}}

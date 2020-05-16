@@ -73,11 +73,13 @@ void null_data(all_data *d)
     d->p->decr_tsqgrid = NULL;
     d->p->prtilde_thetagrid = NULL;
     d->p->reci_tgrid = NULL;
+    d->p->created_breakpoints = 0;
     d->p->breakpoints = NULL;
     d->p->dht_ws = NULL;
     d->p->profiles = NULL;
     d->p->created_conj_profiles = 0;
     d->p->conj_profiles = NULL;
+    d->p->created_filtered_profiles = 0;
     d->p->incr_tgrid_accel = NULL;
     d->p->reci_tgrid_accel = NULL;
 
@@ -101,7 +103,6 @@ void null_data(all_data *d)
     d->tp->ws = NULL;
 
     d->ps->created_Cell = 0;
-    d->ps->dht_ws = NULL;
     d->ps->ell = NULL;
     d->ps->Cell_1h = NULL;
     d->ps->Cell_2h = NULL;
@@ -195,8 +196,22 @@ void reset_data(all_data *d)
         free(d->pwr->corr_accel);
     }
 
-    if (d->h->hmf != NULL) { free(d->h->hmf); }
-    if (d->h->bias != NULL) { free(d->h->bias); }
+    if (d->h->hmf != NULL)
+    {
+        for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+        {
+            if (d->h->hmf[z_index] != NULL) { free(d->h->hmf[z_index]); }
+        }
+        free(d->h->hmf);
+    }
+    if (d->h->bias != NULL)
+    {
+        for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+        {
+            if (d->h->bias[z_index] != NULL) { free(d->h->bias[z_index]); }
+        }
+        free(d->h->bias);
+    }
     if (d->h->c_interp != NULL) { gsl_spline_free(d->h->c_interp); }
     if (d->h->c_accel != NULL) { gsl_interp_accel_free(d->h->c_accel); }
 
@@ -323,7 +338,6 @@ void reset_data(all_data *d)
         free(d->tp->ws);
     }
 
-    if (d->ps->dht_ws != NULL) { gsl_dht_free(d->ps->dht_ws); }
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
     if (d->ps->Cell_2h != NULL) { free(d->ps->Cell_2h); }

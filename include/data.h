@@ -108,8 +108,8 @@ struct halo
     double *Duffy08_params;
     double *Tinker10_params;
 
-    double *hmf;
-    double *bias;
+    double **hmf;
+    double **bias;
 
     gsl_spline *c_interp;
     gsl_interp_accel *c_accel;
@@ -139,9 +139,12 @@ struct profiles
     int created_conj_profiles;
     double ***conj_profiles; // each profile has as zero entry the rescaling such that reci_thetagrid -> ell
 
+    int created_filtered_profiles;
+
     int prtilde_Ntheta;
     double *prtilde_thetagrid;
 
+    int created_breakpoints;
     int *breakpoints;
 
     gsl_dht *dht_ws;
@@ -217,7 +220,7 @@ struct twopoint
 struct powerspectrum
 {//{{{
     int Nell;
-    gsl_dht *dht_ws;
+    int Nell_corr;
 
     int created_Cell;
     double *ell;
