@@ -54,15 +54,20 @@ void run_class(all_data *d)
 
     printf("\trun_class\n");
     printf("\t\tbackground\n");
-    background_init(_c->pr, _c->ba);
+    SAFECLASS(background_init(_c->pr, _c->ba),
+              _c->ba->error_message)
     printf("\t\tthermodynamics\n");
-    thermodynamics_init(_c->pr, _c->ba, _c->th);
+    SAFECLASS(thermodynamics_init(_c->pr, _c->ba, _c->th),
+              _c->th->error_message)
     printf("\t\tperturbs\n");
-    perturb_init(_c->pr, _c->ba, _c->th, _c->pt);
+    SAFECLASS(perturb_init(_c->pr, _c->ba, _c->th, _c->pt),
+              _c->pt->error_message)
     printf("\t\tprimordial\n");
-    primordial_init(_c->pr, _c->pt, _c->pm);
+    SAFECLASS(primordial_init(_c->pr, _c->pt, _c->pm),
+              _c->pm->error_message)
     printf("\t\tnonlinear\n");
-    nonlinear_init(_c->pr, _c->ba, _c->th, _c->pt, _c->pm, _c->nl);
+    SAFECLASS(nonlinear_init(_c->pr, _c->ba, _c->th, _c->pt, _c->pm, _c->nl),
+              _c->nl->error_message);
 }//}}}
 
 void init_class(all_data *d)
@@ -77,13 +82,10 @@ void init_class(all_data *d)
     alloc_class(d);
 
     cls *_c = (cls *)d->cls;
-    if (input_init_from_arguments(argc, argv, _c->pr, _c->ba, _c->th,
-                                  _c->pt, _c->tr, _c->pm, _c->sp,
-                                  _c->nl, _c->le, _c->op,
-                                  _c->errmsg) == _FAILURE_)
-    {
-        printf("Error in input_init_from_arguments : %s\n", _c->errmsg);
-    }
+    SAFECLASS(input_init_from_arguments(argc, argv, _c->pr, _c->ba, _c->th,
+                                       _c->pt, _c->tr, _c->pm, _c->sp,
+                                       _c->nl, _c->le, _c->op, _c->errmsg),
+              _c->errmsg)
 
     run_class(d);
 }//}}}

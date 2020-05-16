@@ -103,8 +103,20 @@ pdf_cl_uncl;
 
 void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode);
 
-void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out); // TODO binning
+void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out);
 
 void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *fname);
+
+typedef enum//{{{
+{
+    onehalo,
+    twohalo,
+    total,
+}//}}}
+Cell_mode;
+
+void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode);
+
+void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode);
 
 #endif

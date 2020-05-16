@@ -73,11 +73,13 @@ void null_data(all_data *d)
     d->p->decr_tsqgrid = NULL;
     d->p->prtilde_thetagrid = NULL;
     d->p->reci_tgrid = NULL;
+    d->p->created_breakpoints = 0;
     d->p->breakpoints = NULL;
     d->p->dht_ws = NULL;
     d->p->profiles = NULL;
     d->p->created_conj_profiles = 0;
     d->p->conj_profiles = NULL;
+    d->p->created_filtered_profiles = 0;
     d->p->incr_tgrid_accel = NULL;
     d->p->reci_tgrid_accel = NULL;
 
@@ -100,19 +102,16 @@ void null_data(all_data *d)
     d->tp->au = NULL;
     d->tp->ws = NULL;
 
-    /*
     d->ps->created_Cell = 0;
-    d->ps->dht_ws = NULL;
     d->ps->ell = NULL;
     d->ps->Cell_1h = NULL;
     d->ps->Cell_2h = NULL;
     d->ps->Cell_tot = NULL;
     d->ps->created_Cphi = 0;
     d->ps->phi = NULL;
-    d->ps->Cphi = NULL;
-    d->ps->Cphi_interp = NULL;
-    d->ps->Cphi_accel = NULL;
-    */
+    d->ps->Cphi_1h = NULL;
+    d->ps->Cphi_2h = NULL;
+    d->ps->Cphi_tot = NULL;
 
     d->cov->ws = NULL;
     d->cov->Cov = NULL;
@@ -131,7 +130,7 @@ all_data *new_data(void)
     d->p = malloc(sizeof(struct profiles));
     d->op = malloc(sizeof(struct onepoint));
     d->tp = malloc(sizeof(struct twopoint));
-//    d->ps = malloc(sizeof(powerspectrum));
+    d->ps = malloc(sizeof(struct powerspectrum));
     d->cov = malloc(sizeof(struct covariance));
 
     d->n->gr = malloc(sizeof(struct grids));
@@ -197,8 +196,22 @@ void reset_data(all_data *d)
         free(d->pwr->corr_accel);
     }
 
-    if (d->h->hmf != NULL) { free(d->h->hmf); }
-    if (d->h->bias != NULL) { free(d->h->bias); }
+    if (d->h->hmf != NULL)
+    {
+        for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+        {
+            if (d->h->hmf[z_index] != NULL) { free(d->h->hmf[z_index]); }
+        }
+        free(d->h->hmf);
+    }
+    if (d->h->bias != NULL)
+    {
+        for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+        {
+            if (d->h->bias[z_index] != NULL) { free(d->h->bias[z_index]); }
+        }
+        free(d->h->bias);
+    }
     if (d->h->c_interp != NULL) { gsl_spline_free(d->h->c_interp); }
     if (d->h->c_accel != NULL) { gsl_interp_accel_free(d->h->c_accel); }
 
@@ -325,17 +338,14 @@ void reset_data(all_data *d)
         free(d->tp->ws);
     }
 
-    /*
-    if (d->ps->dht_ws != NULL) { gsl_dht_free(d->ps->dht_ws); }
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
     if (d->ps->Cell_2h != NULL) { free(d->ps->Cell_2h); }
     if (d->ps->Cell_tot != NULL) { free(d->ps->Cell_tot); }
     if (d->ps->phi != NULL) { free(d->ps->phi); }
-    if (d->ps->Cphi != NULL) { free(d->ps->Cphi); }
-    if (d->ps->Cphi_interp != NULL) { gsl_interp_free(d->ps->Cphi_interp); }
-    if (d->ps->Cphi_accel != NULL) { gsl_interp_accel_free(d->ps->Cphi_accel); }
-    */
+    if (d->ps->Cphi_1h != NULL) { free(d->ps->Cphi_1h); }
+    if (d->ps->Cphi_2h != NULL) { free(d->ps->Cphi_2h); }
+    if (d->ps->Cphi_tot != NULL) { free(d->ps->Cphi_tot); }
 
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
     if (d->cov->ws != NULL)

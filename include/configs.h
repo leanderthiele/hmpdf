@@ -15,7 +15,6 @@
 #define PKINTERP_TYPE interp_cspline
 
 #define PKINTEGR_KMIN PKINTERP_KMIN
-#define PKINTEGR_KMAX PKINTERP_KMAX
 #define PKINTEGR_LIMIT 10000
 #define PKINTEGR_KEY 6
 #define PKINTEGR_EPSABS 0.0
@@ -67,6 +66,8 @@
 
 #define SELL_INTERP_TYPE interp_cspline
 #define PS_NELL 1000
+#define PS_ELLMIN 1e0
+#define PS_ELLMAX 1e5
 #define CELL_INTERP_TYPE interp_cspline
 #define CPHI_INTERP_TYPE interp_cspline
 

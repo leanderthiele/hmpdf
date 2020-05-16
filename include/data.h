@@ -108,8 +108,8 @@ struct halo
     double *Duffy08_params;
     double *Tinker10_params;
 
-    double *hmf;
-    double *bias;
+    double **hmf;
+    double **bias;
 
     gsl_spline *c_interp;
     gsl_interp_accel *c_accel;
@@ -139,9 +139,12 @@ struct profiles
     int created_conj_profiles;
     double ***conj_profiles; // each profile has as zero entry the rescaling such that reci_thetagrid -> ell
 
+    int created_filtered_profiles;
+
     int prtilde_Ntheta;
     double *prtilde_thetagrid;
 
+    int created_breakpoints;
     int *breakpoints;
 
     gsl_dht *dht_ws;
@@ -214,11 +217,10 @@ struct twopoint
     twopoint_workspace *ws;
 };//}}}
 
-#ifdef XXX
 struct powerspectrum
 {//{{{
     int Nell;
-    gsl_dht *dht_ws;
+    int Nell_corr;
 
     int created_Cell;
     double *ell;
@@ -228,14 +230,10 @@ struct powerspectrum
 
     int created_Cphi;
     double *phi;
-    double *Cphi;
-    
-    // keep these interpolators in memory, since we
-    // want to call Cphi often during covariance matrix coputation
-    gsl_interp *Cphi_interp;
-    gsl_interp_accel *Cphi_accel;
+    double *Cphi_1h;
+    double *Cphi_2h;
+    double *Cphi_tot;
 };//}}}
-#endif
 
 struct covariance
 {//{{{
@@ -263,7 +261,7 @@ struct all_data_s
     struct profiles *p;
     struct onepoint *op;
     struct twopoint *tp;
-//    powerspectrum *ps;
+    struct powerspectrum *ps;
     struct covariance *cov;
 };//}}}
 

@@ -68,6 +68,32 @@ void reverse(int N, double *in, double *out)
     }
 }//}}}
 
+int not_monotonic(int N, double *x, int *problems)
+// checks if x is monotonically increasing
+// (this is what we require for the FFTs to work)
+// if problems != NULL, writes problematic indices into the array
+// if problems == NULL, returns immediately if a non-monotonic
+//     value is found (useful to check user input binedges)
+{//{{{
+    int out = 0;
+    for (int ii=1; ii<N; ii++)
+    {
+        if (x[ii] < x[ii-1])
+        {
+            out += 1;
+            if (problems != NULL)
+            {
+                problems[out] = ii;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    return out;
+}//}}}
+
 void zero_real(int N, double *x)
 {//{{{
     for (int ii=0; ii<N; ii++)

@@ -9,6 +9,10 @@
 #define HPLANCK      6.62607004e-34 // SI
 #define KBOLTZMANN   1.38064852e-23 // SI
 
+#define ERRLOC printf("Error in %s line %d: \n\t", __FILE__, __LINE__);
+#define SAFECLASS(expr, errmsg) if (expr==_FAILURE_) \
+                                { ERRLOC; printf("CLASS error %s\n", errmsg); exit(1); }
+
 #include <complex.h>
 
 #include <gsl/gsl_interp.h>
@@ -51,6 +55,7 @@ void logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
 void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
+int not_monotonic(int N, double *x, int *problems);
 
 int wait(void);
 

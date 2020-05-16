@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "configs.h"
 #include "power.h"
+#include "profiles.h"
 #include "onepoint.h"
 #include "twopoint.h"
 #include "covariance.h"
@@ -357,6 +358,12 @@ void prepare_cov(all_data *d)
     printf("In covariance.h -> prepare_cov :\n");
     // run necessary code from other modules
     create_corr(d);
+    if (d->f->Nfilters > 0)
+    {
+        create_conj_profiles(d);
+        create_filtered_profiles(d);
+    }
+    create_breakpoints_or_monotonize(d);
     create_phi_indep(d);
     create_op(d);
     

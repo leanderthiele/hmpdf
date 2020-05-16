@@ -23,7 +23,7 @@ LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
 SRCDIR = ./src
 OBJDIR = ./obj
 OUTDIR = ./lib
-SODIR  = ./lib
+SODIR  = .
 
 $(SHARED): $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
 	$(CC) -shared -o $(SODIR)/$@ $^ $(LINKER) $(OMPFLAGS)
@@ -37,5 +37,5 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 .PHONY: clean
 clean:
 	rm $(OBJDIR)/*.o
-	rm $(OUTDIR)/$(SHARED)
+	rm $(SODIR)/$(SHARED)
 	rm $(OUTDIR)/$(ARCHIVE)

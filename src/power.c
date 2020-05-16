@@ -34,7 +34,6 @@ struct class_interface_s
 
 typedef struct class_interface_s cls;
 
-static
 double Pk_linear(all_data *d, double k)
 // k is logk if LOGK is defined
 {//{{{
@@ -43,8 +42,30 @@ double Pk_linear(all_data *d, double k)
     #endif
     double out;
     cls *_c = (cls *)d->cls;
-    nonlinear_pk_at_k_and_z(_c->ba, _c->pm, _c->nl, pk_linear,
-                            k, 0.0, _c->nl->index_pk_total, &out, NULL);
+
+    double lnk;
+    
+    if (nonlinear_pk_at_k_and_z(_c->ba, _c->pm, _c->nl,
+                                pk_linear, k, 0.0,
+                                _c->nl->index_pk_total,
+                                 &out, NULL) == _FAILURE_)
+    {
+        lnk = log(k);
+        if (lnk > _c->nl->ln_k[_c->nl->k_size-1])
+        // check if k falls out of bounds,
+        //    maximum k needs to be set large enough that linear power is
+        //    essentially zero for larger wavenumbers
+        {
+            return 0.0;
+        }
+        else
+        {
+            ERRLOC;
+            printf("CLASS error %s\n", _c->nl->error_message);
+            exit(1);
+        }
+    }
+
     return out;
 }//}}}
 
@@ -75,18 +96,19 @@ double power_integrand(double k, void *params)
 }//}}}
 
 static
-double power_integral(power_integrand_params *p)
+double power_integral(all_data *d, power_integrand_params *p)
 {//{{{
+    cls *_c = (cls *)d->cls;
     gsl_function integrand;
     integrand.function = &power_integrand;
     integrand.params = p;
     double res, err;
     #ifdef LOGK
     double kmin = log(PKINTEGR_KMIN);
-    double kmax = log(PKINTEGR_KMAX);
+    double kmax = _c->nl->ln_k[_c->nl->k_size-1];
     #else
     double kmin = PKINTEGR_KMIN;
-    double kmax = PKINTEGR_KMAX;
+    double kmax = exp(_c->nl->ln_k[_c->nl->k_size-1]);
     #endif
 
     gsl_integration_workspace *ws = gsl_integration_workspace_alloc(PKINTEGR_LIMIT);
@@ -133,10 +155,10 @@ double _ssq(all_data *d, double M, double *dssq)
     p.F.params = &R;
     // cmpute derivative d sigma^2 / dlogM
     p.F.function = tophat_Wsqprime;
-    *dssq = (R/3.0) * power_integral(&p);
+    *dssq = (R/3.0) * power_integral(d, &p);
     // compute sigma^2(M)
     p.F.function = tophat_Wsq;
-    return power_integral(&p);
+    return power_integral(d, &p);
 }//}}}
 
 static
@@ -169,7 +191,7 @@ double _autocorr(all_data *d)
     p.d = d;
     p.F.params = NULL;
     p.F.function = autocorr_kernel;
-    return power_integral(&p);
+    return power_integral(d, &p);
 }//}}}
 
 static

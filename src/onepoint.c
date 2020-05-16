@@ -21,11 +21,11 @@ void op_Mint_invertible(all_data *d, int z_index, double *au, double *ac)
 {//{{{
     double *temp = (double *)malloc(d->n->gr->Nsignal * sizeof(double));
 
-    for (int M_index=breakpoints(d, z_index); M_index<d->n->gr->NM; M_index++)
+    for (int M_index=d->p->breakpoints[z_index]; M_index<d->n->gr->NM; M_index++)
     {
         dtsq_of_s(d, z_index, M_index, temp);
-        double n = d->h->hmf[z_index*d->n->gr->NM + M_index];
-        double b = d->h->bias[z_index*d->n->gr->NM + M_index];
+        double n = d->h->hmf[z_index][M_index];
+        double b = d->h->bias[z_index][M_index];
         for (int ii=0; ii<d->n->gr->Nsignal; ii++)
         {
             au[ii] -= temp[ii] * M_PI * n
@@ -87,11 +87,11 @@ void op_Mint_notinvertible(all_data *d, int z_index, complex *au, complex *ac)
 // integrals are _added_ to au, ac
 {//{{{
     complex *temp = (complex *)malloc((d->n->gr->Nsignal/2+1) * sizeof(complex));
-    for (int M_index=0; M_index<breakpoints(d, z_index); M_index++)
+    for (int M_index=0; M_index<d->p->breakpoints[z_index]; M_index++)
     {
         lambda_loop(d, z_index, M_index, temp);
-        double n = d->h->hmf[z_index*d->n->gr->NM + M_index];
-        double b = d->h->bias[z_index*d->n->gr->NM + M_index];
+        double n = d->h->hmf[z_index][M_index];
+        double b = d->h->bias[z_index][M_index];
         for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
         {
             au[ii] += temp[ii] * n
@@ -129,14 +129,14 @@ void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the expone
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        if (breakpoints(d, z_index) < d->n->gr->NM-1)
+        if (d->p->breakpoints[z_index] < d->n->gr->NM-1)
         // there are samples for which we can do the FFT integral
         {
             op_Mint_invertible(d, z_index, au_real, ac_real);
             fftw_execute(plan_u);
             fftw_execute(plan_c);
         }
-        if (breakpoints(d, z_index) > 0)
+        if (d->p->breakpoints[z_index] > 0)
         // there are samples for which we need to do the slow integral
         {
             op_Mint_notinvertible(d, z_index, au_comp, ac_comp);
@@ -223,6 +223,12 @@ void prepare_op(all_data *d)
 // does the necessary create calls
 {//{{{
     printf("In onepoint.h -> prepare_op :\n");
+    if (d->f->Nfilters > 0)
+    {
+        create_conj_profiles(d);
+        create_filtered_profiles(d);
+    }
+    create_breakpoints_or_monotonize(d);
     create_op(d);
 }//}}}
 

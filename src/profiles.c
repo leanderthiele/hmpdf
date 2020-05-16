@@ -216,9 +216,9 @@ void create_conj_profiles(all_data *d)
     d->p->created_conj_profiles = 1;
 }//}}}
 
-static
 void create_filtered_profiles(all_data *d)
 {//{{{
+    if (d->p->created_filtered_profiles) { return; }
     if (d->f->Nfilters == 0 ) { return; }
     printf("\tcreate_filtered_profiles\n");
 
@@ -249,23 +249,8 @@ void create_filtered_profiles(all_data *d)
     }
     free(temp);
     free(ell);
-}//}}}
 
-static
-int not_monotonic(int N, double *x, int *problems)
-// checks if x is monotonically increasing
-// (this is what we require for the FFTs to work)
-{//{{{
-    int out = 0;
-    for (int ii=1; ii<N; ii++)
-    {
-        if (x[ii] < x[ii-1])
-        {
-            problems[out] = ii;
-            out += 1;
-        }
-    }
-    return out;
+    d->p->created_filtered_profiles = 1;
 }//}}}
 
 static
@@ -376,9 +361,9 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
     }
 }//}}}
 
-static
 void create_breakpoints_or_monotonize(all_data *d)
 {//{{{
+    if (d->p->created_breakpoints) { return; }
     printf("\tcreate_breakpoints_or_monotonize\n");
     if (d->n->monotonize)
     {
@@ -413,19 +398,8 @@ void create_breakpoints_or_monotonize(all_data *d)
             adjust_breakpoint(d, d->p->breakpoints+z_index);
         }
     }
-}//}}}
 
-int breakpoints(all_data *d, int z_index)
-// TODO remove this function
-{//{{{
-    if (d->n->monotonize)
-    {
-        return 0;
-    }
-    else
-    {
-        return d->p->breakpoints[z_index];
-    }
+    d->p->created_breakpoints = 1;
 }//}}}
 
 void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s)
@@ -444,18 +418,19 @@ void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s)
     delete_interp1d(interp);
 }//}}}
 
-void s_of_l(all_data *d, int z_index, int M_index, int Nl, double *l, double *s)
-// returns the conjugate space profile at z_index, M_index
+void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, double *s)
+// returns the conjugate space profile at z_index, M_index,
+//    interpolated at the ell-values passed
 {//{{{
     interp1d *interp = new_interp1d(d->p->Ntheta, d->p->reci_tgrid,
                                     d->p->conj_profiles[z_index][M_index]+1,
-                                    d->p->conj_profiles[z_index][M_index][1]/*high l*/, 0.0/*low l*/,
+                                    d->p->conj_profiles[z_index][M_index][1]/*low l*/, 0.0/*high l*/,
                                     SELL_INTERP_TYPE, d->p->reci_tgrid_accel);
-    double hankel_norm = 0.0; // FIXME
-    for (int ii=0; ii<Nl; ii++)
+    double hankel_norm = 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]); // FIXME
+    for (int ii=0; ii<Nell; ii++)
     {
-        double l_normalized = l[ii] / d->p->conj_profiles[z_index][M_index][0];
-        s[ii] = hankel_norm * interp1d_eval(interp, l_normalized);
+        double l = ell[ii] / d->p->conj_profiles[z_index][M_index][0];
+        s[ii] = hankel_norm * interp1d_eval(interp, l);
     }
     delete_interp1d(interp);
 }//}}}
@@ -493,13 +468,6 @@ void init_profiles(all_data *d)
     printf("In profiles.h -> init_profiles :\n");
     create_angle_grids(d);
     create_profiles(d);
-
-    if (d->f->Nfilters > 0)
-    {
-        create_conj_profiles(d);
-        create_filtered_profiles(d);
-    }
-    create_breakpoints_or_monotonize(d); // have to keep this here!
 
     d->p->inited_profiles = 1;
 }//}}}
