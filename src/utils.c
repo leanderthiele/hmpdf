@@ -7,6 +7,9 @@
 
 #ifdef _OPENMP
 #include <omp.h>
+#pragma message "Compiling with OpenMP."
+#else
+#pragma message "Warning : compiling without OpenMP. Covariance matrix will be slow."
 #endif
 
 #include <termios.h>
@@ -365,7 +368,6 @@ int isfile(char *fname)
 }//}}}
 
 int this_core(void)
-// TODO
 {//{{{
     #ifdef _OPENMP
     return omp_get_thread_num();

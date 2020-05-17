@@ -265,8 +265,9 @@ void status_update(time_t t1, time_t t0, int done, int tot)
     int hrs = (int)floor(remains/60.0/60.0);
     int min = (int)round(remains/60.0 - 60.0*(double)(hrs));
     int done_perc = (int)round(100.0*(double)(done)/(double)(tot));
-    printf("\t\t%3d %% done, %.2d hrs %.2d min remaining in create_cov.\n",
-           done_perc, hrs, min);
+    fprintf(stdout, "\t\t%3d %% done, %.2d hrs %.2d min remaining "
+                    "in create_cov.\n", done_perc, hrs, min);
+    fflush(stdout);
 }//}}}
 
 static
