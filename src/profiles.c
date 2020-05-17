@@ -480,13 +480,13 @@ void create_breakpoints_or_monotonize(all_data *d)
         int _not_monotonic[d->n->NM];
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            int _problems[d->p->Ntheta];
+            int _problems[d->p->Ntheta+1];
             _not_monotonic[M_index] = not_monotonic(d->p->Ntheta,
                                                     d->p->profiles[z_index][M_index]+1,
                                                     _problems);
             if (d->n->monotonize)
             {
-                monotonize(d->p->Ntheta, _not_monotonic[M_index], _problems,
+                monotonize(d->p->Ntheta+1, _not_monotonic[M_index], _problems,
                            d->p->decr_tgrid, d->p->profiles[z_index][M_index]+1);
                 _not_monotonic[M_index] = 0;
             }
