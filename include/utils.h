@@ -59,7 +59,6 @@ int not_monotonic(int N, double *x, int *problems);
 
 int wait(void);
 
-typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
 gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode);
 void show(gnuplot *gp);

@@ -7,114 +7,102 @@
 #include "data.h"
 #include "class_interface.h"
 
-struct class_interface_s
-{//{{{
-    char *class_ini;
-    char *class_pre;
-
-    struct precision *pr;
-    struct background *ba;
-    struct thermo *th;
-    struct primordial *pm;
-    struct perturbs *pt;
-    struct nonlinear *nl;
-    struct transfers *tr;
-    struct spectra *sp;
-    struct lensing *le;
-    struct output *op;
-
-    ErrorMsg errmsg;
-};//}}}
-
-typedef struct class_interface_s cls;
-
+#include "hmpdf.h"
 
 static
 void alloc_class(all_data *d)
 {//{{{
-    d->cls = (cls *)malloc(sizeof(cls));
-    cls *_c = (cls *)d->cls;
-
-    _c->pr = malloc(sizeof(struct precision));
-    _c->ba = malloc(sizeof(struct background));
-    _c->th = malloc(sizeof(struct thermo));
-    _c->pt = malloc(sizeof(struct perturbs));
-    _c->tr = malloc(sizeof(struct transfers));
-    _c->pm = malloc(sizeof(struct primordial));
-    _c->sp = malloc(sizeof(struct spectra));
-    _c->nl = malloc(sizeof(struct nonlinear));
-    _c->le = malloc(sizeof(struct lensing));
-    _c->op = malloc(sizeof(struct output));
+    d->cls->pr = malloc(sizeof(struct precision));
+    d->cls->ba = malloc(sizeof(struct background));
+    d->cls->th = malloc(sizeof(struct thermo));
+    d->cls->pt = malloc(sizeof(struct perturbs));
+    d->cls->tr = malloc(sizeof(struct transfers));
+    d->cls->pm = malloc(sizeof(struct primordial));
+    d->cls->sp = malloc(sizeof(struct spectra));
+    d->cls->nl = malloc(sizeof(struct nonlinear));
+    d->cls->le = malloc(sizeof(struct lensing));
+    d->cls->op = malloc(sizeof(struct output));
 }//}}}
 
 static
 void run_class(all_data *d)
 {//{{{
-    cls *_c = (cls *)d->cls;
-
     printf("\trun_class\n");
+
+    struct precision *pr = (struct precision *)d->cls->pr;
+    struct background *ba = (struct background *)d->cls->ba;
+    struct thermo *th = (struct thermo *)d->cls->th;
+    struct perturbs *pt = (struct perturbs *)d->cls->pt;
+    struct primordial *pm = (struct primordial *)d->cls->pm;
+    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+
     printf("\t\tbackground\n");
-    SAFECLASS(background_init(_c->pr, _c->ba),
-              _c->ba->error_message)
+    SAFECLASS(background_init(pr, ba), ba->error_message)
     printf("\t\tthermodynamics\n");
-    SAFECLASS(thermodynamics_init(_c->pr, _c->ba, _c->th),
-              _c->th->error_message)
+    SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message)
     printf("\t\tperturbs\n");
-    SAFECLASS(perturb_init(_c->pr, _c->ba, _c->th, _c->pt),
-              _c->pt->error_message)
+    SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
     printf("\t\tprimordial\n");
-    SAFECLASS(primordial_init(_c->pr, _c->pt, _c->pm),
-              _c->pm->error_message)
+    SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)
     printf("\t\tnonlinear\n");
-    SAFECLASS(nonlinear_init(_c->pr, _c->ba, _c->th, _c->pt, _c->pm, _c->nl),
-              _c->nl->error_message);
+    SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
 }//}}}
 
-void init_class(all_data *d)
+void init_class_interface(all_data *d)
 {//{{{
     printf("In class_interface.h -> init_class.\n");
     char **argv = (char **)malloc(3 * sizeof(char *));
-    argv[1] = d->class_ini;
-    argv[2] = d->class_pre;
+    argv[1] = d->cls->class_ini;
+    argv[2] = d->cls->class_pre;
 
     int argc = (strcmp(argv[2], "none")) ? 3 : 2;
 
     alloc_class(d);
 
-    cls *_c = (cls *)d->cls;
-    SAFECLASS(input_init_from_arguments(argc, argv, _c->pr, _c->ba, _c->th,
-                                       _c->pt, _c->tr, _c->pm, _c->sp,
-                                       _c->nl, _c->le, _c->op, _c->errmsg),
-              _c->errmsg)
+    struct precision *pr = (struct precision *)d->cls->pr;
+    struct background *ba = (struct background *)d->cls->ba;
+    struct thermo *th = (struct thermo *)d->cls->th;
+    struct perturbs *pt = (struct perturbs *)d->cls->pt;
+    struct primordial *pm = (struct primordial *)d->cls->pm;
+    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+    struct spectra *sp = (struct spectra *)d->cls->sp;
+    struct lensing *le = (struct lensing *)d->cls->le;
+    struct output *op = (struct output *)d->cls->op;
+    struct transfers *tr = (struct transfers *)d->cls->tr;
+
+    ErrorMsg errmsg;
+    SAFECLASS(input_init_from_arguments(argc, argv, pr, ba, th,
+                                       pt, tr, pm, sp,
+                                       nl, le, op, errmsg),
+              errmsg)
 
     run_class(d);
 }//}}}
 
-void free_class(all_data *d)
+void null_class_interface(all_data *d)
 {//{{{
-    if (d->cls != NULL)
-    {
-        cls *_c = (cls *)d->cls;
+    d->cls->pr = NULL;
+    d->cls->ba = NULL;
+    d->cls->th = NULL;
+    d->cls->pt = NULL;
+    d->cls->pm = NULL;
+    d->cls->nl = NULL;
+    d->cls->sp = NULL;
+    d->cls->le = NULL;
+    d->cls->op = NULL;
+    d->cls->tr = NULL;
+}//}}}
 
-        free(_c->op);
-        lensing_free(_c->le);
-        free(_c->le);
-        spectra_free(_c->sp);
-        free(_c->sp);
-        transfer_free(_c->tr);
-        free(_c->tr);
-        nonlinear_free(_c->nl);
-        free(_c->nl);
-        perturb_free(_c->pt);
-        free(_c->pt);
-        primordial_free(_c->pm);
-        free(_c->pm);
-        thermodynamics_free(_c->th);
-        free(_c->th);
-        background_free(_c->ba);
-        free(_c->ba);
-        free(_c->pr);
-
-        free(d->cls);
-    }
+void reset_class_interface(all_data *d)
+{//{{{
+    if (d->cls->op != NULL) { free(d->cls->op); }
+    if (d->cls->le != NULL) { lensing_free(d->cls->le); free(d->cls->le); }
+    if (d->cls->sp != NULL) { spectra_free(d->cls->sp); free(d->cls->sp); }
+    if (d->cls->tr != NULL) { transfer_free(d->cls->tr); free(d->cls->tr); }
+    if (d->cls->nl != NULL) { nonlinear_free(d->cls->nl); free(d->cls->nl); }
+    if (d->cls->pt != NULL) { perturb_free(d->cls->pt); free(d->cls->pt); }
+    if (d->cls->pm != NULL) { primordial_free(d->cls->pm); free(d->cls->pm); }
+    if (d->cls->th != NULL) { thermodynamics_free(d->cls->th); free(d->cls->th); }
+    if (d->cls->ba != NULL) { background_free(d->cls->ba); free(d->cls->ba); }
+    if (d->cls->pr != NULL) { free(d->cls->pr); }
 }//}}}

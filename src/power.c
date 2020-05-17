@@ -13,26 +13,44 @@
 #include "numerics.h"
 #include "power.h"
 
-struct class_interface_s
+void null_power(all_data *d)
 {//{{{
-    char *class_ini;
-    char *class_pre;
+    d->pwr->inited_power = 0;
+    d->pwr->k_arr = NULL;
+    d->pwr->Pk_arr = NULL;
+    d->pwr->Pk_interp = NULL;
+    d->pwr->ssq = NULL;
+    d->pwr->created_corr = 0;
+    d->pwr->corr_interp = NULL;
+    d->pwr->corr_accel = NULL;
+}//}}}
 
-    struct precision *pr;
-    struct background *ba;
-    struct thermo *th;
-    struct primordial *pm;
-    struct perturbs *pt;
-    struct nonlinear *nl;
-    struct transfers *tr;
-    struct spectra *sp;
-    struct lensing *le;
-    struct output *op;
-
-    ErrorMsg errmsg;
-};//}}}
-
-typedef struct class_interface_s cls;
+void reset_power(all_data *d)
+{//{{{
+    if (d->pwr->k_arr != NULL) { free(d->pwr->k_arr); }
+    if (d->pwr->Pk_arr != NULL) { free(d->pwr->Pk_arr); }
+    if (d->pwr->Pk_interp != NULL) { delete_interp1d(d->pwr->Pk_interp); }
+    if (d->pwr->ssq != NULL)
+    {
+        for (int M_index=0; M_index<d->n->NM; M_index++)
+        {
+            if (d->pwr->ssq[M_index] != NULL)
+            {
+                free(d->pwr->ssq[M_index]);
+            }
+        }
+        free(d->pwr->ssq);
+    }
+    if (d->pwr->corr_interp != NULL) { gsl_spline_free(d->pwr->corr_interp); }
+    if (d->pwr->corr_accel != NULL)
+    {
+        for (int ii=0; ii<d->pwr->Ncorr_accel; ii++)
+        {
+            gsl_interp_accel_free(d->pwr->corr_accel[ii]);
+        }
+        free(d->pwr->corr_accel);
+    }
+}//}}}
 
 double Pk_linear(all_data *d, double k)
 // k is logk if LOGK is defined
@@ -41,17 +59,20 @@ double Pk_linear(all_data *d, double k)
     k = exp(k);
     #endif
     double out;
-    cls *_c = (cls *)d->cls;
+
+    struct background *ba = (struct background *)d->cls->ba;
+    struct primordial *pm = (struct primordial *)d->cls->pm;
+    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
     double lnk;
     
-    if (nonlinear_pk_at_k_and_z(_c->ba, _c->pm, _c->nl,
+    if (nonlinear_pk_at_k_and_z(ba, pm, nl,
                                 pk_linear, k, 0.0,
-                                _c->nl->index_pk_total,
-                                 &out, NULL) == _FAILURE_)
+                                nl->index_pk_total,
+                                &out, NULL) == _FAILURE_)
     {
         lnk = log(k);
-        if (lnk > _c->nl->ln_k[_c->nl->k_size-1])
+        if (lnk > nl->ln_k[nl->k_size-1])
         // check if k falls out of bounds,
         //    maximum k needs to be set large enough that linear power is
         //    essentially zero for larger wavenumbers
@@ -61,7 +82,7 @@ double Pk_linear(all_data *d, double k)
         else
         {
             ERRLOC;
-            printf("CLASS error %s\n", _c->nl->error_message);
+            printf("CLASS error %s\n", nl->error_message);
             exit(1);
         }
     }
@@ -98,17 +119,18 @@ double power_integrand(double k, void *params)
 static
 double power_integral(all_data *d, power_integrand_params *p)
 {//{{{
-    cls *_c = (cls *)d->cls;
+    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+
     gsl_function integrand;
     integrand.function = &power_integrand;
     integrand.params = p;
     double res, err;
     #ifdef LOGK
     double kmin = log(PKINTEGR_KMIN);
-    double kmax = _c->nl->ln_k[_c->nl->k_size-1];
+    double kmax = nl->ln_k[nl->k_size-1];
     #else
     double kmin = PKINTEGR_KMIN;
-    double kmax = exp(_c->nl->ln_k[_c->nl->k_size-1]);
+    double kmax = exp(nl->ln_k[nl->k_size-1]);
     #endif
 
     gsl_integration_workspace *ws = gsl_integration_workspace_alloc(PKINTEGR_LIMIT);
@@ -165,11 +187,11 @@ static
 void create_ssq(all_data *d)
 {//{{{
     printf("\tcreate_ssq\n");
-    d->pwr->ssq = (double **)malloc(d->n->gr->NM * sizeof(double*));
-    for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+    d->pwr->ssq = (double **)malloc(d->n->NM * sizeof(double*));
+    for (int M_index=0; M_index<d->n->NM; M_index++)
     {
         d->pwr->ssq[M_index] = (double *)malloc(2 * sizeof(double));
-        d->pwr->ssq[M_index][0] = _ssq(d, d->n->gr->Mgrid[M_index],
+        d->pwr->ssq[M_index][0] = _ssq(d, d->n->Mgrid[M_index],
                                        d->pwr->ssq[M_index]+1);
     }
 }//}}}
@@ -206,7 +228,7 @@ void create_corr(all_data *d)
 {//{{{
     if (d->pwr->created_corr) { return; }
     printf("\tcreate_corr_interp\n");
-    double rmax = 1.1 * d->n->gr->phimax * d->c->comoving[d->n->gr->Nz-1];
+    double rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
     gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, rmax);
     double *Pk = (double *)malloc(CORRINTERP_N * sizeof(double));
     double *r = (double *)malloc((CORRINTERP_N+1) * sizeof(double));

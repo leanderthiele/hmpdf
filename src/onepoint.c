@@ -14,24 +14,37 @@
 #include "numerics.h"
 #include "onepoint.h"
 
+void null_onepoint(all_data *d)
+{//{{{
+    d->op->created_op = 0;
+    d->op->PDFu = NULL;
+    d->op->PDFc = NULL;
+}//}}}
+
+void reset_onepoint(all_data *d)
+{//{{{
+    if (d->op->PDFu != NULL) { free(d->op->PDFu); }
+    if (d->op->PDFc != NULL) { free(d->op->PDFc); }
+}//}}}
+
 static
 void op_Mint_invertible(all_data *d, int z_index, double *au, double *ac)
 // performs the mass integrals, for the invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
-    double *temp = (double *)malloc(d->n->gr->Nsignal * sizeof(double));
+    double *temp = (double *)malloc(d->n->Nsignal * sizeof(double));
 
-    for (int M_index=d->p->breakpoints[z_index]; M_index<d->n->gr->NM; M_index++)
+    for (int M_index=d->p->breakpoints[z_index]; M_index<d->n->NM; M_index++)
     {
         dtsq_of_s(d, z_index, M_index, temp);
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
-        for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+        for (int ii=0; ii<d->n->Nsignal; ii++)
         {
             au[ii] -= temp[ii] * M_PI * n
-                      * d->n->gr->Mweights[M_index];
+                      * d->n->Mweights[M_index];
             ac[ii] -= temp[ii] * M_PI * n * b
-                      * d->n->gr->Mweights[M_index];
+                      * d->n->Mweights[M_index];
         }
     }
 
@@ -50,16 +63,16 @@ complex not_inv_integral(all_data *d, int z_index, int M_index, int lambda_index
     for (int ii=0; ii<d->p->prtilde_Ntheta; ii++)
     {
         integr[ii] = d->p->prtilde_thetagrid[ii]
-                     * cexp(- _Complex_I * temp[ii] * d->n->gr->lambdagrid[lambda_index]);
+                     * cexp(- _Complex_I * temp[ii] * d->n->lambdagrid[lambda_index]);
     }
     // TODO TESTING
     /*
     if ((z_index+1)%10==0 && (M_index+1)%10==0 && (lambda_index+1)%200==0
         && z_index>25 && M_index>35)
     {
-        printf("z=%d/%d\tM=%d/%d\tlambda=%d/%d\n", z_index+1, d->n->gr->Nz,
-                                                   M_index+1, d->n->gr->NM,
-                                                   lambda_index+1, d->n->gr->Nsignal/2+1);
+        printf("z=%d/%d\tM=%d/%d\tlambda=%d/%d\n", z_index+1, d->n->Nz,
+                                                   M_index+1, d->n->NM,
+                                                   lambda_index+1, d->n->Nsignal/2+1);
         gnuplot *gp = plot_comp(NULL, d->p->prtilde_Ntheta, d->p->prtilde_thetagrid, integr, 0);
         plot_comp(gp, d->p->prtilde_Ntheta, d->p->prtilde_thetagrid, integr, 1);
         show(gp);
@@ -75,7 +88,7 @@ complex not_inv_integral(all_data *d, int z_index, int M_index, int lambda_index
 static
 void lambda_loop(all_data *d, int z_index, int M_index, complex *out)
 {//{{{
-    for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
         out[ii] = not_inv_integral(d, z_index, M_index, ii);
     }
@@ -86,18 +99,18 @@ void op_Mint_notinvertible(all_data *d, int z_index, complex *au, complex *ac)
 // performs the mass integration over the non-invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
-    complex *temp = (complex *)malloc((d->n->gr->Nsignal/2+1) * sizeof(complex));
+    complex *temp = (complex *)malloc((d->n->Nsignal/2+1) * sizeof(complex));
     for (int M_index=0; M_index<d->p->breakpoints[z_index]; M_index++)
     {
         lambda_loop(d, z_index, M_index, temp);
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
-        for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             au[ii] += temp[ii] * n
-                      * d->n->gr->Mweights[M_index];
+                      * d->n->Mweights[M_index];
             ac[ii] += temp[ii] * n * b
-                      * d->n->gr->Mweights[M_index];
+                      * d->n->Mweights[M_index];
         }
     }
 
@@ -107,29 +120,29 @@ void op_Mint_notinvertible(all_data *d, int z_index, complex *au, complex *ac)
 static
 void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
 {//{{{
-    double *ac_real = (double *)fftw_malloc((d->n->gr->Nsignal+2) * sizeof(double));
+    double *ac_real = (double *)fftw_malloc((d->n->Nsignal+2) * sizeof(double));
     complex *ac_comp = (complex *)ac_real;
-    double *au_real = (double *)fftw_malloc((d->n->gr->Nsignal+2) * sizeof(double));
+    double *au_real = (double *)fftw_malloc((d->n->Nsignal+2) * sizeof(double));
     complex *au_comp = (complex *)au_real;
-    fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->gr->Nsignal, au_real, au_comp, FFTW_MEASURE);
-    fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->gr->Nsignal, ac_real, ac_comp, FFTW_MEASURE);
+    fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->Nsignal, au_real, au_comp, FFTW_MEASURE);
+    fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, ac_real, ac_comp, FFTW_MEASURE);
 
     // zero the output arrays
-    for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
         pu_comp[ii] = pc_comp[ii] = 0.0;
     }
 
     // fill the z-integrand
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         // zero the arrays
-        for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        if (d->p->breakpoints[z_index] < d->n->gr->NM-1)
+        if (d->p->breakpoints[z_index] < d->n->NM-1)
         // there are samples for which we can do the FFT integral
         {
             op_Mint_invertible(d, z_index, au_real, ac_real);
@@ -142,7 +155,7 @@ void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the expone
             op_Mint_notinvertible(d, z_index, au_comp, ac_comp);
         }
 
-        for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             // subtract the zero modes, square the clustered mass integral
             complex tempu = au_comp[ii] - au_comp[0];
@@ -156,8 +169,8 @@ void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the expone
                      / d->c->hubble[z_index];
             tempc += tempu;
 
-            pu_comp[ii] += tempu * d->n->gr->zweights[z_index];
-            pc_comp[ii] += tempc * d->n->gr->zweights[z_index];
+            pu_comp[ii] += tempu * d->n->zweights[z_index];
+            pc_comp[ii] += tempc * d->n->zweights[z_index];
         }
     }
     fftw_free(au_real);
@@ -173,10 +186,10 @@ void get_mean_signal(all_data *d)
     d->op->signalmeanc = 0.0;
     double normu = 0.0;
     double normc = 0.0;
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        d->op->signalmeanu += d->n->gr->signalgrid[ii] * d->op->PDFu[ii];
-        d->op->signalmeanc += d->n->gr->signalgrid[ii] * d->op->PDFc[ii];
+        d->op->signalmeanu += d->n->signalgrid[ii] * d->op->PDFu[ii];
+        d->op->signalmeanc += d->n->signalgrid[ii] * d->op->PDFc[ii];
         normu += d->op->PDFu[ii];
         normc += d->op->PDFc[ii];
     }
@@ -188,22 +201,22 @@ void create_op(all_data *d)
 {//{{{
     if (d->op->created_op) { return; }
     printf("\tcreate_op\n");
-    d->op->PDFu = (double *)fftw_malloc((d->n->gr->Nsignal + 2) * sizeof(double));
-    d->op->PDFc = (double *)fftw_malloc((d->n->gr->Nsignal + 2) * sizeof(double));
+    d->op->PDFu = (double *)fftw_malloc((d->n->Nsignal + 2) * sizeof(double));
+    d->op->PDFc = (double *)fftw_malloc((d->n->Nsignal + 2) * sizeof(double));
     complex *PDFu_comp = (complex *)d->op->PDFu;
     complex *PDFc_comp = (complex *)d->op->PDFc;
 
-    fftw_plan plan_u = fftw_plan_dft_c2r_1d(d->n->gr->Nsignal, PDFu_comp, d->op->PDFu, FFTW_ESTIMATE);
-    fftw_plan plan_c = fftw_plan_dft_c2r_1d(d->n->gr->Nsignal, PDFc_comp, d->op->PDFc, FFTW_ESTIMATE);
+    fftw_plan plan_u = fftw_plan_dft_c2r_1d(d->n->Nsignal, PDFu_comp, d->op->PDFu, FFTW_ESTIMATE);
+    fftw_plan plan_c = fftw_plan_dft_c2r_1d(d->n->Nsignal, PDFc_comp, d->op->PDFc, FFTW_ESTIMATE);
 
     // perform redshift integration
     op_zint(d, PDFu_comp, PDFc_comp);
 
     // take exponential and normalize
-    for (int ii=0; ii<d->n->gr->Nsignal/2+1; ii++)
+    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
-        PDFu_comp[ii] = cexp(PDFu_comp[ii])/(double)(d->n->gr->Nsignal);
-        PDFc_comp[ii] = cexp(PDFc_comp[ii])/(double)(d->n->gr->Nsignal);
+        PDFu_comp[ii] = cexp(PDFu_comp[ii])/(double)(d->n->Nsignal);
+        PDFc_comp[ii] = cexp(PDFc_comp[ii])/(double)(d->n->Nsignal);
     }
 
     // transform back to real space
@@ -246,7 +259,7 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
         }
     }
 
-    bin_1d(d->n->gr->Nsignal, d->n->gr->signalgrid,
+    bin_1d(d->n->Nsignal, d->n->signalgrid,
            (mode==uncl) ? d->op->PDFu : d->op->PDFc,
            Nbins, _binedges, out, OPINTERP_TYPE);
 }//}}}

@@ -11,6 +11,47 @@
 #include "data.h"
 #include "halo_model.h"
 
+void null_halo_model(all_data *d)
+{//{{{
+    d->h->inited_halo = 0;
+    d->h->hmf = NULL;
+    d->h->bias = NULL;
+    d->h->c_interp = NULL;
+    d->h->c_accel = NULL;
+}//}}}
+
+void reset_halo_model(all_data *d)
+{//{{{
+    if (d->h->hmf != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            if (d->h->hmf[z_index] != NULL) { free(d->h->hmf[z_index]); }
+        }
+        free(d->h->hmf);
+    }
+    if (d->h->bias != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            if (d->h->bias[z_index] != NULL) { free(d->h->bias[z_index]); }
+        }
+        free(d->h->bias);
+    }
+    if (d->h->c_interp != NULL) { gsl_spline_free(d->h->c_interp); }
+    if (d->h->c_accel != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->h->c_accel[ii] != NULL)
+            {
+                gsl_interp_accel_free(d->h->c_accel[ii]);
+            }
+        }
+        free(d->h->c_accel);
+    }
+}//}}}
+
 static
 double DeltaVir_BryanNorman98(all_data *d, int z_index)
 {//{{{
@@ -33,8 +74,8 @@ double density_threshold(all_data *d, int z_index, mdef mdef)
 static
 double RofM(all_data *d, int z_index, int M_index)
 {//{{{
-    return cbrt(3.0*d->n->gr->Mgrid[M_index]/4.0/M_PI
-                /density_threshold(d, z_index, MDEF_GLOBAL));
+    return cbrt(3.0*d->n->Mgrid[M_index]/4.0/M_PI
+                / density_threshold(d, z_index, MDEF_GLOBAL));
 }//}}}
 
 static
@@ -55,8 +96,8 @@ double _c_Duffy08(all_data *d, double z, double M, mdef mdef)
 static
 double c_Duffy08(all_data *d, int z_index, int M_index)
 {//{{{
-    return _c_Duffy08(d, d->n->gr->zgrid[z_index],
-                      d->n->gr->Mgrid[M_index],
+    return _c_Duffy08(d, d->n->zgrid[z_index],
+                      d->n->Mgrid[M_index],
                       MDEF_GLOBAL);
 }//}}}
 
@@ -66,7 +107,7 @@ double NFW_fundamental(all_data *d, int z_index, int M_index, double *rs)
 {//{{{
     double c = c_Duffy08(d, z_index, M_index);
     *rs = RofM(d, z_index, M_index) / c;
-    return d->n->gr->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
+    return d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
            / (log1p(c)-c/(1.0+c));
 }//}}}
 
@@ -84,7 +125,11 @@ void create_c_of_y(all_data *d)
         logy_grid[ii] = log(3.0) - 3.0*logc_grid[ii] + log(log1p(_c) - _c/(1.0+_c));
     }
     d->h->c_interp = gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC);
-    d->h->c_accel = gsl_interp_accel_alloc();
+    d->h->c_accel = (gsl_interp_accel **)malloc(d->Ncores * sizeof(gsl_interp_accel *));
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        d->h->c_accel[ii] = gsl_interp_accel_alloc();
+    }
     gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC);
     free(logc_grid);
     free(logy_grid);
@@ -95,7 +140,7 @@ double c_of_y(all_data *d, double y)
 // inverts the function y(c) = 3/c^3 * (log(1+c)-c/(1+c))
 // this function is much smoother on loglog scale, so do the interpolation this way
 {//{{{
-    return exp(gsl_spline_eval(d->h->c_interp, log(y), d->h->c_accel));
+    return exp(gsl_spline_eval(d->h->c_interp, log(y), d->h->c_accel[this_core()]));
 }//}}}
 
 double Mconv(all_data *d, int z_index, int M_index, mdef mdef_out, double *R, double *c)
@@ -148,9 +193,9 @@ double _dndlogM(all_data *d, int z_index, int M_index, double *bias)
     double sigma_squared_prime = d->pwr->ssq[M_index][1];
     double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
-    double fnu = fnu_Tinker10(d, nu, d->n->gr->zgrid[z_index]);
+    double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
     double hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
-                 / (2.0 * sigma_squared * d->n->gr->Mgrid[M_index]);
+                 / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
     *bias = bnu_Tinker10(nu);
     return hmf;
 }//}}}
@@ -159,13 +204,13 @@ static
 void create_dndlogM(all_data *d)
 {//{{{
     printf("\tcreate_dndlogM\n");
-    d->h->hmf = (double **)malloc(d->n->gr->Nz * sizeof(double *));
-    d->h->bias = (double **)malloc(d->n->gr->Nz * sizeof(double *));
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    d->h->hmf = (double **)malloc(d->n->Nz * sizeof(double *));
+    d->h->bias = (double **)malloc(d->n->Nz * sizeof(double *));
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        d->h->hmf[z_index] = (double *)malloc(d->n->gr->NM * sizeof(double));
-        d->h->bias[z_index] = (double *)malloc(d->n->gr->NM * sizeof(double));
-        for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+        d->h->hmf[z_index] = (double *)malloc(d->n->NM * sizeof(double));
+        d->h->bias[z_index] = (double *)malloc(d->n->NM * sizeof(double));
+        for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             d->h->hmf[z_index][M_index] =
                 _dndlogM(d, z_index, M_index,

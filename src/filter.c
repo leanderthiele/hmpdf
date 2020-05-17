@@ -13,6 +13,46 @@
 #include "data.h"
 #include "filter.h"
 
+void null_filters(all_data *d)
+{//{{{
+    d->f->inited_filters = 0;
+    d->f->ffilters = NULL;
+    d->f->z_dependent = NULL;
+    d->f->quadraticpixel_interp = NULL;
+    d->f->quadraticpixel_accel = NULL;
+    d->f->quadraticpixel_ellmin = NULL;
+    d->f->quadraticpixel_ellmax = NULL;
+}//}}}
+
+void reset_filters(all_data *d)
+{//{{{
+    if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
+    if (d->f->ffilters != NULL) { free(d->f->ffilters); }
+    if (d->f->quadraticpixel_interp != NULL)
+    {
+        if (d->f->quadraticpixel_interp[0] != NULL) { gsl_spline_free(d->f->quadraticpixel_interp[0]); }
+        if (d->f->quadraticpixel_interp[1] != NULL) { gsl_spline_free(d->f->quadraticpixel_interp[1]); }
+        free(d->f->quadraticpixel_interp);
+    }
+    if (d->f->quadraticpixel_accel != NULL)
+    {
+        for (int ii=0; ii<2; ii++)
+        {
+            if (d->f->quadraticpixel_accel[ii] != NULL)
+            {
+                for (int jj=0; jj<d->Ncores; jj++)
+                {
+                    gsl_interp_accel_free(d->f->quadraticpixel_accel[ii][jj]);
+                }
+                free(d->f->quadraticpixel_accel[ii]);
+            }
+        }
+        free(d->f->quadraticpixel_accel);
+    }
+    if (d->f->quadraticpixel_ellmin != NULL) { free(d->f->quadraticpixel_ellmin); }
+    if (d->f->quadraticpixel_ellmax != NULL) { free(d->f->quadraticpixel_ellmax); }
+}//}}}
+    
 char filter_pdf_ps[][256] = {"pdf", "ps"};
 
 static
@@ -94,7 +134,12 @@ void _quadraticpixelinterp(all_data *d, filter_mode mode)
     }
 
     d->f->quadraticpixel_interp[mode] = gsl_spline_alloc(gsl_interp_cspline, Nell);
-    d->f->quadraticpixel_accel[mode] = gsl_interp_accel_alloc();
+    d->f->quadraticpixel_accel[mode]
+        = (gsl_interp_accel **)malloc(d->Ncores * sizeof(gsl_interp_accel *));
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        d->f->quadraticpixel_accel[mode][ii] = gsl_interp_accel_alloc();
+    }
     gsl_spline_init(d->f->quadraticpixel_interp[mode], Well[0], Well[1], Nell);
 
     #ifdef LOGELL
@@ -156,7 +201,7 @@ double filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard)
         ell = log(ell);
         #endif
         return gsl_spline_eval(_d->f->quadraticpixel_interp[m], ell,
-                               _d->f->quadraticpixel_accel[m]);
+                               _d->f->quadraticpixel_accel[m][this_core()]);
     }
 }//}}}
 
@@ -210,7 +255,7 @@ double filter_custom_k(void *d, double ell, filter_mode m, int *z_index)
     all_data *_d = (all_data *)d;
     // figure out comoving wavenumber corresponding to ell
     double k = ell / _d->c->comoving[*z_index];
-    double w =  _d->f->custom_k(k, _d->n->gr->zgrid[*z_index], _d->f->custom_k_p);
+    double w =  _d->f->custom_k(k, _d->n->zgrid[*z_index], _d->f->custom_k_p);
     switch (m)
     {
         case filter_pdf : return w;
@@ -261,7 +306,7 @@ void init_filters(all_data *d)
     {//{{{
         printf("\twill apply quadratic pixel filter\n");
         d->f->quadraticpixel_interp = (gsl_spline **)malloc(2 * sizeof(gsl_spline *));
-        d->f->quadraticpixel_accel = (gsl_interp_accel **)malloc(2 * sizeof(gsl_interp_accel *));
+        d->f->quadraticpixel_accel = (gsl_interp_accel ***)malloc(2 * sizeof(gsl_interp_accel **));
         d->f->quadraticpixel_ellmin = (double *)malloc(2 * sizeof(double));
         d->f->quadraticpixel_ellmax = (double *)malloc(2 * sizeof(double));
         _quadraticpixelinterp(d, filter_pdf);

@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf_bessel.h>
@@ -18,17 +21,85 @@
 #include "filter.h"
 #include "profiles.h"
 
+void null_profiles(all_data *d)
+{//{{{
+    d->p->inited_profiles = 0;
+    d->p->decr_tgrid = NULL;
+    d->p->incr_tgrid = NULL;
+    d->p->decr_tsqgrid = NULL;
+    d->p->prtilde_thetagrid = NULL;
+    d->p->reci_tgrid = NULL;
+    d->p->created_breakpoints = 0;
+    d->p->breakpoints = NULL;
+    d->p->dht_ws = NULL;
+    d->p->profiles = NULL;
+    d->p->created_conj_profiles = 0;
+    d->p->conj_profiles = NULL;
+    d->p->created_filtered_profiles = 0;
+    d->p->incr_tgrid_accel = NULL;
+    d->p->reci_tgrid_accel = NULL;
+}//}}}
+
+void reset_profiles(all_data *d)
+{//{{{
+    if (d->p->decr_tgrid != NULL) { free(d->p->decr_tgrid); }
+    if (d->p->incr_tgrid != NULL) { free(d->p->incr_tgrid); }
+    if (d->p->decr_tsqgrid != NULL) { free(d->p->decr_tsqgrid); }
+    if (d->p->reci_tgrid != NULL) { free(d->p->reci_tgrid); }
+    if (d->p->prtilde_thetagrid != NULL) { free(d->p->prtilde_thetagrid); }
+    if (d->p->incr_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->incr_tgrid_accel); }
+    if (d->p->reci_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->reci_tgrid_accel); }
+    if (d->p->profiles != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            if (d->p->profiles[z_index] != NULL)
+            {
+                for (int M_index=0; M_index<d->n->NM; M_index++)
+                {
+                    if (d->p->profiles[z_index][M_index] != NULL)
+                    {
+                        free(d->p->profiles[z_index][M_index]);
+                    }
+                }
+                free(d->p->profiles[z_index]);
+            }
+        }
+        free(d->p->profiles);
+    }
+    if (d->p->conj_profiles != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            if (d->p->conj_profiles[z_index] != NULL)
+            {
+                for (int M_index=0; M_index<d->n->NM; M_index++)
+                {
+                    if (d->p->conj_profiles[z_index][M_index] != NULL)
+                    {
+                        free(d->p->conj_profiles[z_index][M_index]);
+                    }
+                }
+                free(d->p->conj_profiles[z_index]);
+            }
+        }
+        free(d->p->conj_profiles);
+    }
+    if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
+}//}}}
+
 static
 void create_angle_grids(struct all_data_s *d)
 {//{{{
     printf("\tcreate_angle_grids\n");
     d->p->prtilde_Ntheta = PRTILDE_INTEGR_NTHETA;
 
-    d->p->decr_tgrid = (double *)malloc(d->p->Ntheta * sizeof(double));
-    d->p->incr_tgrid = (double *)malloc(d->p->Ntheta * sizeof(double));
-    d->p->decr_tsqgrid = (double *)malloc(d->p->Ntheta * sizeof(double));
+    d->p->decr_tgrid = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
+    d->p->incr_tgrid = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
+    d->p->decr_tsqgrid = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
     d->p->reci_tgrid = (double *)malloc(d->p->Ntheta * sizeof(double));
     d->p->prtilde_thetagrid = (double *)malloc(d->p->prtilde_Ntheta * sizeof(double));
+
     for (int ii=0; ii<d->p->Ntheta; ii++)
     {
         // reverse order, maximum angle is the first one
@@ -37,10 +108,26 @@ void create_angle_grids(struct all_data_s *d)
 
         d->p->reci_tgrid[ii] = gsl_sf_bessel_zero_J0(ii+1);
     }
-    reverse(d->p->Ntheta, d->p->decr_tgrid, d->p->incr_tgrid);
+
+    reverse(d->p->Ntheta, d->p->decr_tgrid, d->p->incr_tgrid+1);
+    // fix the endpoints
+    d->p->decr_tgrid[d->p->Ntheta] = 0.0;
+    d->p->decr_tsqgrid[d->p->Ntheta] = 0.0;
+    d->p->incr_tgrid[0] = 0.0;
+
     linspace(d->p->prtilde_Ntheta, 0.0, 1.0, d->p->prtilde_thetagrid);
     d->p->incr_tgrid_accel = gsl_interp_accel_alloc();
     d->p->reci_tgrid_accel = gsl_interp_accel_alloc();
+}//}}}
+
+static
+void fix_endpoints(int N, double *x, double *y)
+// sets y[0]=0 and y[N] to linear extrapolation
+{//{{{
+    y[0] = 0.0;
+    double a = (y[N-1]-y[N-2]) / (x[N-1]-x[N-2]);
+    double b = y[N-1] - a * x[N-1];
+    y[N] = a * x[N] + b;
 }//}}}
 
 static
@@ -84,7 +171,6 @@ void kappa_profile(all_data *d, int z_index, int M_index,
         p[ii] -= 2.0*(lout-lin)*d->c->rho_m[z_index];
         p[ii] /= d->c->Scrit[z_index];
     }
-    p[0] = 0.0; // FIXME without this there is a bug
 }//}}}
 
 // Battaglia profiles{{{
@@ -118,14 +204,14 @@ void tsz_profile(all_data *d, int z_index, int M_index,
     // convert to 200c
     double M200c, R200c, c200c;
     M200c = Mconv(d, z_index, M_index, mdef_c, &R200c, &c200c);
-    double P0 = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 0);
-    double xc = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 1);
+    double P0 = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
+    double xc = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
     // prepare the integration
     Battmodel_params par;
-    par.alpha = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 2);
-    par.beta  = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 3);
-    par.gamma = _Battmodel_primitive(d, M200c, d->n->gr->zgrid[z_index], 4);
+    par.alpha = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
+    par.beta  = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
+    par.gamma = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
     gsl_function integrand;
     integrand.function = &Battmodel_integrand;
     integrand.params = &par;
@@ -177,15 +263,20 @@ static
 void create_profiles(all_data *d)
 {//{{{
     printf("\tcreate_profiles\n");
-    d->p->profiles = (double ***)malloc(d->n->gr->Nz * sizeof(double **));
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    d->p->profiles = (double ***)malloc(d->n->Nz * sizeof(double **));
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(d->Ncores)
+    #endif
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        d->p->profiles[z_index] = (double **)malloc(d->n->gr->NM * sizeof(double *));
-        for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+        d->p->profiles[z_index] = (double **)malloc(d->n->NM * sizeof(double *));
+        for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            d->p->profiles[z_index][M_index] = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
+            d->p->profiles[z_index][M_index] = (double *)malloc((d->p->Ntheta+2) * sizeof(double));
             d->p->profiles[z_index][M_index][0] = profile(d, z_index, M_index,
                                                           d->p->profiles[z_index][M_index]+1);
+
+            fix_endpoints(d->p->Ntheta, d->p->decr_tgrid, d->p->profiles[z_index][M_index]+1);
         }
     }
 }//}}}
@@ -197,21 +288,26 @@ void create_conj_profiles(all_data *d)
     printf("\tcreate_conj_profiles\n");
     // prepare the Hankel transform work space
     d->p->dht_ws = gsl_dht_new(d->p->Ntheta, 0, 1.0);
-    // need buffer to store the profiles with theta increasing
-    double *temp = (double *)malloc(d->p->Ntheta * sizeof(double));
-    d->p->conj_profiles = (double ***)malloc(d->n->gr->Nz * sizeof(double **));
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    d->p->conj_profiles = (double ***)malloc(d->n->Nz * sizeof(double **));
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(d->Ncores)
+    #endif
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        d->p->conj_profiles[z_index] = (double **)malloc(d->n->gr->NM * sizeof(double *));
-        for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+        // need buffer to store the profiles with theta increasing
+        // allocate inside z-loop for thread safety
+        double *temp = (double *)malloc(d->p->Ntheta * sizeof(double));
+        d->p->conj_profiles[z_index] = (double **)malloc(d->n->NM * sizeof(double *));
+        for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             d->p->conj_profiles[z_index][M_index] = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, temp);
+            // dht_ws is unchanged under gsl_dht_apply, so this is thread safe
             gsl_dht_apply(d->p->dht_ws, temp, d->p->conj_profiles[z_index][M_index]+1);
             d->p->conj_profiles[z_index][M_index][0] = 1.0/d->p->profiles[z_index][M_index][0];
         }
+        free(temp);
     }
-    free(temp);
 
     d->p->created_conj_profiles = 1;
 }//}}}
@@ -222,33 +318,38 @@ void create_filtered_profiles(all_data *d)
     if (d->f->Nfilters == 0 ) { return; }
     printf("\tcreate_filtered_profiles\n");
 
-    double *ell = (double *)malloc(d->p->Ntheta * sizeof(double));
-    double *temp = (double *)malloc(d->p->Ntheta * sizeof(double)); // buffer
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(d->Ncores)
+    #endif
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+        double *ell = (double *)malloc(d->p->Ntheta * sizeof(double));
+        double *temp = (double *)malloc(d->p->Ntheta * sizeof(double)); // buffer
+        for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             for (int ii=0; ii<d->p->Ntheta; ii++)
             {
                 ell[ii] = d->p->reci_tgrid[ii] * d->p->conj_profiles[z_index][M_index][0];
             }
             // multiply with the window functions
-            apply_filters(d, d->p->Ntheta, ell, d->p->conj_profiles[z_index][M_index]+1, temp, filter_pdf, &z_index);
+            apply_filters(d, d->p->Ntheta, ell, d->p->conj_profiles[z_index][M_index]+1,
+                                                temp, filter_pdf, &z_index);
             // transform back to real space
             gsl_dht_apply(d->p->dht_ws, temp, d->p->profiles[z_index][M_index]+1);
             // reverse the profile
-            reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, d->p->profiles[z_index][M_index]+1);
+            reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1,
+                                  d->p->profiles[z_index][M_index]+1);
             // normalize properly
             for (int ii=0; ii<d->p->Ntheta; ii++)
             {
                 d->p->profiles[z_index][M_index][ii+1] *= gsl_pow_2(d->p->reci_tgrid[d->p->Ntheta-1]);
             }
-            // set the value at maximum theta to zero
-            d->p->profiles[z_index][M_index][1] = 0.0;
+
+            fix_endpoints(d->p->Ntheta, d->p->decr_tgrid, d->p->profiles[z_index][M_index]+1);
         }
+        free(temp);
+        free(ell);
     }
-    free(temp);
-    free(ell);
 
     d->p->created_filtered_profiles = 1;
 }//}}}
@@ -281,10 +382,10 @@ void adjust_breakpoint(all_data *d, int *bp)
     {
         *bp = INTEGR_MINSAMPLES-1;
     }
-    if (d->n->gr->NM - *bp < INTEGR_MINSAMPLES-1)
+    if (d->n->NM - *bp < INTEGR_MINSAMPLES-1)
     // remove the small FFT integral
     {
-        *bp = d->n->gr->NM-1;
+        *bp = d->n->NM-1;
     }
 }//}}}
 
@@ -373,11 +474,11 @@ void create_breakpoints_or_monotonize(all_data *d)
     {
         printf("\t\tcreating breakpoints (no monotonizing requested)\n");
     }
-    d->p->breakpoints = (int *)malloc(d->n->gr->Nz * sizeof(int));
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    d->p->breakpoints = (int *)malloc(d->n->Nz * sizeof(int));
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        int _not_monotonic[d->n->gr->NM];
-        for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+        int _not_monotonic[d->n->NM];
+        for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             int _problems[d->p->Ntheta];
             _not_monotonic[M_index] = not_monotonic(d->p->Ntheta,
@@ -391,7 +492,7 @@ void create_breakpoints_or_monotonize(all_data *d)
             }
         }
 
-        d->p->breakpoints[z_index] = find_breakpoint(d->n->gr->NM, _not_monotonic);
+        d->p->breakpoints[z_index] = find_breakpoint(d->n->NM, _not_monotonic);
         if (d->p->breakpoints[z_index] > 0)
         // we potentially need to make adjustments to breakpoint
         {
@@ -405,9 +506,9 @@ void create_breakpoints_or_monotonize(all_data *d)
 void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
 {//{{{
-    double *temp = (double *)malloc(d->p->Ntheta * sizeof(double));
-    reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, temp);
-    interp1d *interp = new_interp1d(d->p->Ntheta, d->p->incr_tgrid, temp, temp[0], 0.0,
+    double *temp = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
+    reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
+    interp1d *interp = new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
                                     PRINTERP_TYPE, d->p->incr_tgrid_accel);
 
     for (int ii=0; ii<Nt; ii++)
@@ -436,15 +537,15 @@ void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, doub
 }//}}}
 
 void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
-// write dtheta(signal)/dsignal*dsignal into return values
+// write dtheta^2(signal)/dsignal*dsignal into return values
 {//{{{
-    interp1d *interp = new_interp1d(d->p->Ntheta, d->p->profiles[z_index][M_index]+1,
+    interp1d *interp = new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
                                     d->p->decr_tsqgrid, 0.0, 0.0, PRINTERP_TYPE, NULL);
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal; ii++)
     {
         dtsq[ii] = gsl_pow_2(d->p->profiles[z_index][M_index][0])
-                   * (d->n->gr->signalgrid[1] - d->n->gr->signalgrid[0])
-                   * interp1d_eval_deriv(interp, d->n->gr->signalgrid[ii]);
+                   * (d->n->signalgrid[1] - d->n->signalgrid[0])
+                   * interp1d_eval_deriv(interp, d->n->signalgrid[ii]);
     }
     delete_interp1d(interp);
 }//}}}
@@ -452,12 +553,12 @@ void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
 void t_of_s(all_data *d, int z_index, int M_index, double *t)
 // only valid results if monotonize is True
 {//{{{
-    interp1d *interp = new_interp1d(d->p->Ntheta, d->p->profiles[z_index][M_index]+1,
+    interp1d *interp = new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
                                     d->p->decr_tgrid, 0.0, 0.0, PRINTERP_TYPE, NULL);
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal; ii++)
     {
         t[ii] = d->p->profiles[z_index][M_index][0]
-                * interp1d_eval(interp, d->n->gr->signalgrid[ii]);
+                * interp1d_eval(interp, d->n->signalgrid[ii]);
     }
     delete_interp1d(interp);
 }//}}}

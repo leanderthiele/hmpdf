@@ -18,18 +18,44 @@
 
 #include "hmpdf.h"
 
+void null_powerspectrum(all_data *d)
+{//{{{
+    d->ps->created_Cell = 0;
+    d->ps->ell = NULL;
+    d->ps->Cell_1h = NULL;
+    d->ps->Cell_2h = NULL;
+    d->ps->Cell_tot = NULL;
+    d->ps->created_Cphi = 0;
+    d->ps->phi = NULL;
+    d->ps->Cphi_1h = NULL;
+    d->ps->Cphi_2h = NULL;
+    d->ps->Cphi_tot = NULL;
+}//}}}
+
+void reset_powerspectrum(all_data *d)
+{//{{{
+    if (d->ps->ell != NULL) { free(d->ps->ell); }
+    if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
+    if (d->ps->Cell_2h != NULL) { free(d->ps->Cell_2h); }
+    if (d->ps->Cell_tot != NULL) { free(d->ps->Cell_tot); }
+    if (d->ps->phi != NULL) { free(d->ps->phi); }
+    if (d->ps->Cphi_1h != NULL) { free(d->ps->Cphi_1h); }
+    if (d->ps->Cphi_2h != NULL) { free(d->ps->Cphi_2h); }
+    if (d->ps->Cphi_tot != NULL) { free(d->ps->Cphi_tot); }
+}//}}}
+
 int find_Nell(all_data *d)
 {//{{{
     int N = 0;
     if (d->f->pixelside > 0.0)
     // pixel sidelength is defined, which gives us a natural choice of minimum angle
     {
-        N = (int)round(2.0 * d->n->gr->phimax / d->f->pixelside );
+        N = (int)round(2.0 * d->n->phimax / d->f->pixelside );
         // now check if the Bessel function zero is less than pixelside,
         // otherwise increase N
         while (1)
         {
-            double phimin = 2.0 * d->n->gr->phimax * gsl_sf_bessel_zero_J0(1)
+            double phimin = 2.0 * d->n->phimax * gsl_sf_bessel_zero_J0(1)
                             / gsl_sf_bessel_zero_J0(N);
             if (phimin < d->f->pixelside)
             {
@@ -57,7 +83,7 @@ void ps_Mint(all_data *d, int z_index, double *oneh, double *twoh)
     zero_real(d->ps->Nell, twoh);
     double *temp = (double *)malloc(d->ps->Nell * sizeof(double));
 
-    for (int M_index=0; M_index<d->n->gr->NM; M_index++)
+    for (int M_index=0; M_index<d->n->NM; M_index++)
     {
         // evaluate the conjugate profile interpolator
         s_of_ell(d, z_index, M_index, d->ps->Nell, d->ps->ell, temp);
@@ -69,9 +95,9 @@ void ps_Mint(all_data *d, int z_index, double *oneh, double *twoh)
         for (int ii=0; ii<d->ps->Nell; ii++)
         {
             oneh[ii] += n * gsl_pow_2(temp[ii])
-                        * d->n->gr->Mweights[M_index];
+                        * d->n->Mweights[M_index];
             twoh[ii] += n * b * temp[ii]
-                        * d->n->gr->Mweights[M_index];
+                        * d->n->Mweights[M_index];
         }
     }
 
@@ -93,7 +119,7 @@ void ps_zint(all_data *d, double *oneh, double *twoh)
     double *oneh_z = (double *)malloc(d->ps->Nell * sizeof(double));
     double *twoh_z = (double *)malloc(d->ps->Nell * sizeof(double));
 
-    for (int z_index=0; z_index<d->n->gr->Nz; z_index++)
+    for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         ps_Mint(d, z_index, oneh_z, twoh_z);
 
@@ -109,10 +135,10 @@ void ps_zint(all_data *d, double *oneh, double *twoh)
             #endif
 
             oneh[ii] += gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index]
-                        * oneh_z[ii] * d->n->gr->zweights[z_index];
+                        * oneh_z[ii] * d->n->zweights[z_index];
             twoh[ii] += gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index]
                         * d->c->Dsq[z_index] * Pk_linear(d, k)
-                        * twoh_z[ii] * d->n->gr->zweights[z_index];
+                        * twoh_z[ii] * d->n->zweights[z_index];
         }
     }
 
@@ -154,7 +180,7 @@ void create_Cphi(all_data *d)
     if (d->ps->created_Cphi) { return; }
     printf("\tcreate_Cphi\n");
     d->ps->Nell_corr = find_Nell(d);
-    gsl_dht *t = gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->gr->phimax);
+    gsl_dht *t = gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->phimax);
     
     d->ps->phi = (double *)malloc(d->ps->Nell_corr * sizeof(double));
     double *temp_ell = (double *)malloc(d->ps->Nell_corr * sizeof(double));

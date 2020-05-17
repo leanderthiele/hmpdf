@@ -12,6 +12,31 @@
 #include "data.h"
 #include "numerics.h"
 
+void null_numerics(all_data *d)
+{//{{{
+    d->n->inited_numerics = 0;
+    d->n->zgrid = NULL;
+    d->n->zweights = NULL;
+    d->n->Mgrid = NULL;
+    d->n->Mweights = NULL;
+    d->n->signalgrid = NULL;
+    d->n->lambdagrid = NULL;
+    d->n->phigrid = NULL;
+    d->n->phiweights = NULL;
+}//}}}
+
+void reset_numerics(all_data *d)
+{//{{{
+    if (d->n->zgrid != NULL) { free(d->n->zgrid); }
+    if (d->n->zweights != NULL) { free(d->n->zweights); }
+    if (d->n->Mgrid != NULL) { free(d->n->Mgrid); }
+    if (d->n->Mweights != NULL) { free(d->n->Mweights); }
+    if (d->n->signalgrid != NULL) { free(d->n->signalgrid); }
+    if (d->n->lambdagrid != NULL) { free(d->n->lambdagrid); }
+    if (d->n->phigrid != NULL) { free(d->n->phigrid); }
+    if (d->n->phiweights != NULL) { free(d->n->phiweights); }
+}//}}}
+
 static
 double weight_fct(integr_mode m,
                   double a, double b, double alpha, double beta,
@@ -78,34 +103,34 @@ static
 void create_grids(all_data *d)
 {//{{{
     printf("\tcreate_grids\n");
-    d->n->gr->zgrid = (double *)malloc(d->n->gr->Nz * sizeof(double));
-    d->n->gr->zweights = (double *)malloc(d->n->gr->Nz * sizeof(double));
-    gauss_fixed_point(d->n->zintegr_type, d->n->gr->Nz,
-                      d->n->gr->zmin, d->n->gr->zmax,
+    d->n->zgrid = (double *)malloc(d->n->Nz * sizeof(double));
+    d->n->zweights = (double *)malloc(d->n->Nz * sizeof(double));
+    gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
+                      d->n->zmin, d->n->zmax,
                       d->n->zintegr_alpha, d->n->zintegr_beta,
-                      d->n->gr->zgrid, d->n->gr->zweights,
+                      d->n->zgrid, d->n->zweights,
                       1/*neutralize weights*/);
 
-    d->n->gr->Mgrid = (double *)malloc(d->n->gr->NM * sizeof(double));
-    d->n->gr->Mweights = (double *)malloc(d->n->gr->NM * sizeof(double));
-    gauss_fixed_point(d->n->Mintegr_type, d->n->gr->NM,
-                      log(d->n->gr->Mmin), log(d->n->gr->Mmax),
+    d->n->Mgrid = (double *)malloc(d->n->NM * sizeof(double));
+    d->n->Mweights = (double *)malloc(d->n->NM * sizeof(double));
+    gauss_fixed_point(d->n->Mintegr_type, d->n->NM,
+                      log(d->n->Mmin), log(d->n->Mmax),
                       d->n->Mintegr_alpha, d->n->Mintegr_beta,
-                      d->n->gr->Mgrid, d->n->gr->Mweights,
+                      d->n->Mgrid, d->n->Mweights,
                       1/*neutralize weights*/);
-    for (int ii=0; ii<d->n->gr->NM; ii++)
+    for (int ii=0; ii<d->n->NM; ii++)
     {
-        d->n->gr->Mgrid[ii] = exp(d->n->gr->Mgrid[ii]);
+        d->n->Mgrid[ii] = exp(d->n->Mgrid[ii]);
     }
 
-    d->n->gr->signalgrid = (double *)malloc(d->n->gr->Nsignal * sizeof(double));
-    linspace(d->n->gr->Nsignal, d->n->gr->signalmin, d->n->gr->signalmax,
-             d->n->gr->signalgrid);
+    d->n->signalgrid = (double *)malloc(d->n->Nsignal * sizeof(double));
+    linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
+             d->n->signalgrid);
 
-    d->n->gr->lambdagrid = (double *)malloc((d->n->gr->Nsignal/2+1) * sizeof(double));
-    linspace(d->n->gr->Nsignal/2+1,
-             0.0, M_PI/(d->n->gr->signalgrid[1]-d->n->gr->signalgrid[0]),
-             d->n->gr->lambdagrid);
+    d->n->lambdagrid = (double *)malloc((d->n->Nsignal/2+1) * sizeof(double));
+    linspace(d->n->Nsignal/2+1,
+             0.0, M_PI/(d->n->signalgrid[1]-d->n->signalgrid[0]),
+             d->n->lambdagrid);
 }//}}}
 
 static
@@ -236,7 +261,7 @@ void init_numerics(all_data *d)
 
     // TODO this is somewhat awkward here
     d->n->zsource = (d->n->zsource < 0.0) ?
-                    d->n->gr->zmax+0.001
+                    d->n->zmax+0.001
                     : d->n->zsource;
 
     d->n->inited_numerics = 1;

@@ -49,7 +49,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
     // parameter (cosmological or numerical)
     reset_data(d);
 
-    d->class_ini = class_ini;
+    d->cls->class_ini = class_ini;
     d->p->stype = stype;
 
     param p[] = {//{{{
@@ -57,27 +57,27 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         {hmpdf_N_cores,
             &(d->Ncores),           int_type,     0, {&(def.Ncores), }},
         {hmpdf_class_pre,
-            &(d->class_pre),        str_type,     0, {&(def.class_pre), }},
+            &(d->cls->class_pre),        str_type,     0, {&(def.class_pre), }},
         {hmpdf_N_z,
-            &(d->n->gr->Nz),        int_type,     0, {&(def.Npoints_z), }},          
+            &(d->n->Nz),        int_type,     0, {&(def.Npoints_z), }},          
         {hmpdf_z_min,
-            &(d->n->gr->zmin),      dbl_type,     0, {&(def.z_min), }},
+            &(d->n->zmin),      dbl_type,     0, {&(def.z_min), }},
         {hmpdf_z_max,
-            &(d->n->gr->zmax),      dbl_type,     1, {NULL, &(def.z_max)}},
+            &(d->n->zmax),      dbl_type,     1, {NULL, &(def.z_max)}},
         {hmpdf_z_source,
             &(d->n->zsource),       dbl_type,     0, {&(def.z_source), }},
         {hmpdf_N_M,
-            &(d->n->gr->NM),        int_type,     0, {&(def.Npoints_M), }},
+            &(d->n->NM),        int_type,     0, {&(def.Npoints_M), }},
         {hmpdf_M_min,
-            &(d->n->gr->Mmin),      dbl_type,     0, {&(def.M_min), }},
+            &(d->n->Mmin),      dbl_type,     0, {&(def.M_min), }},
         {hmpdf_M_max,
-            &(d->n->gr->Mmax),      dbl_type,     0, {&(def.M_max), }},
+            &(d->n->Mmax),      dbl_type,     0, {&(def.M_max), }},
         {hmpdf_N_signal,
-            &(d->n->gr->Nsignal),   int_type,     0, {&(def.Npoints_signal), }},
+            &(d->n->Nsignal),   int_type,     0, {&(def.Npoints_signal), }},
         {hmpdf_signal_min,
-            &(d->n->gr->signalmin), dbl_type,     0, {&(def.signal_min), }},
+            &(d->n->signalmin), dbl_type,     0, {&(def.signal_min), }},
         {hmpdf_signal_max,
-            &(d->n->gr->signalmax), dbl_type,     1, {&(def.max_kappa), &(def.max_tsz)}},
+            &(d->n->signalmax), dbl_type,     1, {&(def.max_kappa), &(def.max_tsz)}},
         {hmpdf_N_theta,
             &(d->p->Ntheta),        int_type,     0, {&(def.Npoints_theta), }},
         {hmpdf_rout_scale,
@@ -99,15 +99,15 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         {hmpdf_custom_k_filter_params,
             &(d->f->custom_k_p),    vptr_type,    0, {&(def.custom_k_filter_params), }},
         {hmpdf_N_phi,
-            &(d->n->gr->Nphi),      int_type,     0, {&(def.Nphi), }},
+            &(d->n->Nphi),      int_type,     0, {&(def.Nphi), }},
         {hmpdf_phi_max,
-            &(d->n->gr->phimax),    dbl_type,     0, {&(def.phimax), }},
+            &(d->n->phimax),    dbl_type,     0, {&(def.phimax), }},
         {hmpdf_pixelexact_max,
-            &(d->n->gr->pixelexactmax), int_type, 0, {&(def.pixelexactmax), }},
+            &(d->n->pixelexactmax), int_type, 0, {&(def.pixelexactmax), }},
         {hmpdf_phi_jitter,
-            &(d->n->gr->phijitter), dbl_type,     0, {&(def.phijitter), }},
+            &(d->n->phijitter), dbl_type,     0, {&(def.phijitter), }},
         {hmpdf_phi_pwr,
-            &(d->n->gr->phipwr),    dbl_type,     0, {&(def.phipwr), }},
+            &(d->n->phipwr),    dbl_type,     0, {&(def.phipwr), }},
         {hmpdf_regularize_tp,
             &(d->tp->regularize),   int_type,     0, {&(def.regularize_tp), }},
         {hmpdf_monotonize,
@@ -256,14 +256,14 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
     #endif
 
     // do necessary conversions
-    d->n->gr->phimax *= M_PI/180.0/60.0;
+    d->n->phimax *= M_PI/180.0/60.0;
     d->f->pixelside *= M_PI/180.0/60.0;
     d->f->tophat_radius *= M_PI/180.0/60.0;
     d->f->gaussian_sigma *= M_PI/180.0/60.0/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
 
     // compute things that we need for all output products
     init_numerics(d);
-    init_class(d);
+    init_class_interface(d);
     init_cosmology(d);
     init_power(d);
     init_halo_model(d);

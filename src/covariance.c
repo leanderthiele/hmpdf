@@ -11,6 +11,7 @@
 
 #include "utils.h"
 #include "configs.h"
+#include "data.h"
 #include "power.h"
 #include "profiles.h"
 #include "onepoint.h"
@@ -18,6 +19,34 @@
 #include "covariance.h"
 
 #include "hmpdf.h"
+
+void null_covariance(all_data *d)
+{//{{{{
+    d->cov->ws = NULL;
+    d->cov->Cov = NULL;
+}//}}}
+
+void reset_covariance(all_data *d)
+{//{{{
+    if (d->cov->Cov != NULL) { free(d->cov->Cov); }
+    if (d->cov->ws != NULL)
+    {
+        for (int ii=0; ii<d->cov->Nws; ii++)
+        {
+            if (d->cov->ws[ii] != NULL)
+            {
+                fftw_free(d->cov->ws[ii]->pdf_real);
+                free(d->cov->ws[ii]->bc);
+                fftw_free(d->cov->ws[ii]->tempc_real);
+                fftw_destroy_plan(d->cov->ws[ii]->pu_r2c);
+                fftw_destroy_plan(d->cov->ws[ii]->pc_r2c);
+                fftw_destroy_plan(d->cov->ws[ii]->ppdf_c2r);
+                free(d->cov->ws[ii]);
+            }
+        }
+        free(d->cov->ws);
+    }
+}//}}}
 
 static int comp_int(const void *a, const void *b)
 // to qsort an array of ints
@@ -42,19 +71,19 @@ static
 void create_phigrid(all_data *d)
 {//{{{
     printf("\tcreate_phigrid\n");
-    double *_phigrid = (double *)malloc(2 * d->n->gr->Nphi * sizeof(double));
-    double *_phiweights = (double *)malloc(2 * d->n->gr->Nphi * sizeof(double));
+    double *_phigrid = (double *)malloc(2 * d->n->Nphi * sizeof(double));
+    double *_phiweights = (double *)malloc(2 * d->n->Nphi * sizeof(double));
     // allocate twice as much as we probably need to be safe,
     // the continuum integral adds a bit of noise
 
     // first treat the exact pixelization part
-    int *_rsq = (int *)malloc(d->n->gr->pixelexactmax * d->n->gr->pixelexactmax
+    int *_rsq = (int *)malloc(d->n->pixelexactmax * d->n->pixelexactmax
                               * sizeof(int));
     int N = 0; // counts possibly repeated sums of two squares
     // loop over one quadrant
-    for (int ii=0; ii<=d->n->gr->pixelexactmax; ii++)
+    for (int ii=0; ii<=d->n->pixelexactmax; ii++)
     {
-        for (int jj=1; jj*jj<=d->n->gr->pixelexactmax * d->n->gr->pixelexactmax - ii*ii; jj++)
+        for (int jj=1; jj*jj<=d->n->pixelexactmax * d->n->pixelexactmax - ii*ii; jj++)
         {
             _rsq[N++] = ii*ii+jj*jj;
         }
@@ -70,9 +99,9 @@ void create_phigrid(all_data *d)
         {
             ctr += 1;
         }
-        if (Nexact >= d->n->gr->Nphi)
+        if (Nexact >= d->n->Nphi)
         {
-            printf("Error : N_phi = %d too small.\n", d->n->gr->Nphi);
+            printf("Error : N_phi = %d too small.\n", d->n->Nphi);
         }
         _phigrid[Nexact] = sqrt((double)(_rsq[ii]))
                                     * d->f->pixelside;
@@ -86,10 +115,10 @@ void create_phigrid(all_data *d)
     // then the "density of states" is
     //      rho(phi) = rho0 * phi^(1/a - 1)
     // We want to fix the constant rho0 such that \int_phimin^phimax rho(phi) dphi = Nphi
-    double integral = d->n->gr->phipwr
-                      * (pow(d->n->gr->phimax, 1.0/d->n->gr->phipwr)
-                         - pow(d->f->pixelside, 1.0/d->n->gr->phipwr));
-    double rho0 = (double)(d->n->gr->Nphi) / integral;
+    double integral = d->n->phipwr
+                      * (pow(d->n->phimax, 1.0/d->n->phipwr)
+                         - pow(d->f->pixelside, 1.0/d->n->phipwr));
+    double rho0 = (double)(d->n->Nphi) / integral;
     int end = Nexact; // index of the first free element in phigrid
     for (int ii=0; ii<Nexact; ii++)
     {
@@ -106,7 +135,7 @@ void create_phigrid(all_data *d)
         {
             deltaphi = 0.5 * (_phigrid[ii+1] - _phigrid[ii-1]);
         }
-        double rho_here = pow(_phigrid[ii], 1.0/d->n->gr->phipwr-1.0);
+        double rho_here = pow(_phigrid[ii], 1.0/d->n->phipwr-1.0);
         int Nphi_here = (int)(ceil(deltaphi * rho0 * rho_here)) - 1;
         if (Nphi_here%2)
         // want Nphi_here to be even for convenience
@@ -118,10 +147,10 @@ void create_phigrid(all_data *d)
         for (int jj=1; jj<=Nphi_here/2; jj++)
         {
             _phigrid[end+2*jj-2] = _phigrid[ii]
-                                   + deltaphi * d->n->gr->phijitter
+                                   + deltaphi * d->n->phijitter
                                      * (double)(jj) / (double)(Nphi_here/2);
             _phigrid[end+2*jj-1] = _phigrid[ii]
-                                   - deltaphi * d->n->gr->phijitter
+                                   - deltaphi * d->n->phijitter
                                      * (double)(jj) / (double)(Nphi_here/2);
             _phiweights[end+2*jj-2] = _phiweights[end+2*jj-1] = _phiweights[ii];
         }
@@ -129,20 +158,20 @@ void create_phigrid(all_data *d)
     }
     Nexact = end; // Nphi - Nexact is the number of continuum phi values
 
-    if (Nexact > d->n->gr->Nphi)
+    if (Nexact > d->n->Nphi)
     {
         printf("Error : N_phi = %d too small "
-               "(suggested increase to at least %d)\n", d->n->gr->Nphi, 2*Nexact);
+               "(suggested increase to at least %d)\n", d->n->Nphi, 2*Nexact);
     }
 
     // now fill the rest of the phi-grid
     // the continuum version is
     //      \int_lo^\phi_max d\phi 2\pi\phi/(pixel sidelength)^2 * integrand
-    double lo = pow((double)(d->n->gr->pixelexactmax) * d->f->pixelside,
-                    1.0/d->n->gr->phipwr);
-    double hi = pow(d->n->gr->phimax, 1.0/d->n->gr->phipwr);
+    double lo = pow((double)(d->n->pixelexactmax) * d->f->pixelside,
+                    1.0/d->n->phipwr);
+    double hi = pow(d->n->phimax, 1.0/d->n->phipwr);
     gsl_integration_fixed_workspace *t =
-        gsl_integration_fixed_alloc(gsl_integration_fixed_legendre, d->n->gr->Nphi-Nexact,
+        gsl_integration_fixed_alloc(gsl_integration_fixed_legendre, d->n->Nphi-Nexact,
                                     lo, hi, 0.0, 0.0);
     double *nodes = gsl_integration_fixed_nodes(t);
     double *weights = gsl_integration_fixed_weights(t);
@@ -160,38 +189,38 @@ void create_phigrid(all_data *d)
         }
         else
         {
-            _phigrid[nn] = pow(nodes[ii], d->n->gr->phipwr);
+            _phigrid[nn] = pow(nodes[ii], d->n->phipwr);
             // fix the normalization
             _phiweights[nn] = weights[ii]
                                        * 2.0 * M_PI * _phigrid[nn]
                                        / gsl_pow_2(d->f->pixelside)
                                        // Jacobian of the transformation
-                                       * d->n->gr->phipwr
-                                       * pow(nodes[ii], d->n->gr->phipwr-1.0);
+                                       * d->n->phipwr
+                                       * pow(nodes[ii], d->n->phipwr-1.0);
             ++nn;
         }
     }
-    d->n->gr->Nphi = nn;
-    printf("\t\tNphi=%d, Nexact=%d\n", d->n->gr->Nphi, Nexact);
+    d->n->Nphi = nn;
+    printf("\t\tNphi=%d, Nexact=%d\n", d->n->Nphi, Nexact);
     gsl_integration_fixed_free(t);
 
     // now copy into the main grids
     // including shuffling to make parallel execution more efficient
-    d->n->gr->phigrid = (double *)malloc(d->n->gr->Nphi * sizeof(double));
-    d->n->gr->phiweights = (double *)malloc(d->n->gr->Nphi * sizeof(double));
-    int *_indices = (int *)malloc(d->n->gr->Nphi * sizeof(int));
-    for (int ii=0; ii<d->n->gr->Nphi; ii++)
+    d->n->phigrid = (double *)malloc(d->n->Nphi * sizeof(double));
+    d->n->phiweights = (double *)malloc(d->n->Nphi * sizeof(double));
+    int *_indices = (int *)malloc(d->n->Nphi * sizeof(int));
+    for (int ii=0; ii<d->n->Nphi; ii++)
     {
         _indices[ii] = ii;
     }
     gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(r, 10); // TODO seed this randomly
-    gsl_ran_shuffle(r, _indices, d->n->gr->Nphi, sizeof(int));
+    gsl_ran_shuffle(r, _indices, d->n->Nphi, sizeof(int));
     gsl_rng_free(r);
-    for (int ii=0; ii<d->n->gr->Nphi; ii++)
+    for (int ii=0; ii<d->n->Nphi; ii++)
     {
-        d->n->gr->phigrid[ii] = _phigrid[_indices[ii]];
-        d->n->gr->phiweights[ii] = _phiweights[_indices[ii]];
+        d->n->phigrid[ii] = _phigrid[_indices[ii]];
+        d->n->phiweights[ii] = _phiweights[_indices[ii]];
     }
     free(_phigrid);
     free(_phiweights);
@@ -201,10 +230,10 @@ void create_phigrid(all_data *d)
     /*
     {
         FILE *f = fopen("phigrid.dat", "w");
-        for (int ii=0; ii<d->n->gr->Nphi; ii++)
+        for (int ii=0; ii<d->n->Nphi; ii++)
         {
-            fprintf(f, "%.8e %.8e\n", d->n->gr->phigrid[ii]*180.0*60.0/M_PI,
-                                      d->n->gr->phiweights[ii]);
+            fprintf(f, "%.8e %.8e\n", d->n->phigrid[ii]*180.0*60.0/M_PI,
+                                      d->n->phiweights[ii]);
         }
         fclose(f);
     }
@@ -221,7 +250,7 @@ void alloc_tp_ws(all_data *d)
     // allocate workspaces until we run out of memory
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        d->cov->ws[ii] = new_tp_ws(d->n->gr->Nsignal);
+        d->cov->ws[ii] = new_tp_ws(d->n->Nsignal);
         if (d->cov->ws[ii] == NULL)
         {
             break;
@@ -243,14 +272,14 @@ static
 double corr_diagn(all_data *d, twopoint_workspace *ws)
 {//{{{
     double out = 0.0;
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (int jj=0; jj<d->n->gr->Nsignal; jj++)
+        for (int jj=0; jj<d->n->Nsignal; jj++)
         {
             // assumes pdf_real to be properly normalized!
-            out += ws->pdf_real[ii*(d->n->gr->Nsignal+2)+jj]
-                   * (d->n->gr->signalgrid[ii] - d->op->signalmeanc)
-                   * (d->n->gr->signalgrid[jj] - d->op->signalmeanc);
+            out += ws->pdf_real[ii*(d->n->Nsignal+2)+jj]
+                   * (d->n->signalgrid[ii] - d->op->signalmeanc)
+                   * (d->n->signalgrid[jj] - d->op->signalmeanc);
         }
     }
     return out;
@@ -274,12 +303,12 @@ static
 void add_shotnoise(all_data *d)
 // adds the zero-separation contribution to the covariance matrix
 {//{{{
-    for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        d->cov->Cov[ii*d->n->gr->Nsignal+ii] += d->op->PDFc[ii];
-        for (int jj=0; jj<d->n->gr->Nsignal; jj++)
+        d->cov->Cov[ii*d->n->Nsignal+ii] += d->op->PDFc[ii];
+        for (int jj=0; jj<d->n->Nsignal; jj++)
         {
-            d->cov->Cov[ii*d->n->gr->Nsignal+jj]
+            d->cov->Cov[ii*d->n->Nsignal+jj]
                 -= d->op->PDFc[ii] * d->op->PDFc[jj];
         }
     }
@@ -290,7 +319,7 @@ void rescale_to_fsky1(all_data *d)
 // divides covariance matrix by number of pixels in the sky
 {//{{{
     double Npixels = 4.0*M_PI/gsl_pow_2(d->f->pixelside);
-    for (int ii=0; ii<d->n->gr->Nsignal*d->n->gr->Nsignal; ii++)
+    for (int ii=0; ii<d->n->Nsignal*d->n->Nsignal; ii++)
     {
         d->cov->Cov[ii] /= Npixels;
     }
@@ -301,7 +330,7 @@ void create_cov(all_data *d)
 {//{{{
     printf("\tcreate_cov\n");
     // zero covariance
-    zero_real(d->n->gr->Nsignal*d->n->gr->Nsignal, d->cov->Cov);
+    zero_real(d->n->Nsignal*d->n->Nsignal, d->cov->Cov);
 
     // status
     int Nstatus = 0;
@@ -311,26 +340,26 @@ void create_cov(all_data *d)
     #ifdef _OPENMP
     #pragma omp parallel for num_threads(d->cov->Nws)
     #endif
-    for (int pp=0; pp<d->n->gr->Nphi; pp++)
+    for (int pp=0; pp<d->n->Nphi; pp++)
     {
         // create twopoint at this phi
-        create_tp(d, d->n->gr->phigrid[pp], d->cov->ws[this_core()]);
+        create_tp(d, d->n->phigrid[pp], d->cov->ws[this_core()]);
 
         // compute the correlation function
         d->cov->corr_diagn[pp] = corr_diagn(d, d->cov->ws[this_core()]);
         
         // add to covariance
-        for (int ii=0; ii<d->n->gr->Nsignal; ii++)
+        for (int ii=0; ii<d->n->Nsignal; ii++)
         {
-            for (int jj=0; jj<d->n->gr->Nsignal; jj++)
+            for (int jj=0; jj<d->n->Nsignal; jj++)
             {
                 #ifdef _OPENMP
                 // make sure no two threads add to the same element simultaneously
                 #pragma omp atomic
                 #endif
-                d->cov->Cov[ii*d->n->gr->Nsignal+jj]
-                    += d->n->gr->phiweights[pp]
-                       * (d->cov->ws[this_core()]->pdf_real[ii*(d->n->gr->Nsignal+2)+jj]
+                d->cov->Cov[ii*d->n->Nsignal+jj]
+                    += d->n->phiweights[pp]
+                       * (d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj]
                           - d->op->PDFc[ii] * d->op->PDFc[jj]);
             }
         }
@@ -344,7 +373,7 @@ void create_cov(all_data *d)
             if (Nstatus%COV_STATUS_PERIOD == 0)
             {
                 time_t this_time = time(NULL);
-                status_update(this_time, start_time, Nstatus, d->n->gr->Nphi);
+                status_update(this_time, start_time, Nstatus, d->n->Nphi);
             }
         }
     }
@@ -375,10 +404,10 @@ void prepare_cov(all_data *d)
     alloc_tp_ws(d);
     
     // allocate the covariance matrix
-    d->cov->Cov = (double *)malloc(d->n->gr->Nsignal*d->n->gr->Nsignal*sizeof(double));
+    d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
 
     // allocate the diagnostic correlation function
-    d->cov->corr_diagn = (double *)malloc(d->n->gr->Nphi * sizeof(double));
+    d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
 
     // create covariance matrix
     create_cov(d);
@@ -389,7 +418,7 @@ void load_cov(all_data *d, char *fname)
 {//{{{
     int Nlines;
     double **_x = fromfile(fname, &Nlines, 1);
-    if (Nlines != d->n->gr->Nsignal*d->n->gr->Nsignal+1)
+    if (Nlines != d->n->Nsignal*d->n->Nsignal+1)
     {
         printf("In get_cov : cov matrix loaded from file %s "
                "not compatible with Nsignal. Aborting.\n", fname);
@@ -405,7 +434,7 @@ void save_cov(all_data *d, char *fname)
     FILE *f = fopen(fname, "wb");
     fwrite(&(d->op->signalmeanc), sizeof(double), 1, f);
     fwrite(d->cov->Cov, sizeof(double),
-           d->n->gr->Nsignal*d->n->gr->Nsignal, f);
+           d->n->Nsignal*d->n->Nsignal, f);
     fclose(f);
 }//}}}
 
@@ -456,8 +485,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
     if ((name != NULL) && (to_compute))
     {
         save_cov(d, covfile);
-        tofile(corrfile, d->n->gr->Nphi, 3, d->n->gr->phigrid,
-               d->n->gr->phiweights, d->cov->corr_diagn);
+        tofile(corrfile, d->n->Nphi, 3, d->n->phigrid,
+               d->n->phiweights, d->cov->corr_diagn);
     }
 
     if (Nbins > 0)
@@ -476,7 +505,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
 
         // perform the binning
         printf("\t\tbinning the covariance matrix\n");
-        bin_2d(d->n->gr->Nsignal, d->n->gr->signalgrid, d->cov->Cov, COVINTEGR_N,
+        bin_2d(d->n->Nsignal, d->n->signalgrid, d->cov->Cov, COVINTEGR_N,
                Nbins, _binedges, out, TPINTERP_TYPE);
     }
 
