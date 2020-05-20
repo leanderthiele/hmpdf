@@ -224,7 +224,7 @@ void create_op(all_data *d)
     fftw_execute(plan_c);
     fftw_destroy_plan(plan_u);
     fftw_destroy_plan(plan_c);
-    
+
     // compute the mean of the distributions if needed later
     get_mean_signal(d);
 

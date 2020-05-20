@@ -71,6 +71,9 @@ void delete_data(all_data *d)
     free(d->h);
     free(d->n);
     free(d->op);
+    free(d->tp);
+    free(d->ps);
+    free(d->cov);
 
     free(d);
 }//}}}

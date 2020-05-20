@@ -81,17 +81,31 @@ int not_monotonic(int N, double *x, int *problems)
     int out = 0;
     for (int ii=1; ii<N; ii++)
     {
-        if (x[ii] < x[ii-1])
+        if (x[ii] <= x[ii-1])
         {
             out += 1;
             if (problems != NULL)
             {
-                problems[out] = ii;
+                problems[out-1] = ii;
             }
             else
             {
                 break;
             }
+        }
+    }
+    return out;
+}//}}}
+
+int all_zero(int N, double *x, double threshold)
+{//{{{
+    int out = 1;
+    for (int ii=0; ii<N; ii++)
+    {
+        if (fabs(x[ii]) > threshold)
+        {
+            out = 0;
+            break;
         }
     }
     return out;
@@ -433,6 +447,7 @@ void delete_interp1d(interp1d *interp)
     {
         gsl_interp_accel_free(interp->a);
     }
+    free(interp);
 }//}}}
 
 double interp1d_eval(interp1d *interp, double x)
@@ -535,6 +550,7 @@ void delete_interp2d(interp2d *interp)
     {
         gsl_interp_accel_free(interp->a);
     }
+    free(interp);
 }//}}}
 
 double interp2d_eval(interp2d *interp, double x, double y)

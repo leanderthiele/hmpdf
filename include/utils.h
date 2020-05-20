@@ -56,6 +56,7 @@ void zero_real(int N, double *x);
 void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int *problems);
+int all_zero(int N, double *x, double threshold);
 
 int wait(void);
 

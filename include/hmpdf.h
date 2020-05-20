@@ -75,6 +75,9 @@ typedef enum//{{{
 }//}}}
 configs;
 
+void linspace(int N, double xmin, double xmax, double *x);
+void logspace(int N, double xmin, double xmax, double *x);
+
 void savetxt(char *fname, int Nlines, int Nvec, ...);
 double **loadtxt(char *fname, int *Nlines, int Nvec);
 void tofile(char *fname, int Nlines, int Nvec, ...);

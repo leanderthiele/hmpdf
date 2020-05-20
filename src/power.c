@@ -64,14 +64,12 @@ double Pk_linear(all_data *d, double k)
     struct primordial *pm = (struct primordial *)d->cls->pm;
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
-    double lnk;
-    
     if (nonlinear_pk_at_k_and_z(ba, pm, nl,
                                 pk_linear, k, 0.0,
                                 nl->index_pk_total,
                                 &out, NULL) == _FAILURE_)
     {
-        lnk = log(k);
+        double lnk = log(k);
         if (lnk > nl->ln_k[nl->k_size-1])
         // check if k falls out of bounds,
         //    maximum k needs to be set large enough that linear power is

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -85,6 +86,7 @@ void reset_profiles(all_data *d)
         }
         free(d->p->conj_profiles);
     }
+    if (d->p->breakpoints != NULL) { free(d->p->breakpoints); }
     if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
 }//}}}
 
@@ -394,6 +396,16 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 // problems is an int[Nproblems], holding the indices where y was decreasing,
 // in increasing order
 {//{{{
+    // compute standard deviation as relevant scale
+    //      (we need some scale to make sure we don't run
+    //       into numerical instability)
+    double scale = 0.0;
+    for (int jj=1; jj<Nx; jj++)
+    {
+        scale += y[jj] * y[jj];
+    }
+    scale = sqrt(scale/(double)(Nx-1));
+
     int ledge = 0;
     int redge = 0;
     for (int ii=0; ii<Nproblems; ii++)
@@ -409,7 +421,7 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
         redge = Nx;
         for (int jj=ledge+1; jj<Nx; jj++)
         {
-            if (y[jj] > y[ledge])
+            if (y[jj] > y[ledge]+0.1*scale)
             {
                 redge = jj;
                 break;
@@ -424,14 +436,8 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
             if (ledge == 0)
             // case when we have no valid points
             // use stdev as relevant scale
-            // profiles using this are completely irrelevant
+            // profiles using this are completely irrelevant hopefully
             {
-                double scale = 0.0;
-                for (int jj=1; jj<Nx; jj++)
-                {
-                    scale += y[jj] * y[jj];
-                }
-                scale = sqrt(scale/(double)(Nx-1));
                 a = scale / (x[Nx-1] - x[ledge]);
                 b = - a * x[ledge];
             }
@@ -444,11 +450,14 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
                 double cov00, cov01, cov11, sumsq;
                 gsl_fit_linear(x+_start, 1, y+_start, 1, ledge-_start+1,
                                &b, &a, &cov00, &cov01, &cov11, &sumsq);
-                // as is by construction positive, but we still need to ensure
-                // b doesn't spoil the party
+                // as is by construction negative, but we still need to ensure
+                // b doesn't spoil the party,
+                // and ensure numerical stability in a
+                a = GSL_MIN(-scale/fabs(x[Nx-1]-x[0]), a);
                 b = GSL_MAX(y[ledge] - a * x[ledge], b);
             }
         }
+        // a redge was found
         else
         {
             a = (y[redge]-y[ledge]) / (x[redge] - x[ledge]);
@@ -481,7 +490,7 @@ void create_breakpoints_or_monotonize(all_data *d)
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             int _problems[d->p->Ntheta+1];
-            _not_monotonic[M_index] = not_monotonic(d->p->Ntheta,
+            _not_monotonic[M_index] = not_monotonic(d->p->Ntheta+1,
                                                     d->p->profiles[z_index][M_index]+1,
                                                     _problems);
             if (d->n->monotonize)
@@ -539,6 +548,13 @@ void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, doub
 void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
 // write dtheta^2(signal)/dsignal*dsignal into return values
 {//{{{
+    if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
+                 1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0])))
+    {
+        zero_real(d->n->Nsignal, dtsq);
+        return;
+    }
+
     interp1d *interp = new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
                                     d->p->decr_tsqgrid, 0.0, 0.0, PRINTERP_TYPE, NULL);
     for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -553,6 +569,13 @@ void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
 void t_of_s(all_data *d, int z_index, int M_index, double *t)
 // only valid results if monotonize is True
 {//{{{
+    if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
+                 1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0])))
+    {
+        zero_real(d->n->Nsignal, t);
+        return;
+    }
+
     interp1d *interp = new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
                                     d->p->decr_tgrid, 0.0, 0.0, PRINTERP_TYPE, NULL);
     for (int ii=0; ii<d->n->Nsignal; ii++)

@@ -77,6 +77,8 @@ void init_class_interface(all_data *d)
               errmsg)
 
     run_class(d);
+
+    free(argv);
 }//}}}
 
 void null_class_interface(all_data *d)
@@ -96,9 +98,9 @@ void null_class_interface(all_data *d)
 void reset_class_interface(all_data *d)
 {//{{{
     if (d->cls->op != NULL) { free(d->cls->op); }
-    if (d->cls->le != NULL) { lensing_free(d->cls->le); free(d->cls->le); }
-    if (d->cls->sp != NULL) { spectra_free(d->cls->sp); free(d->cls->sp); }
-    if (d->cls->tr != NULL) { transfer_free(d->cls->tr); free(d->cls->tr); }
+    if (d->cls->le != NULL) { free(d->cls->le); }
+    if (d->cls->sp != NULL) { free(d->cls->sp); }
+    if (d->cls->tr != NULL) { free(d->cls->tr); }
     if (d->cls->nl != NULL) { nonlinear_free(d->cls->nl); free(d->cls->nl); }
     if (d->cls->pt != NULL) { perturb_free(d->cls->pt); free(d->cls->pt); }
     if (d->cls->pm != NULL) { primordial_free(d->cls->pm); free(d->cls->pm); }

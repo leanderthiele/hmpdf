@@ -89,6 +89,7 @@ void fill_background(all_data *d)
                                * gsl_pow_2(d->c->hubble[z_index]);
         d->c->rho_m[z_index] = d->c->Om[z_index] * d->c->rho_c[z_index];
     }
+
     if (d->p->stype == kappa) // need to compute critical surface density
     {
         // find distances to source position
