@@ -300,28 +300,27 @@ void status_update(time_t t1, time_t t0, int done, int tot)
 }//}}}
 
 static
-void add_shotnoise(all_data *d)
+void add_shotnoise(int N, double *cov, double *p)
 // adds the zero-separation contribution to the covariance matrix
 {//{{{
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    for (int ii=0; ii<N; ii++)
     {
-        d->cov->Cov[ii*d->n->Nsignal+ii] += d->op->PDFc[ii];
-        for (int jj=0; jj<d->n->Nsignal; jj++)
+        cov[ii*N + ii] += p[ii];
+        for (int jj=0; jj<N; jj++)
         {
-            d->cov->Cov[ii*d->n->Nsignal+jj]
-                -= d->op->PDFc[ii] * d->op->PDFc[jj];
+            cov[ii*N + jj] -= p[ii] * p[jj];
         }
     }
 }//}}}
 
 static
-void rescale_to_fsky1(all_data *d)
+void rescale_to_fsky1(all_data *d, int N, double *cov)
 // divides covariance matrix by number of pixels in the sky
 {//{{{
     double Npixels = 4.0*M_PI/gsl_pow_2(d->f->pixelside);
-    for (int ii=0; ii<d->n->Nsignal*d->n->Nsignal; ii++)
+    for (int ii=0; ii<N*N; ii++)
     {
-        d->cov->Cov[ii] /= Npixels;
+        cov[ii] /= Npixels;
     }
 }//}}}
 
@@ -377,9 +376,6 @@ void create_cov(all_data *d)
             }
         }
     }
-
-    add_shotnoise(d);
-    rescale_to_fsky1(d);
 }//}}}
 
 static
@@ -438,8 +434,14 @@ void save_cov(all_data *d, char *fname)
     fclose(f);
 }//}}}
 
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
+void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, char *name)
 {//{{{
+    if (noisy && d->op->noise<0.0)
+    {
+        printf("Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
+        return;
+    }
+
     char covfile[512];
     char corrfile[512];
     if (Nbins == 0 && name == NULL)
@@ -503,10 +505,34 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *name)
             }
         }
 
+        // prepare final covariance matrix
+        int N = (noisy) ? d->n->Nsignal_noisy : d->n->Nsignal;
+        double *final_cov = (double *)malloc(N * N * sizeof(double));
+        if (noisy)
+        {
+            zero_real(N * N, final_cov);
+            int len_kernel = (d->n->Nsignal_noisy - d->n->Nsignal)/2;
+            for (int ii=0; ii<d->n->Nsignal; ii++)
+            {
+                memcpy(final_cov + (len_kernel+ii)*d->n->Nsignal_noisy + len_kernel,
+                       d->cov->Cov + ii*d->n->Nsignal, d->n->Nsignal * sizeof(double));
+            }
+        }
+        else
+        {
+            memcpy(final_cov, d->cov->Cov, N * N * sizeof(double));
+        }
+        // add shotnoise term
+        add_shotnoise((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+                      final_cov,
+                      (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
+        // rescale to fsky=1
+        rescale_to_fsky1(d, N, final_cov);
+
         // perform the binning
         printf("\t\tbinning the covariance matrix\n");
-        bin_2d(d->n->Nsignal, d->n->signalgrid, d->cov->Cov, COVINTEGR_N,
-               Nbins, _binedges, out, TPINTERP_TYPE);
+        bin_2d(N, (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+               final_cov, COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
     }
 
 }//}}}

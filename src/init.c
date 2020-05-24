@@ -130,6 +130,8 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
             &(d->h->Tinker10_params),dptr_type,   0, {&(def.Tinker10_p), }},
         {hmpdf_Battaglia12_tsz_params,
             &(d->p->Battaglia12_params), dbl_type,0, {&(def.Battaglia12_p), }},
+        {hmpdf_noise,
+            &(d->op->noise),         dbl_type,    0, {&(def.noise), }},
     };//}}}
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)

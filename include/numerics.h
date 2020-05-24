@@ -27,6 +27,9 @@ typedef struct//{{{
     double *signalgrid;
     double *lambdagrid;
 
+    int Nsignal_noisy;
+    double *signalgrid_noisy;
+
     // TODO move these into covariance
     int Nphi;
     int pixelexactmax;

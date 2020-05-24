@@ -6,6 +6,9 @@
 #include <fftw3.h>
 
 #include <gsl/gsl_math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_blas.h>
 
 #include "utils.h"
 #include "configs.h"
@@ -19,12 +22,16 @@ void null_onepoint(all_data *d)
     d->op->created_op = 0;
     d->op->PDFu = NULL;
     d->op->PDFc = NULL;
+    d->op->PDFu_noisy = NULL;
+    d->op->PDFc_noisy = NULL;
 }//}}}
 
 void reset_onepoint(all_data *d)
 {//{{{
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
+    if (d->op->PDFu_noisy != NULL) { free(d->op->PDFu_noisy); }
+    if (d->op->PDFc_noisy != NULL) { free(d->op->PDFc_noisy); }
 }//}}}
 
 static
@@ -180,21 +187,79 @@ void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the expone
 }//}}}
 
 static
+double _mean(int N, double *x, double *p)
+{//{{{
+    double out = 0.0;
+    double norm = 0.0;
+    for (int ii=0; ii<N; ii++)
+    {
+        out += p[ii] * x[ii];
+        norm += p[ii];
+    }
+    return out/norm;
+}//}}}
+
+static
 void get_mean_signal(all_data *d)
 {//{{{
-    d->op->signalmeanu = 0.0;
-    d->op->signalmeanc = 0.0;
-    double normu = 0.0;
-    double normc = 0.0;
+    d->op->signalmeanu = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFu);
+    d->op->signalmeanc = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFc);
+    if (d->op->PDFu_noisy != NULL)
+    {
+        d->op->signalmeanu_noisy
+            = _mean(d->n->Nsignal_noisy, d->n->signalgrid_noisy, d->op->PDFu_noisy);
+        d->op->signalmeanc_noisy
+            = _mean(d->n->Nsignal_noisy, d->n->signalgrid_noisy, d->op->PDFc_noisy);
+    }
+}//}}}
+
+void create_noisy_op(all_data *d)
+{//{{{
+    int len_kernel = d->n->Nsignal;
+    d->n->Nsignal_noisy = d->n->Nsignal+2*len_kernel;
+    d->n->signalgrid_noisy = (double *)malloc(d->n->Nsignal_noisy
+                                              * sizeof(double));
+    double extra_signal = (double)(len_kernel)/(double)(d->n->Nsignal-1)
+                          *(d->n->signalmax - d->n->signalmin);
+    double smin = d->n->signalmin - extra_signal;
+    double smax = d->n->signalmax + extra_signal;
+    linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
+    // construct toeplitz matrix, initialize to zero!
+    gsl_matrix *toepl = gsl_matrix_calloc(d->n->Nsignal_noisy/*rows*/,
+                                          d->n->Nsignal/*columns*/);
+    double *k = (double *)malloc((len_kernel*2+1) * sizeof(double));
+    double sigma = d->op->noise
+                   / (d->n->signalgrid[1] - d->n->signalgrid[0]);
+    for (int ii=-len_kernel; ii<=len_kernel; ii++)
+    {
+        k[ii+len_kernel] = exp(-0.5*gsl_pow_2((double)(ii)/sigma))
+                           /sqrt(2.0*M_PI)/sigma;
+    }
     for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        d->op->signalmeanu += d->n->signalgrid[ii] * d->op->PDFu[ii];
-        d->op->signalmeanc += d->n->signalgrid[ii] * d->op->PDFc[ii];
-        normu += d->op->PDFu[ii];
-        normc += d->op->PDFc[ii];
+        for (int jj=0; jj<len_kernel*2+1; jj++)
+        {
+            gsl_matrix_set(toepl, ii+jj, ii, k[jj]);
+        }
     }
-    d->op->signalmeanu /= normu;
-    d->op->signalmeanc /= normc;
+    free(k);
+
+    double *in[] = {d->op->PDFu, d->op->PDFc};
+    gsl_vector in_vec;
+    in_vec.size = d->n->Nsignal;
+    in_vec.stride = 1;
+    double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
+    gsl_vector out_vec;
+    out_vec.size = d->n->Nsignal_noisy;
+    out_vec.stride = 1;
+    for (int ii=0; ii<2; ii++)
+    {
+        *out[ii] = (double *)malloc(d->n->Nsignal_noisy * sizeof(double));
+        in_vec.data = in[ii];
+        out_vec.data = *out[ii];
+        gsl_blas_dgemv(CblasNoTrans, 1.0, toepl, &in_vec, 0.0, &out_vec);
+    }
+    gsl_matrix_free(toepl);
 }//}}}
 
 void create_op(all_data *d)
@@ -225,6 +290,12 @@ void create_op(all_data *d)
     fftw_destroy_plan(plan_u);
     fftw_destroy_plan(plan_c);
 
+    if (d->op->noise > 0.0)
+    // include gaussian noise
+    {
+        create_noisy_op(d);
+    }
+
     // compute the mean of the distributions if needed later
     get_mean_signal(d);
 
@@ -245,8 +316,14 @@ void prepare_op(all_data *d)
     create_op(d);
 }//}}}
 
-void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode)
+void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode, int noisy)
 {//{{{
+    if (noisy && d->op->noise<0.0)
+    {
+        printf("Error: noisy pdf requested but no/invalid noise level passed.\n");
+        return;
+    }
+
     prepare_op(d);
     
     double _binedges[Nbins+1];
@@ -255,12 +332,16 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
     {
         for (int ii=0; ii<=Nbins; ii++)
         {
-            _binedges[ii] += ((mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc);
+            _binedges[ii] += (noisy) ?
+                             ((mode==uncl) ? d->op->signalmeanu_noisy : d->op->signalmeanc_noisy)
+                             : ((mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc);
         }
     }
 
-    bin_1d(d->n->Nsignal, d->n->signalgrid,
-           (mode==uncl) ? d->op->PDFu : d->op->PDFc,
+    bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+           (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+           (noisy) ?  ((mode==uncl) ? d->op->PDFu_noisy : d->op->PDFc_noisy)
+           : ((mode==uncl) ? d->op->PDFu : d->op->PDFc),
            Nbins, _binedges, out, OPINTERP_TYPE);
 }//}}}
 

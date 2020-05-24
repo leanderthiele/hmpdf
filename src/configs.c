@@ -36,4 +36,5 @@ struct DEFAULTS def = { .Ncores=1, .class_pre="none",
                         .Mintegr_type=legendre, .Mintegr_alpha=0.0, .Mintegr_beta=0.0,
                         .Duffy08_p=def_Duffy08_conc_params,
                         .Tinker10_p=def_Tinker10_hmf_params,
-                        .Battaglia12_p=def_Battaglia12_tsz_params, };
+                        .Battaglia12_p=def_Battaglia12_tsz_params,
+                        .noise=-1.0, };

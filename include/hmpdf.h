@@ -71,6 +71,7 @@ typedef enum//{{{
     hmpdf_Duffy08_conc_params,
     hmpdf_Tinker10_hmf_params,
     hmpdf_Battaglia12_tsz_params,
+    hmpdf_noise,
     hmpdf_end_configs, // keep this last
 }//}}}
 configs;
@@ -108,11 +109,11 @@ typedef enum//{{{
 }//}}}
 pdf_cl_uncl;
 
-void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode);
+void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode, int noisy);
 
 void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out);
 
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, char *fname);
+void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, char *fname);
 
 typedef enum//{{{
 {
