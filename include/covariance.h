@@ -10,7 +10,10 @@ typedef struct//{{{
     double *corr_diagn;
 
     int Nws;
+    int created_tp_ws;
     twopoint_workspace **ws;
+
+    int created_phigrid;
 }//}}}
 covariance_t;
 

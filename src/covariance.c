@@ -24,6 +24,9 @@ void null_covariance(all_data *d)
 {//{{{{
     d->cov->ws = NULL;
     d->cov->Cov = NULL;
+    d->cov->corr_diagn = NULL;
+    d->cov->created_tp_ws = 0;
+    d->cov->created_phigrid = 0;
 }//}}}
 
 void reset_covariance(all_data *d)
@@ -70,6 +73,7 @@ static int comp_int(const void *a, const void *b)
 static
 void create_phigrid(all_data *d)
 {//{{{
+    if (d->cov->created_phigrid) { return; }
     printf("\tcreate_phigrid\n");
     double *_phigrid = (double *)malloc(2 * d->n->Nphi * sizeof(double));
     double *_phiweights = (double *)malloc(2 * d->n->Nphi * sizeof(double));
@@ -226,25 +230,15 @@ void create_phigrid(all_data *d)
     free(_phiweights);
     free(_indices);
 
-    // TODO TEST
-    /*
-    {
-        FILE *f = fopen("phigrid.dat", "w");
-        for (int ii=0; ii<d->n->Nphi; ii++)
-        {
-            fprintf(f, "%.8e %.8e\n", d->n->phigrid[ii]*180.0*60.0/M_PI,
-                                      d->n->phiweights[ii]);
-        }
-        fclose(f);
-    }
-    */
+    d->cov->created_phigrid = 1;
 }//}}}
 
 static
-void alloc_tp_ws(all_data *d)
+void create_tp_ws(all_data *d)
 {//{{{
-    printf("\talloc_tp_ws\n");
-    printf("\t\tIn alloc_tp_ws : Trying to allocate workspaces for %d cores.\n", d->Ncores);
+    if (d->cov->created_tp_ws) { return; }
+    printf("\tcreate_tp_ws\n");
+    printf("\t\tIn create_tp_ws : Trying to allocate workspaces for %d cores.\n", d->Ncores);
     d->cov->ws = (twopoint_workspace **)malloc(d->Ncores * sizeof(twopoint_workspace *));
     d->cov->Nws = 0;
     // allocate workspaces until we run out of memory
@@ -266,6 +260,8 @@ void alloc_tp_ws(all_data *d)
         d->cov->ws[ii] = NULL;
     }
     printf("\t\tAllocated %d workspaces.\n", d->cov->Nws);
+
+    d->cov->created_tp_ws = 1;
 }//}}}
 
 static
@@ -397,13 +393,19 @@ void prepare_cov(all_data *d)
     create_phigrid(d);
     
     // allocate the workspaces
-    alloc_tp_ws(d);
+    create_tp_ws(d);
     
     // allocate the covariance matrix
-    d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
+    if (d->cov->Cov == NULL)
+    {
+        d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
+    }
 
     // allocate the diagnostic correlation function
-    d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
+    if (d->cov->corr_diagn == NULL)
+    {
+        d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
+    }
 
     // create covariance matrix
     create_cov(d);
