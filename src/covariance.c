@@ -501,7 +501,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         {
             for (int ii=0; ii<=Nbins; ii++)
             {
-                _binedges[ii] += d->op->signalmeanc;
+                _binedges[ii] += (noisy) ? d->op->signalmeanc_noisy
+                                 : d->op->signalmeanc;
             }
         }
 
