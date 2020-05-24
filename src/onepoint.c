@@ -6,9 +6,7 @@
 #include <fftw3.h>
 
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_blas.h>
+#include <gsl/gsl_cblas.h>
 
 #include "utils.h"
 #include "configs.h"
@@ -214,8 +212,11 @@ void get_mean_signal(all_data *d)
 }//}}}
 
 void create_noisy_op(all_data *d)
+// convolves the original PDF with a Gaussian kernel of width sigma = noise
 {//{{{
+    // can in principle make this a user setting
     int len_kernel = d->n->Nsignal;
+    // construct the new signal grid
     d->n->Nsignal_noisy = d->n->Nsignal+2*len_kernel;
     d->n->signalgrid_noisy = (double *)malloc(d->n->Nsignal_noisy
                                               * sizeof(double));
@@ -224,42 +225,38 @@ void create_noisy_op(all_data *d)
     double smin = d->n->signalmin - extra_signal;
     double smax = d->n->signalmax + extra_signal;
     linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
-    // construct toeplitz matrix, initialize to zero!
-    gsl_matrix *toepl = gsl_matrix_calloc(d->n->Nsignal_noisy/*rows*/,
-                                          d->n->Nsignal/*columns*/);
-    double *k = (double *)malloc((len_kernel*2+1) * sizeof(double));
+    // construct Toeplitz matrix, initialize to zero!
+    double *toepl = (double *)malloc(d->n->Nsignal * d->n->Nsignal_noisy
+                                     * sizeof(double));
+    zero_real(d->n->Nsignal*d->n->Nsignal_noisy, toepl);
     double sigma = d->op->noise
                    / (d->n->signalgrid[1] - d->n->signalgrid[0]);
+    // fill the first row
     for (int ii=-len_kernel; ii<=len_kernel; ii++)
     {
-        k[ii+len_kernel] = exp(-0.5*gsl_pow_2((double)(ii)/sigma))
-                           /sqrt(2.0*M_PI)/sigma;
+        toepl[ii+len_kernel] = exp(-0.5*gsl_pow_2((double)(ii)/sigma))
+                                   /sqrt(2.0*M_PI)/sigma;
     }
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    // fill the remaining rows
+    for (int ii=1; ii<d->n->Nsignal; ii++)
     {
-        for (int jj=0; jj<len_kernel*2+1; jj++)
-        {
-            gsl_matrix_set(toepl, ii+jj, ii, k[jj]);
-        }
+        memcpy(toepl + ii*(d->n->Nsignal_noisy+1), toepl,
+               (2*len_kernel+1) * sizeof(double));
     }
-    free(k);
 
     double *in[] = {d->op->PDFu, d->op->PDFc};
-    gsl_vector in_vec;
-    in_vec.size = d->n->Nsignal;
-    in_vec.stride = 1;
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
-    gsl_vector out_vec;
-    out_vec.size = d->n->Nsignal_noisy;
-    out_vec.stride = 1;
     for (int ii=0; ii<2; ii++)
     {
         *out[ii] = (double *)malloc(d->n->Nsignal_noisy * sizeof(double));
-        in_vec.data = in[ii];
-        out_vec.data = *out[ii];
-        gsl_blas_dgemv(CblasNoTrans, 1.0, toepl, &in_vec, 0.0, &out_vec);
+        cblas_dgemv(CblasRowMajor, CblasTrans/*the matrix toepl is to be transposed*/,
+                    d->n->Nsignal/*# of rows*/, d->n->Nsignal_noisy/*# of cols*/,
+                    1.0/*alpha*/, toepl/*matrix A*/, d->n->Nsignal_noisy/*lda*/,
+                    in[ii]/*input vector X*/, 1/*stride of X*/, 0.0/*beta*/,
+                    *out[ii]/*output vector Y*/, 1/*stride of Y*/);
     }
-    gsl_matrix_free(toepl);
+
+    free(toepl);
 }//}}}
 
 void create_op(all_data *d)
