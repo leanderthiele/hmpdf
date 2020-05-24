@@ -20,6 +20,7 @@ void null_numerics(all_data *d)
     d->n->Mgrid = NULL;
     d->n->Mweights = NULL;
     d->n->signalgrid = NULL;
+    d->n->signalgrid_noisy = NULL;
     d->n->lambdagrid = NULL;
     d->n->phigrid = NULL;
     d->n->phiweights = NULL;
@@ -32,6 +33,7 @@ void reset_numerics(all_data *d)
     if (d->n->Mgrid != NULL) { free(d->n->Mgrid); }
     if (d->n->Mweights != NULL) { free(d->n->Mweights); }
     if (d->n->signalgrid != NULL) { free(d->n->signalgrid); }
+    if (d->n->signalgrid_noisy != NULL) { free(d->n->signalgrid_noisy); }
     if (d->n->lambdagrid != NULL) { free(d->n->lambdagrid); }
     if (d->n->phigrid != NULL) { free(d->n->phigrid); }
     if (d->n->phiweights != NULL) { free(d->n->phiweights); }

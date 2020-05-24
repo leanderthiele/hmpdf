@@ -533,6 +533,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         printf("\t\tbinning the covariance matrix\n");
         bin_2d(N, (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                final_cov, COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
+
+        free(final_cov);
     }
 
 }//}}}
