@@ -27,11 +27,13 @@ void null_covariance(all_data *d)
     d->cov->corr_diagn = NULL;
     d->cov->created_tp_ws = 0;
     d->cov->created_phigrid = 0;
+    d->cov->created_cov = 0;
 }//}}}
 
 void reset_covariance(all_data *d)
 {//{{{
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
+    if (d->cov->corr_diagn != NULL) { free(d->cov->corr_diagn); }
     if (d->cov->ws != NULL)
     {
         for (int ii=0; ii<d->cov->Nws; ii++)
@@ -323,6 +325,7 @@ void rescale_to_fsky1(all_data *d, int N, double *cov)
 static
 void create_cov(all_data *d)
 {//{{{
+    if (d->cov->created_cov) { return; }
     printf("\tcreate_cov\n");
     // zero covariance
     zero_real(d->n->Nsignal*d->n->Nsignal, d->cov->Cov);
@@ -372,6 +375,8 @@ void create_cov(all_data *d)
             }
         }
     }
+
+    d->cov->created_cov = 1;
 }//}}}
 
 static
@@ -395,18 +400,6 @@ void prepare_cov(all_data *d)
     // allocate the workspaces
     create_tp_ws(d);
     
-    // allocate the covariance matrix
-    if (d->cov->Cov == NULL)
-    {
-        d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
-    }
-
-    // allocate the diagnostic correlation function
-    if (d->cov->corr_diagn == NULL)
-    {
-        d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
-    }
-
     // create covariance matrix
     create_cov(d);
 }//}}}
@@ -458,6 +451,18 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         sprintf(corrfile, "%s_corr.bin", name);
     }
 
+    // allocate the covariance matrix (if not allocated yet)
+    if (d->cov->Cov == NULL)
+    {
+        d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
+    }
+
+    // allocate the diagnostic correlation function (if not allocated yet)
+    if (d->cov->corr_diagn == NULL)
+    {
+        d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
+    }
+
     int to_compute = 1;
     if (name != NULL)
     {
@@ -486,6 +491,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         prepare_cov(d);
     }
 
+    // save the raw data if necessary
     if ((name != NULL) && (to_compute))
     {
         save_cov(d, covfile);

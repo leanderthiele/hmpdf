@@ -14,6 +14,8 @@ typedef struct//{{{
     twopoint_workspace **ws;
 
     int created_phigrid;
+
+    int created_cov;
 }//}}}
 covariance_t;
 
