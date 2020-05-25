@@ -149,7 +149,8 @@ void ps_zint(all_data *d, double *oneh, double *twoh)
 void create_Cell(all_data *d)
 {//{{{
     if (d->ps->created_Cell) { return; }
-    printf("\tcreate_Cell\n");
+    fprintf(stdout, "\tcreate_Cell\n");
+    fflush(stdout);
     d->ps->Nell = PS_NELL;
     d->ps->ell = (double *)malloc(d->ps->Nell * sizeof(double));
     logspace(d->ps->Nell, PS_ELLMIN, PS_ELLMAX, d->ps->ell);
@@ -178,7 +179,8 @@ static
 void create_Cphi(all_data *d)
 {//{{{
     if (d->ps->created_Cphi) { return; }
-    printf("\tcreate_Cphi\n");
+    fprintf(stdout, "\tcreate_Cphi\n");
+    fflush(stdout);
     d->ps->Nell_corr = find_Nell(d);
     gsl_dht *t = gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->phimax);
     
@@ -225,7 +227,8 @@ void create_Cphi(all_data *d)
 static
 void prepare_Cell(all_data *d)
 {//{{{
-    printf("In powerspectrum.h -> prepare_Cell.\n");
+    fprintf(stdout, "In powerspectrum.h -> prepare_Cell.\n");
+    fflush(stdout);
     create_conj_profiles(d);
     create_Cell(d);
 }//}}}
@@ -233,7 +236,8 @@ void prepare_Cell(all_data *d)
 static
 void prepare_Cphi(all_data *d)
 {//{{{
-    printf("In powerspectrum.h -> prepare_Cphi :\n");
+    fprintf(stdout, "In powerspectrum.h -> prepare_Cphi :\n");
+    fflush(stdout);
     create_conj_profiles(d);
     create_Cell(d);
     create_Cphi(d);
@@ -249,7 +253,8 @@ void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode)
         case onehalo : C = d->ps->Cell_1h; break;
         case twohalo : C = d->ps->Cell_2h; break;
         case total   : C = d->ps->Cell_tot; break;
-        default      : printf("Invalid Cell_mode in get_Cell.\n"); return;
+        default      : fprintf(stderr, "Invalid Cell_mode in get_Cell.\n"); return;
+                       fflush(stderr);
     }
     interp1d *interp = new_interp1d(d->ps->Nell, d->ps->ell, C, C[0], 0.0, CELL_INTERP_TYPE, NULL);
 
@@ -271,7 +276,8 @@ void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode)
         case onehalo : C = d->ps->Cphi_1h; break;
         case twohalo : C = d->ps->Cphi_2h; break;
         case total   : C = d->ps->Cphi_tot; break;
-        default      : printf("Invalid Cphi_mode in get_Cphi.\n"); return;
+        default      : fprintf(stderr, "Invalid Cphi_mode in get_Cphi.\n"); return;
+                       fflush(stderr);
     }
     interp1d *interp = new_interp1d(d->ps->Nell_corr, d->ps->phi,
                                     C, C[0], 0.0, CPHI_INTERP_TYPE, NULL);

@@ -4,7 +4,8 @@
 
 void null_data(all_data *d)
 {//{{{
-    printf("\tnull_data\n");
+    fprintf(stdout, "\tnull_data\n");
+    fflush(stdout);
 
     null_numerics(d);
     null_class_interface(d);
@@ -21,7 +22,8 @@ void null_data(all_data *d)
 
 all_data *new_data(void)
 {//{{{
-    printf("In data.h -> new_data.\n");
+    fprintf(stdout, "In data.h -> new_data.\n");
+    fflush(stdout);
     all_data *d = malloc(sizeof(all_data));
 
     d->n = malloc(sizeof(numerics_t));
@@ -41,7 +43,8 @@ all_data *new_data(void)
 
 void reset_data(all_data *d)
 {//{{{
-    printf("In data.h -> reset_data.\n");
+    fprintf(stdout, "In data.h -> reset_data.\n");
+    fflush(stdout);
 
     reset_numerics(d);
     reset_cosmology(d);
@@ -60,7 +63,8 @@ void reset_data(all_data *d)
 
 void delete_data(all_data *d)
 {//{{{
-    printf("In data.h -> delete_data.\n");
+    fprintf(stdout, "In data.h -> delete_data.\n");
+    fflush(stdout);
     reset_data(d);
 
     free(d->cls);

@@ -43,7 +43,8 @@ param;
 
 void init(all_data *d, char *class_ini, signaltype stype, ...)
 {//{{{
-    printf("In init.h -> init.\n");
+    fprintf(stdout, "In init.h -> init.\n");
+    fflush(stdout);
     // this frees all the computed quantities,
     // since we assume that each call of init changes some
     // parameter (cosmological or numerical)
@@ -136,7 +137,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)
     {
-        if (ii != p[ii].indx) { printf("ERROR : Indx not matching at %d.\n", ii); return; }
+        if (ii != p[ii].indx) { fprintf(stdout, "ERROR : Indx not matching at %d.\n", ii); fflush(stdout); return; }
         p[ii].set = 0;
     }
 
@@ -252,8 +253,10 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
     #ifndef _OPENMP
     if (d->Ncores > 1)
     {
-        printf("Warning : You requested N_cores = %d, "
-               "but code is compiled without OpenMP.\n", d->Ncores);
+        fprintf(stdout, "Warning : You requested N_cores = %d, "
+                        "but code is compiled without OpenMP.\n",
+                        d->Ncores);
+        fflush(stdout);
     }
     #endif
 

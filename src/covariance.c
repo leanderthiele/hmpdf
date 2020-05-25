@@ -76,7 +76,8 @@ static
 void create_phigrid(all_data *d)
 {//{{{
     if (d->cov->created_phigrid) { return; }
-    printf("\tcreate_phigrid\n");
+    fprintf(stdout, "\tcreate_phigrid\n");
+    fflush(stdout);
     double *_phigrid = (double *)malloc(2 * d->n->Nphi * sizeof(double));
     double *_phiweights = (double *)malloc(2 * d->n->Nphi * sizeof(double));
     // allocate twice as much as we probably need to be safe,
@@ -107,7 +108,9 @@ void create_phigrid(all_data *d)
         }
         if (Nexact >= d->n->Nphi)
         {
-            printf("Error : N_phi = %d too small.\n", d->n->Nphi);
+            fprintf(stdout, "Error : N_phi = %d too small.\n", d->n->Nphi);
+            fflush(stdout);
+            return;
         }
         _phigrid[Nexact] = sqrt((double)(_rsq[ii]))
                                     * d->f->pixelside;
@@ -166,8 +169,10 @@ void create_phigrid(all_data *d)
 
     if (Nexact > d->n->Nphi)
     {
-        printf("Error : N_phi = %d too small "
-               "(suggested increase to at least %d)\n", d->n->Nphi, 2*Nexact);
+        fprintf(stdout, "Error : N_phi = %d too small "
+                        "(suggested increase to at least %d)\n",
+                        d->n->Nphi, 2*Nexact);
+        fflush(stdout);
     }
 
     // now fill the rest of the phi-grid
@@ -207,7 +212,8 @@ void create_phigrid(all_data *d)
         }
     }
     d->n->Nphi = nn;
-    printf("\t\tNphi=%d, Nexact=%d\n", d->n->Nphi, Nexact);
+    fprintf(stdout, "\t\tNphi=%d, Nexact=%d\n", d->n->Nphi, Nexact);
+    fflush(stdout);
     gsl_integration_fixed_free(t);
 
     // now copy into the main grids
@@ -239,8 +245,10 @@ static
 void create_tp_ws(all_data *d)
 {//{{{
     if (d->cov->created_tp_ws) { return; }
-    printf("\tcreate_tp_ws\n");
-    printf("\t\tIn create_tp_ws : Trying to allocate workspaces for %d cores.\n", d->Ncores);
+    fprintf(stdout, "\tcreate_tp_ws\n");
+    fflush(stdout);
+    fprintf(stdout, "\t\tIn create_tp_ws : Trying to allocate workspaces for %d cores.\n", d->Ncores);
+    fflush(stdout);
     d->cov->ws = (twopoint_workspace **)malloc(d->Ncores * sizeof(twopoint_workspace *));
     d->cov->Nws = 0;
     // allocate workspaces until we run out of memory
@@ -261,7 +269,8 @@ void create_tp_ws(all_data *d)
     {
         d->cov->ws[ii] = NULL;
     }
-    printf("\t\tAllocated %d workspaces.\n", d->cov->Nws);
+    fprintf(stdout, "\t\tAllocated %d workspaces.\n", d->cov->Nws);
+    fflush(stdout);
 
     d->cov->created_tp_ws = 1;
 }//}}}
@@ -326,7 +335,8 @@ static
 void create_cov(all_data *d)
 {//{{{
     if (d->cov->created_cov) { return; }
-    printf("\tcreate_cov\n");
+    fprintf(stdout, "\tcreate_cov\n");
+    fflush(stdout);
     // zero covariance
     zero_real(d->n->Nsignal*d->n->Nsignal, d->cov->Cov);
 
@@ -382,7 +392,8 @@ void create_cov(all_data *d)
 static
 void prepare_cov(all_data *d)
 {//{{{
-    printf("In covariance.h -> prepare_cov :\n");
+    fprintf(stdout, "In covariance.h -> prepare_cov :\n");
+    fflush(stdout);
     // run necessary code from other modules
     create_corr(d);
     if (d->f->Nfilters > 0)
@@ -411,8 +422,9 @@ void load_cov(all_data *d, char *fname)
     double **_x = fromfile(fname, &Nlines, 1);
     if (Nlines != d->n->Nsignal*d->n->Nsignal+1)
     {
-        printf("In get_cov : cov matrix loaded from file %s "
-               "not compatible with Nsignal. Aborting.\n", fname);
+        fprintf(stdout, "In get_cov : cov matrix loaded from file %s "
+                        "not compatible with Nsignal. Aborting.\n", fname);
+        fflush(stdout);
         return;
     }
     d->op->signalmeanc = _x[0][0];
@@ -433,7 +445,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
 {//{{{
     if (noisy && d->op->noise<0.0)
     {
-        printf("Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
+        fprintf(stdout, "Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
+        fflush(stdout);
         return;
     }
 
@@ -441,7 +454,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
     char corrfile[512];
     if (Nbins == 0 && name == NULL)
     {
-        printf("ERROR : both Nbins=0 and name=NULL,\nnothing to do in get_cov.\n");
+        fprintf(stdout, "ERROR : both Nbins=0 and name=NULL,\nnothing to do in get_cov.\n");
+        fflush(stdout);
         return;
     }
 
@@ -471,9 +485,10 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         {
             if (Nbins == 0)
             {
-                printf("ERROR : covariance matrix named %s already exists,\n"
-                       "and you requested no binning.\n"
-                       "Nothing to do in get_cov.\n", covfile);
+                fprintf(stdout, "ERROR : covariance matrix named %s already exists,\n"
+                                "and you requested no binning.\n"
+                                "Nothing to do in get_cov.\n", covfile);
+                fflush(stdout);
                 return;
             }
             load_cov(d, covfile);
@@ -481,7 +496,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         }
         else
         {
-            printf("\t\tIn get_cov : file %s not found. Will compute.\n", covfile);
+            fprintf(stdout, "\t\tIn get_cov : file %s not found. Will compute.\n", covfile);
+            fflush(stdout);
         }
     }
 
@@ -539,7 +555,8 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         rescale_to_fsky1(d, N, final_cov);
 
         // perform the binning
-        printf("\t\tbinning the covariance matrix\n");
+        fprintf(stdout, "\t\tbinning the covariance matrix\n");
+        fflush(stdout);
         bin_2d(N, (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                final_cov, COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
 

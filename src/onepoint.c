@@ -262,7 +262,8 @@ void create_noisy_op(all_data *d)
 void create_op(all_data *d)
 {//{{{
     if (d->op->created_op) { return; }
-    printf("\tcreate_op\n");
+    fprintf(stdout, "\tcreate_op\n");
+    fflush(stdout);
     d->op->PDFu = (double *)fftw_malloc((d->n->Nsignal + 2) * sizeof(double));
     d->op->PDFc = (double *)fftw_malloc((d->n->Nsignal + 2) * sizeof(double));
     complex *PDFu_comp = (complex *)d->op->PDFu;
@@ -303,7 +304,8 @@ static
 void prepare_op(all_data *d)
 // does the necessary create calls
 {//{{{
-    printf("In onepoint.h -> prepare_op :\n");
+    fprintf(stdout, "In onepoint.h -> prepare_op :\n");
+    fflush(stdout);
     if (d->f->Nfilters > 0)
     {
         create_conj_profiles(d);
@@ -317,7 +319,8 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
 {//{{{
     if (noisy && d->op->noise<0.0)
     {
-        printf("Error: noisy pdf requested but no/invalid noise level passed.\n");
+        fprintf(stderr, "Error: noisy pdf requested but no/invalid noise level passed.\n");
+        fflush(stderr);
         return;
     }
 

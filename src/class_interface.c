@@ -27,7 +27,8 @@ void alloc_class(all_data *d)
 static
 void run_class(all_data *d)
 {//{{{
-    printf("\trun_class\n");
+    fprintf(stdout, "\trun_class\n");
+    fflush(stdout);
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
@@ -36,21 +37,27 @@ void run_class(all_data *d)
     struct primordial *pm = (struct primordial *)d->cls->pm;
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
-    printf("\t\tbackground\n");
+    fprintf(stdout, "\t\tbackground\n");
+    fflush(stdout);
     SAFECLASS(background_init(pr, ba), ba->error_message)
-    printf("\t\tthermodynamics\n");
+    fprintf(stdout, "\t\tthermodynamics\n");
+    fflush(stdout);
     SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message)
-    printf("\t\tperturbs\n");
+    fprintf(stdout, "\t\tperturbs\n");
+    fflush(stdout);
     SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
-    printf("\t\tprimordial\n");
+    fprintf(stdout, "\t\tprimordial\n");
+    fflush(stdout);
     SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)
-    printf("\t\tnonlinear\n");
+    fprintf(stdout, "\t\tnonlinear\n");
+    fflush(stdout);
     SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
 }//}}}
 
 void init_class_interface(all_data *d)
 {//{{{
-    printf("In class_interface.h -> init_class.\n");
+    fprintf(stdout, "In class_interface.h -> init_class.\n");
+    fflush(stdout);
     char **argv = (char **)malloc(3 * sizeof(char *));
     argv[1] = d->cls->class_ini;
     argv[2] = d->cls->class_pre;

@@ -93,7 +93,8 @@ void reset_profiles(all_data *d)
 static
 void create_angle_grids(struct all_data_s *d)
 {//{{{
-    printf("\tcreate_angle_grids\n");
+    fprintf(stdout, "\tcreate_angle_grids\n");
+    fflush(stdout);
     d->p->prtilde_Ntheta = PRTILDE_INTEGR_NTHETA;
 
     d->p->decr_tgrid = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
@@ -264,7 +265,8 @@ double profile(all_data *d, int z_index, int M_index, double *p)
 static
 void create_profiles(all_data *d)
 {//{{{
-    printf("\tcreate_profiles\n");
+    fprintf(stdout, "\tcreate_profiles\n");
+    fflush(stdout);
     d->p->profiles = (double ***)malloc(d->n->Nz * sizeof(double **));
     #ifdef _OPENMP
     #pragma omp parallel for num_threads(d->Ncores)
@@ -287,7 +289,8 @@ void create_conj_profiles(all_data *d)
 // computes the conjugate space profiles
 {//{{{
     if (d->p->created_conj_profiles) { return; }
-    printf("\tcreate_conj_profiles\n");
+    fprintf(stdout, "\tcreate_conj_profiles\n");
+    fflush(stdout);
     // prepare the Hankel transform work space
     d->p->dht_ws = gsl_dht_new(d->p->Ntheta, 0, 1.0);
     d->p->conj_profiles = (double ***)malloc(d->n->Nz * sizeof(double **));
@@ -318,7 +321,8 @@ void create_filtered_profiles(all_data *d)
 {//{{{
     if (d->p->created_filtered_profiles) { return; }
     if (d->f->Nfilters == 0 ) { return; }
-    printf("\tcreate_filtered_profiles\n");
+    fprintf(stdout, "\tcreate_filtered_profiles\n");
+    fflush(stdout);
 
     #ifdef _OPENMP
     #pragma omp parallel for num_threads(d->Ncores)
@@ -474,14 +478,17 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 void create_breakpoints_or_monotonize(all_data *d)
 {//{{{
     if (d->p->created_breakpoints) { return; }
-    printf("\tcreate_breakpoints_or_monotonize\n");
+    fprintf(stdout, "\tcreate_breakpoints_or_monotonize\n");
+    fflush(stdout);
     if (d->n->monotonize)
     {
-        printf("\t\tmonotonizing\n");
+        fprintf(stdout, "\t\tmonotonizing\n");
+        fflush(stdout);
     }
     else
     {
-        printf("\t\tcreating breakpoints (no monotonizing requested)\n");
+        fprintf(stdout, "\t\tcreating breakpoints (no monotonizing requested)\n");
+        fflush(stdout);
     }
     d->p->breakpoints = (int *)malloc(d->n->Nz * sizeof(int));
     for (int z_index=0; z_index<d->n->Nz; z_index++)
@@ -589,7 +596,8 @@ void t_of_s(all_data *d, int z_index, int M_index, double *t)
 void init_profiles(all_data *d)
 {//{{{
     if (d->p->inited_profiles) { return; }
-    printf("In profiles.h -> init_profiles :\n");
+    fprintf(stdout, "In profiles.h -> init_profiles :\n");
+    fflush(stdout);
     create_angle_grids(d);
     create_profiles(d);
 

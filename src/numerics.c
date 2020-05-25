@@ -55,7 +55,8 @@ double weight_fct(integr_mode m,
         case exponential : return pow(fabs(x-0.5*(a+b)), alpha);
         case rational    : return pow(x-a, alpha) * pow(x+b, beta);
         case chebyshev2  : return sqrt((b-x)*(x-a));
-        default          : printf("Unknown gsl_integration_fixed_type.\n");
+        default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
+                           fflush(stderr);
                            return 0.0;
     }
 }//}}}
@@ -78,7 +79,8 @@ void gauss_fixed_point(integr_mode m, int N,
         case exponential : T = gsl_integration_fixed_exponential; break;
         case rational    : T = gsl_integration_fixed_rational; break;
         case chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
-        default          : printf("Unknown gsl_integration_fixed_type.\n");
+        default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
+                           fflush(stderr);
                            return;
     }
     gsl_integration_fixed_workspace *ws
@@ -104,7 +106,8 @@ void gauss_fixed_point(integr_mode m, int N,
 static
 void create_grids(all_data *d)
 {//{{{
-    printf("\tcreate_grids\n");
+    fprintf(stdout, "\tcreate_grids\n");
+    fflush(stdout);
     d->n->zgrid = (double *)malloc(d->n->Nz * sizeof(double));
     d->n->zweights = (double *)malloc(d->n->Nz * sizeof(double));
     gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
@@ -258,7 +261,8 @@ complex integr_comp(int N, double dx, int stride, complex *f)
 void init_numerics(all_data *d)
 {//{{{
     if (d->n->inited_numerics) { return; }
-    printf("In numerics.h -> init_numerics :\n");
+    fprintf(stdout, "In numerics.h -> init_numerics :\n");
+    fflush(stdout);
     create_grids(d);
 
     // TODO this is somewhat awkward here

@@ -114,7 +114,8 @@ double NFW_fundamental(all_data *d, int z_index, int M_index, double *rs)
 static
 void create_c_of_y(all_data *d)
 {//{{{
-    printf("\tcreate_c_of_y\n");
+    fprintf(stdout, "\tcreate_c_of_y\n");
+    fflush(stdout);
     double *logc_grid = (double *)malloc(CINTERP_NC * sizeof(double));
     double *logy_grid = (double *)malloc(CINTERP_NC * sizeof(double));
     for (int ii=0; ii<CINTERP_NC; ii++)
@@ -203,7 +204,8 @@ double _dndlogM(all_data *d, int z_index, int M_index, double *bias)
 static
 void create_dndlogM(all_data *d)
 {//{{{
-    printf("\tcreate_dndlogM\n");
+    fprintf(stdout, "\tcreate_dndlogM\n");
+    fflush(stdout);
     d->h->hmf = (double **)malloc(d->n->Nz * sizeof(double *));
     d->h->bias = (double **)malloc(d->n->Nz * sizeof(double *));
     for (int z_index=0; z_index<d->n->Nz; z_index++)
@@ -222,7 +224,8 @@ void create_dndlogM(all_data *d)
 void init_halo_model(all_data *d)
 {//{{{
     if (d->h->inited_halo) { return; }
-    printf("In halo_model.h -> init_halo_model :\n");
+    fprintf(stdout, "In halo_model.h -> init_halo_model :\n");
+    fflush(stdout);
     create_c_of_y(d);
     create_dndlogM(d);
     d->h->inited_halo = 1;

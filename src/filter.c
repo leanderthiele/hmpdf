@@ -215,7 +215,8 @@ double filter_tophat(void *d, double ell, filter_mode m, int *discard)
     {
         case filter_pdf : return _tophat(ell);
         case filter_ps  : return _tophatsq(ell);
-        default         : printf("Unknown filter mode in filter_tophat\n");
+        default         : fprintf(stdout, "Unknown filter mode in filter_tophat\n");
+                          fflush(stdout);
                           return 0.0;
     }
 }//}}}
@@ -230,7 +231,8 @@ double filter_gaussian(void *d, double ell, filter_mode m, int *discard)
     {
         case filter_pdf : return exp(-0.5*ell*ell);
         case filter_ps  : return exp(-ell*ell);
-        default         : printf("Unknown filter mode in filter_gaussian\n");
+        default         : fprintf(stdout, "Unknown filter mode in filter_gaussian\n");
+                          fflush(stdout);
                           return 0.0;
     }
 }//}}}
@@ -244,7 +246,8 @@ double filter_custom_ell(void *d, double ell, filter_mode m, int *discard)
     {
         case filter_pdf : return w;
         case filter_ps  : return w*w;
-        default         : printf("Unknown filter_mode in filter_custom_ell.\n");
+        default         : fprintf(stdout, "Unknown filter_mode in filter_custom_ell.\n");
+                          fflush(stdout);
                           return 0.0;
     }
 }//}}}
@@ -260,7 +263,8 @@ double filter_custom_k(void *d, double ell, filter_mode m, int *z_index)
     {
         case filter_pdf : return w;
         case filter_ps  : return w*w;
-        default         : printf("Unknown filter_mode in filter_custom_k.\n");
+        default         : fprintf(stdout, "Unknown filter_mode in filter_custom_k.\n");
+                          fflush(stdout);
                           return 0.0;
     }
 }//}}}
@@ -297,14 +301,16 @@ void apply_filters(all_data *d, int N, double *ell, double *in, double *out, fil
 void init_filters(all_data *d)
 {//{{{
     if (d->f->inited_filters) { return; }
-    printf("In filter.h -> init_filters.\n");
+    fprintf(stdout, "In filter.h -> init_filters.\n");
+    fflush(stdout);
     d->f->ffilters = (filter_fct *)malloc(10 * sizeof(filter_fct));
     d->f->z_dependent = (int *)malloc(10 * sizeof(int));
     d->f->Nfilters = 0;
 
     if (d->f->pixelside > 0.0)
     {//{{{
-        printf("\twill apply quadratic pixel filter\n");
+        fprintf(stdout, "\twill apply quadratic pixel filter\n");
+        fflush(stdout);
         d->f->quadraticpixel_interp = (gsl_spline **)malloc(2 * sizeof(gsl_spline *));
         d->f->quadraticpixel_accel = (gsl_interp_accel ***)malloc(2 * sizeof(gsl_interp_accel **));
         d->f->quadraticpixel_ellmin = (double *)malloc(2 * sizeof(double));
@@ -317,28 +323,32 @@ void init_filters(all_data *d)
     }//}}}
     if (d->f->tophat_radius > 0.0)
     {//{{{
-        printf("\twill apply tophat filter\n");
+        fprintf(stdout, "\twill apply tophat filter\n");
+        fflush(stdout);
         d->f->ffilters[d->f->Nfilters] = &filter_tophat;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->gaussian_sigma > 0.0)
     {//{{{
-        printf("\twill apply gaussian filter\n");
+        fprintf(stdout, "\twill apply gaussian filter\n");
+        fflush(stdout);
         d->f->ffilters[d->f->Nfilters] = &filter_gaussian;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->custom_ell != NULL)
     {//{{{
-        printf("\twill apply user-supplied ell-space filter\n");
+        fprintf(stdout, "\twill apply user-supplied ell-space filter\n");
+        fflush(stdout);
         d->f->ffilters[d->f->Nfilters] = &filter_custom_ell;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->custom_k != NULL)
     {//{{{
-        printf("\twill apply user-supplied k-space filter\n");
+        fprintf(stdout, "\twill apply user-supplied k-space filter\n");
+        fflush(stdout);
         d->f->ffilters[d->f->Nfilters] = &filter_custom_k;
         d->f->z_dependent[d->f->Nfilters] = 1;
         ++d->f->Nfilters;

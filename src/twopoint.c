@@ -92,7 +92,8 @@ void create_phi_indep(all_data *d)
 // computes tp->dtsq, tp->t, tp->ac
 {//{{{
     if (d->tp->created_phi_indep) { return; }
-    printf("\tcreate_phi_indep\n");
+    fprintf(stdout, "\tcreate_phi_indep\n");
+    fflush(stdout);
     d->tp->dtsq = (double ***)malloc(d->n->Nz * sizeof(double **));
     d->tp->t = (double ***)malloc(d->n->Nz * sizeof(double **));
     d->tp->ac = (complex **)malloc(d->n->Nz * sizeof(complex *));
@@ -439,10 +440,12 @@ twopoint_workspace *new_tp_ws(int N)
 static
 void prepare_tp(all_data *d, double phi)
 {//{{{
-    printf("In twopoint.h -> prepare_tp :\n");
+    fprintf(stdout, "In twopoint.h -> prepare_tp :\n");
+    fflush(stdout);
     if (!(d->n->monotonize))
     {
-        printf("Twopoint only possible if monotonize=1.\n");
+        fprintf(stderr, "Error : Twopoint only possible if monotonize=1.\n");
+        fflush(stderr);
         return;
     }
 
@@ -462,7 +465,8 @@ void prepare_tp(all_data *d, double phi)
         d->tp->ws = new_tp_ws(d->n->Nsignal);
         if (d->tp->ws == NULL)
         {
-            printf("Out of memory in twopoint.h -> prepare_tp.\n");
+            fprintf(stderr, "Error : Out of memory in twopoint.h -> prepare_tp.\n");
+            fflush(stderr);
             return;
         }
     }
@@ -494,7 +498,8 @@ void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out)
                d->n->Nsignal * sizeof(double));
     }
 
-    printf("\t\tbinning the twopoint pdf\n");
+    fprintf(stdout, "\t\tbinning the twopoint pdf\n");
+    fflush(stdout);
     bin_2d(d->n->Nsignal, d->n->signalgrid, temp_tp, TPINTEGR_N,
            Nbins, _binedges, out, TPINTERP_TYPE);
 

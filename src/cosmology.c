@@ -39,7 +39,8 @@ void reset_cosmology(all_data *d)
 static
 void alloc_cosmo(all_data *d)
 {//{{{
-    printf("\talloc_cosmo\n");
+    fprintf(stdout, "\talloc_cosmo\n");
+    fflush(stdout);
     d->c->hubble = (double *)malloc(d->n->Nz * sizeof(double));
     d->c->comoving = (double *)malloc(d->n->Nz * sizeof(double));
     d->c->angular_diameter = (double *)malloc(d->n->Nz * sizeof(double));
@@ -56,7 +57,8 @@ void alloc_cosmo(all_data *d)
 static
 void fill_background(all_data *d)
 {//{{{
-    printf("\tfill_background\n");
+    fprintf(stdout, "\tfill_background\n");
+    fflush(stdout);
     double tau; // conformal time in Mpc
     int index = 0; // some internal CLASS thing
 
@@ -113,7 +115,8 @@ void fill_background(all_data *d)
 
 void init_cosmology(all_data *d)
 {//{{{
-    printf("In cosmology.h -> init_cosmo.\n");
+    fprintf(stdout, "In cosmology.h -> init_cosmo.\n");
+    fflush(stdout);
     alloc_cosmo(d);
     fill_background(d);
 }//}}}

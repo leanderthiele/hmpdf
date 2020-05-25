@@ -80,7 +80,8 @@ double Pk_linear(all_data *d, double k)
         else
         {
             ERRLOC;
-            printf("CLASS error %s\n", nl->error_message);
+            fprintf(stderr, "CLASS error %s\n", nl->error_message);
+            fflush(stderr);
             exit(1);
         }
     }
@@ -184,7 +185,8 @@ double _ssq(all_data *d, double M, double *dssq)
 static
 void create_ssq(all_data *d)
 {//{{{
-    printf("\tcreate_ssq\n");
+    fprintf(stdout, "\tcreate_ssq\n");
+    fflush(stdout);
     d->pwr->ssq = (double **)malloc(d->n->NM * sizeof(double*));
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
@@ -217,7 +219,8 @@ double _autocorr(all_data *d)
 static
 void create_autocorr(all_data *d)
 {//{{{
-    printf("\tcreate_autocorr\n");
+    fprintf(stdout, "\tcreate_autocorr\n");
+    fflush(stdout);
     d->pwr->autocorr = _autocorr(d);
 }//}}}
 
@@ -225,7 +228,8 @@ void create_corr(all_data *d)
 // computes the z=0 matter correlation function
 {//{{{
     if (d->pwr->created_corr) { return; }
-    printf("\tcreate_corr_interp\n");
+    fprintf(stdout, "\tcreate_corr_interp\n");
+    fflush(stdout);
     double rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
     gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, rmax);
     double *Pk = (double *)malloc(CORRINTERP_N * sizeof(double));
@@ -281,7 +285,8 @@ double corr(all_data *d, int z_index, double phi)
 
 void init_power(all_data *d)
 {//{{{
-    printf("In power.h -> init_power :\n");
+    fprintf(stdout, "In power.h -> init_power :\n");
+    fflush(stdout);
     create_ssq(d);
     create_autocorr(d);
 }//}}}
