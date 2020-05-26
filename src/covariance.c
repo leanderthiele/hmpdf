@@ -571,10 +571,12 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         double *temp = (double *)malloc(Nbins * sizeof(double));
         get_op(d, Nbins, binedges, temp, cl, noisy);
         // normalize properly
+        /*
         for (int ii=0; ii<Nbins; ii++)
         {
             temp[ii] *= binedges[ii+1] - binedges[ii];
         }
+        */
         add_shotnoise_diag(Nbins, out, temp);
         free(temp);
 
