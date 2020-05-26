@@ -16,9 +16,6 @@ typedef struct
 
     double signalmeanu;
     double signalmeanc;
-
-    double signalmeanu_noisy;
-    double signalmeanc_noisy;
 }//}}}
 onepoint_t;
 

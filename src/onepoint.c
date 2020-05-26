@@ -202,13 +202,6 @@ void get_mean_signal(all_data *d)
 {//{{{
     d->op->signalmeanu = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFu);
     d->op->signalmeanc = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFc);
-    if (d->op->PDFu_noisy != NULL)
-    {
-        d->op->signalmeanu_noisy
-            = _mean(d->n->Nsignal_noisy, d->n->signalgrid_noisy, d->op->PDFu_noisy);
-        d->op->signalmeanc_noisy
-            = _mean(d->n->Nsignal_noisy, d->n->signalgrid_noisy, d->op->PDFc_noisy);
-    }
 }//}}}
 
 void create_noisy_op(all_data *d)
@@ -332,9 +325,7 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
     {
         for (int ii=0; ii<=Nbins; ii++)
         {
-            _binedges[ii] += (noisy) ?
-                             ((mode==uncl) ? d->op->signalmeanu_noisy : d->op->signalmeanc_noisy)
-                             : ((mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc);
+            _binedges[ii] += (mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc;
         }
     }
 

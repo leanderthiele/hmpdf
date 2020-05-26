@@ -307,7 +307,7 @@ void status_update(time_t t1, time_t t0, int done, int tot)
 }//}}}
 
 static
-void add_shotnoise_offiag(int N, double *cov, double *p)
+void add_shotnoise_offdiag(int N, double *cov, double *p)
 // adds the zero-separation contribution to the covariance matrix
 {//{{{
     for (int ii=0; ii<N; ii++)
@@ -398,29 +398,34 @@ void create_cov(all_data *d)
 }//}}}
 
 static
-void prepare_cov(all_data *d)
+void prepare_cov(all_data *d, int complete)
 {//{{{
     fprintf(stdout, "In covariance.h -> prepare_cov :\n");
     fflush(stdout);
     // run necessary code from other modules
-    create_corr(d);
     if (d->f->Nfilters > 0)
     {
         create_conj_profiles(d);
         create_filtered_profiles(d);
     }
     create_breakpoints_or_monotonize(d);
-    create_phi_indep(d);
     create_op(d);
-    
-    // create phi grid
-    create_phigrid(d);
-    
-    // allocate the workspaces
-    create_tp_ws(d);
-    
-    // create covariance matrix
-    create_cov(d);
+
+    if (complete)
+    {
+        create_corr(d);
+
+        create_phi_indep(d);
+        
+        // create phi grid
+        create_phigrid(d);
+        
+        // allocate the workspaces
+        create_tp_ws(d);
+        
+        // create covariance matrix
+        create_cov(d);
+    }
 }//}}}
 
 static
@@ -510,10 +515,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
     }
 
     // perform the computation if necessary
-    if (to_compute)
-    {
-        prepare_cov(d);
-    }
+    prepare_cov(d, to_compute);
 
     // save the raw data if necessary
     if ((name != NULL) && (to_compute))
@@ -533,8 +535,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         {
             for (int ii=0; ii<=Nbins; ii++)
             {
-                _binedges[ii] += (noisy) ? d->op->signalmeanc_noisy
-                                 : d->op->signalmeanc;
+                _binedges[ii] += d->op->signalmeanc;
             }
         }
 
@@ -557,9 +558,9 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         }
         
         // add the off-diagonal shot-noise elements
-        add_shotnoise_offiag((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                             final_cov,
-                             (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
+        add_shotnoise_offdiag((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+                              final_cov,
+                              (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
 
         // perform the binning
         fprintf(stdout, "\t\tbinning the covariance matrix\n");
