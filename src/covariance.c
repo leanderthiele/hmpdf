@@ -433,25 +433,20 @@ void load_cov(all_data *d, char *fname)
 {//{{{
     int Nlines;
     double **_x = fromfile(fname, &Nlines, 1);
-    if (Nlines != d->n->Nsignal*d->n->Nsignal+1)
+    if (Nlines != d->n->Nsignal*d->n->Nsignal)
     {
         fprintf(stdout, "In get_cov : cov matrix loaded from file %s "
                         "not compatible with Nsignal. Aborting.\n", fname);
         fflush(stdout);
         return;
     }
-    d->op->signalmeanc = _x[0][0];
-    d->cov->Cov = _x[0]+1;
+    d->cov->Cov = _x[0];
 }//}}}
 
 static
 void save_cov(all_data *d, char *fname)
 {//{{{
-    FILE *f = fopen(fname, "wb");
-    fwrite(&(d->op->signalmeanc), sizeof(double), 1, f);
-    fwrite(d->cov->Cov, sizeof(double),
-           d->n->Nsignal*d->n->Nsignal, f);
-    fclose(f);
+    tofile(fname, d->n->Nsignal*d->n->Nsignal, 1, d->cov->Cov);
 }//}}}
 
 void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, char *name)
