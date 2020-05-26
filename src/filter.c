@@ -269,7 +269,7 @@ double filter_custom_k(void *d, double ell, filter_mode m, int *z_index)
     }
 }//}}}
 
-void apply_filters(all_data *d, int N, double *ell, double *in, double *out, filter_mode mode, int *z_index)
+void apply_filters(all_data *d, int N, double *ell, double *in, double *out, int stride, filter_mode mode, int *z_index)
 // (1) if *z_index == NULL, applies only the z-independent filters
 // (2) if *z_index != NULL and mode == filter_pdf, apply all filters
 // (3)                     and mode == filter_ps,  apply only the z-dependent filters
@@ -291,7 +291,7 @@ void apply_filters(all_data *d, int N, double *ell, double *in, double *out, fil
         {
             for (int jj=0; jj<N; jj++)
             {
-                out[jj] *= (*(d->f->ffilters[ii]))((void *)d, ell[jj], mode, z_index);
+                out[jj*stride] *= (*(d->f->ffilters[ii]))((void *)d, ell[jj], mode, z_index);
             }
         }
     }

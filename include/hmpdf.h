@@ -123,8 +123,10 @@ typedef enum//{{{
 }//}}}
 Cell_mode;
 
-void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode);
+void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode, int noisy);
 
-void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode);
+void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode, int noisy);
+
+void get_Cell_cov(all_data *d, int Nell, double *ell, double *Covell, int noisy);
 
 #endif

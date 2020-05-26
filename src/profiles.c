@@ -339,7 +339,7 @@ void create_filtered_profiles(all_data *d)
             }
             // multiply with the window functions
             apply_filters(d, d->p->Ntheta, ell, d->p->conj_profiles[z_index][M_index]+1,
-                                                temp, filter_pdf, &z_index);
+                                                temp, 1, filter_pdf, &z_index);
             // transform back to real space
             gsl_dht_apply(d->p->dht_ws, temp, d->p->profiles[z_index][M_index]+1);
             // reverse the profile

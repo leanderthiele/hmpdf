@@ -307,16 +307,24 @@ void status_update(time_t t1, time_t t0, int done, int tot)
 }//}}}
 
 static
-void add_shotnoise(int N, double *cov, double *p)
+void add_shotnoise_offiag(int N, double *cov, double *p)
 // adds the zero-separation contribution to the covariance matrix
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
-        cov[ii*N + ii] += p[ii];
         for (int jj=0; jj<N; jj++)
         {
             cov[ii*N + jj] -= p[ii] * p[jj];
         }
+    }
+}//}}}
+
+static
+void add_shotnoise_diag(int N, double *cov, double *p)
+{//{{{
+    for (int ii=0; ii<N; ii++)
+    {
+        cov[ii*(N+1)] += p[ii];
     }
 }//}}}
 
@@ -547,18 +555,31 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         {
             memcpy(final_cov, d->cov->Cov, N * N * sizeof(double));
         }
-        // add shotnoise term
-        add_shotnoise((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                      final_cov,
-                      (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
-        // rescale to fsky=1
-        rescale_to_fsky1(d, N, final_cov);
+        
+        // add the off-diagonal shot-noise elements
+        add_shotnoise_offiag((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+                             final_cov,
+                             (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
 
         // perform the binning
         fprintf(stdout, "\t\tbinning the covariance matrix\n");
         fflush(stdout);
         bin_2d(N, (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                final_cov, COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
+
+        // compute the shot noise term
+        double *temp = (double *)malloc(Nbins * sizeof(double));
+        get_op(d, Nbins, binedges, temp, cl, noisy);
+        // normalize properly
+        for (int ii=0; ii<Nbins; ii++)
+        {
+            temp[ii] *= binedges[ii+1] - binedges[ii];
+        }
+        add_shotnoise_diag(Nbins, out, temp);
+        free(temp);
+
+        // normalize properly
+        rescale_to_fsky1(d, Nbins, out);
 
         free(final_cov);
     }

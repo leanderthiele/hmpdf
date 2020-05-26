@@ -70,6 +70,7 @@
 #define PS_ELLMAX 1e5
 #define CELL_INTERP_TYPE interp_cspline
 #define CPHI_INTERP_TYPE interp_cspline
+#define PS_COVINTEGR_N 100
 
 #define COV_STATUS_PERIOD 100
 //}}}

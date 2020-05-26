@@ -33,7 +33,7 @@ filters_t;
 void null_filters(all_data *d);
 void reset_filters(all_data *d);
 void apply_filters(all_data *d, int N, double *ell,
-                   double *in, double *out,
+                   double *in, double *out, int stride,
                    filter_mode mode, int *z_index);
 void init_filters(all_data *d);
 
