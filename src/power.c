@@ -275,7 +275,6 @@ void create_corr(all_data *d)
 }//}}}
 
 double corr(all_data *d, int z_index, double phi)
-// FIXME this is called in multithreaded mode, need one accelerator for each core
 {//{{{
     double r = d->c->comoving[z_index] * phi;
     return d->c->Dsq[z_index]

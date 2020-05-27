@@ -365,7 +365,7 @@ void create_cov(all_data *d)
         d->cov->corr_diagn[pp] = corr_diagn(d, d->cov->ws[this_core()]);
         
         // add to covariance
-        for (int ii=0; ii<d->n->Nsignal; ii++)
+        for (int ii=0; ii<d->n->Nsignal*d->n->Nsignal; ii++)
         {
             for (int jj=0; jj<d->n->Nsignal; jj++)
             {
@@ -375,8 +375,7 @@ void create_cov(all_data *d)
                 #endif
                 d->cov->Cov[ii*d->n->Nsignal+jj]
                     += d->n->phiweights[pp]
-                       * (d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj]
-                          - d->op->PDFc[ii] * d->op->PDFc[jj]);
+                       * d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj];
             }
         }
 
@@ -391,6 +390,22 @@ void create_cov(all_data *d)
                 time_t this_time = time(NULL);
                 status_update(this_time, start_time, Nstatus, d->n->Nphi);
             }
+        }
+    }
+
+    // subtract the one-point outer product
+    double weight_sum = 0.0;
+    for (int pp=0; pp<d->n->Nphi; pp++)
+    {
+        weight_sum += d->n->phiweights[pp];
+    }
+    for (int ii=0; ii<d->n->Nsignal; ii++)
+    {
+        for (int jj=0; jj<d->n->Nsignal; jj++)
+        {
+            d->cov->Cov[ii*d->n->Nsignal+jj] -= weight_sum
+                                                * d->op->PDFc[ii]
+                                                * d->op->PDFc[jj];
         }
     }
 
@@ -566,13 +581,6 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
         // compute the shot noise term
         double *temp = (double *)malloc(Nbins * sizeof(double));
         get_op(d, Nbins, binedges, temp, cl, noisy);
-        // normalize properly
-        /*
-        for (int ii=0; ii<Nbins; ii++)
-        {
-            temp[ii] *= binedges[ii+1] - binedges[ii];
-        }
-        */
         add_shotnoise_diag(Nbins, out, temp);
         free(temp);
 

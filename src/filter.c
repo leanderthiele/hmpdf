@@ -90,7 +90,6 @@ double (*Bell[])(double, void *) = {Bell_pdf, Bell_ps};
 
 static
 void _quadraticpixelinterp(all_data *d, filter_mode mode)
-// FIXME not in agreement with python calculation!
 {//{{{
     double **Well;
     char fname[512];

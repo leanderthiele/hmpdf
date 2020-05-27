@@ -543,7 +543,7 @@ void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, doub
                                     d->p->conj_profiles[z_index][M_index]+1,
                                     d->p->conj_profiles[z_index][M_index][1]/*low l*/, 0.0/*high l*/,
                                     SELL_INTERP_TYPE, d->p->reci_tgrid_accel);
-    double hankel_norm = 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]); // FIXME
+    double hankel_norm = 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
     for (int ii=0; ii<Nell; ii++)
     {
         double l = ell[ii] / d->p->conj_profiles[z_index][M_index][0];
