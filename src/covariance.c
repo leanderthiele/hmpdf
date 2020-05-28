@@ -472,16 +472,16 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
     // perform the computation
     prepare_cov(d);
 
-        // if kappa, adjust the bins
-        double _binedges[Nbins+1];
-        memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-        if (d->p->stype == kappa)
+    // if kappa, adjust the bins
+    double _binedges[Nbins+1];
+    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
+    if (d->p->stype == kappa)
+    {
+        for (int ii=0; ii<=Nbins; ii++)
         {
-            for (int ii=0; ii<=Nbins; ii++)
-            {
-                _binedges[ii] += d->op->signalmeanc;
-            }
+            _binedges[ii] += d->op->signalmeanc;
         }
+    }
 
     // perform the binning
     fprintf(stdout, "\t\tbinning the covariance matrix\n");
