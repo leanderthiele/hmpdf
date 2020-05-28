@@ -12,6 +12,7 @@
 #include "halo_model.h"
 #include "filter.h"
 #include "profiles.h"
+#include "noise.h"
 #include "init.h"
 
 #include "hmpdf.h"
@@ -132,7 +133,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         {hmpdf_Battaglia12_tsz_params,
             &(d->p->Battaglia12_params), dbl_type,0, {&(def.Battaglia12_p), }},
         {hmpdf_noise,
-            &(d->op->noise),         dbl_type,    0, {&(def.noise), }},
+            &(d->ns->noise),         dbl_type,    0, {&(def.noise), }},
     };//}}}
 
     for (int ii=0; ii<hmpdf_end_configs; ii++)
@@ -274,4 +275,5 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
     init_halo_model(d);
     init_filters(d);
     init_profiles(d);
+    init_noise(d);
 }//}}}

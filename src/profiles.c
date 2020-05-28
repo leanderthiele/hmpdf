@@ -400,6 +400,11 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 // problems is an int[Nproblems], holding the indices where y was decreasing,
 // in increasing order
 {//{{{
+    // TODO
+    /*
+    gnuplot *gp = plot(NULL, Nx, x, y);
+    */
+
     // compute standard deviation as relevant scale
     //      (we need some scale to make sure we don't run
     //       into numerical instability)
@@ -473,6 +478,19 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
             y[jj] = a * x[jj] + b;
         }
     }
+    
+    // TODO
+    /*
+    for (int ii=0; ii<Nproblems; ii++)
+    {
+        fprintf(stdout, " %.4f ", x[problems[ii]]);
+    }
+    fprintf(stdout, "\n");
+    fflush(stdout);
+
+    plot(gp, Nx, x, y);
+    show(gp);
+    */
 }//}}}
 
 void create_breakpoints_or_monotonize(all_data *d)
@@ -500,8 +518,16 @@ void create_breakpoints_or_monotonize(all_data *d)
             _not_monotonic[M_index] = not_monotonic(d->p->Ntheta+1,
                                                     d->p->profiles[z_index][M_index]+1,
                                                     _problems);
-            if (d->n->monotonize)
+            
+            if (d->n->monotonize && _not_monotonic[M_index])
             {
+                // TODO
+                /*
+                fprintf(stdout, "*****Monotonizing z = %.3d / %.3d, M = %.3d / %.3d***********\n",
+                        z_index+1, d->n->Nz, M_index+1, d->n->NM);
+                fflush(stdout);
+                */
+
                 monotonize(d->p->Ntheta+1, _not_monotonic[M_index], _problems,
                            d->p->decr_tgrid, d->p->profiles[z_index][M_index]+1);
                 _not_monotonic[M_index] = 0;

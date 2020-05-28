@@ -9,6 +9,7 @@
 #include "halo_model.h"
 #include "profiles.h"
 #include "filter.h"
+#include "noise.h"
 #include "onepoint.h"
 #include "twopoint.h"
 #include "powerspectrum.h"
@@ -27,6 +28,7 @@ struct all_data_s
     halo_model_t *h;
     filters_t *f;
     profiles_t *p;
+    noise_t *ns;
     onepoint_t *op;
     twopoint_t *tp;
     powerspectrum_t *ps;

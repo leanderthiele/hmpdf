@@ -14,6 +14,7 @@ void null_data(all_data *d)
     null_halo_model(d);
     null_filters(d);
     null_profiles(d);
+    null_noise(d);
     null_onepoint(d);
     null_twopoint(d);
     null_powerspectrum(d);
@@ -33,6 +34,7 @@ all_data *new_data(void)
     d->h = malloc(sizeof(halo_model_t));
     d->f = malloc(sizeof(filters_t));
     d->p = malloc(sizeof(profiles_t));
+    d->ns = malloc(sizeof(noise_t));
     d->op = malloc(sizeof(onepoint_t));
     d->tp = malloc(sizeof(twopoint_t));
     d->ps = malloc(sizeof(powerspectrum_t));
@@ -53,6 +55,7 @@ void reset_data(all_data *d)
     reset_halo_model(d);
     reset_filters(d);
     reset_profiles(d);
+    reset_noise(d);
     reset_onepoint(d);
     reset_twopoint(d);
     reset_powerspectrum(d);
@@ -74,6 +77,7 @@ void delete_data(all_data *d)
     free(d->p);
     free(d->h);
     free(d->n);
+    free(d->ns);
     free(d->op);
     free(d->tp);
     free(d->ps);
