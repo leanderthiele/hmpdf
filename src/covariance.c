@@ -358,7 +358,7 @@ void create_cov(all_data *d)
     d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
 
     // zero covariance
-    zero_real(d->n->Nsignal*d->n->Nsignal, d->cov->Cov);
+    zero_real(d->n->Nsignal * d->n->Nsignal, d->cov->Cov);
 
     // status
     int Nstatus = 0;
@@ -377,7 +377,7 @@ void create_cov(all_data *d)
         d->cov->corr_diagn[pp] = corr_diagn(d, d->cov->ws[this_core()]);
         
         // add to covariance
-        for (int ii=0; ii<d->n->Nsignal*d->n->Nsignal; ii++)
+        for (int ii=0; ii<d->n->Nsignal; ii++)
         {
             for (int jj=0; jj<d->n->Nsignal; jj++)
             {
