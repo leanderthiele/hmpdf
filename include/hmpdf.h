@@ -113,7 +113,7 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
 
 void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out);
 
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, char *fname);
+void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy);
 
 typedef enum//{{{
 {

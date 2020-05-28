@@ -9,10 +9,9 @@ typedef struct
     double *PDFu;
     double *PDFc;
 
+    int created_noisy_op;
     double *PDFu_noisy;
     double *PDFc_noisy;
-
-    double noise;
 
     double signalmeanu;
     double signalmeanc;

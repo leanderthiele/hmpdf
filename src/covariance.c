@@ -14,6 +14,7 @@
 #include "data.h"
 #include "power.h"
 #include "profiles.h"
+#include "noise.h"
 #include "onepoint.h"
 #include "twopoint.h"
 #include "covariance.h"
@@ -24,15 +25,18 @@ void null_covariance(all_data *d)
 {//{{{{
     d->cov->ws = NULL;
     d->cov->Cov = NULL;
+    d->cov->Cov_noisy = NULL;
     d->cov->corr_diagn = NULL;
     d->cov->created_tp_ws = 0;
     d->cov->created_phigrid = 0;
     d->cov->created_cov = 0;
+    d->cov->created_noisy_cov = 0;
 }//}}}
 
 void reset_covariance(all_data *d)
 {//{{{
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
+    if (d->cov->Cov_noisy != NULL) { free(d->cov->Cov_noisy); }
     if (d->cov->corr_diagn != NULL) { free(d->cov->corr_diagn); }
     if (d->cov->ws != NULL)
     {
@@ -307,19 +311,6 @@ void status_update(time_t t1, time_t t0, int done, int tot)
 }//}}}
 
 static
-void add_shotnoise_offdiag(int N, double *cov, double *p)
-// adds the zero-separation contribution to the covariance matrix
-{//{{{
-    for (int ii=0; ii<N; ii++)
-    {
-        for (int jj=0; jj<N; jj++)
-        {
-            cov[ii*N + jj] -= p[ii] * p[jj];
-        }
-    }
-}//}}}
-
-static
 void add_shotnoise_diag(int N, double *cov, double *p)
 {//{{{
     for (int ii=0; ii<N; ii++)
@@ -340,11 +331,32 @@ void rescale_to_fsky1(all_data *d, int N, double *cov)
 }//}}}
 
 static
+void create_noisy_cov(all_data *d)
+{//{{{
+    if (d->cov->created_noisy_cov) { return; }
+    fprintf(stdout, "\tcreate_noisy_cov\n");
+    fflush(stdout);
+
+    d->cov->Cov_noisy = (double *)malloc(d->n->Nsignal_noisy
+                                         * d->n->Nsignal_noisy
+                                         * sizeof(double));
+    noise_matr(d, d->cov->Cov, d->cov->Cov_noisy);
+
+    d->cov->created_noisy_cov = 1;
+}//}}}
+
+static
 void create_cov(all_data *d)
 {//{{{
     if (d->cov->created_cov) { return; }
     fprintf(stdout, "\tcreate_cov\n");
     fflush(stdout);
+
+    // allocate storage
+    d->cov->Cov = (double *)malloc(d->n->Nsignal * d->n->Nsignal
+                                   * sizeof(double));
+    d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
+
     // zero covariance
     zero_real(d->n->Nsignal*d->n->Nsignal, d->cov->Cov);
 
@@ -394,7 +406,7 @@ void create_cov(all_data *d)
     }
 
     // subtract the one-point outer product
-    double weight_sum = 0.0;
+    double weight_sum = 1.0; // includes the zero-separation contribution here
     for (int pp=0; pp<d->n->Nphi; pp++)
     {
         weight_sum += d->n->phiweights[pp];
@@ -413,10 +425,11 @@ void create_cov(all_data *d)
 }//}}}
 
 static
-void prepare_cov(all_data *d, int complete)
+void prepare_cov(all_data *d)
 {//{{{
     fprintf(stdout, "In covariance.h -> prepare_cov :\n");
     fflush(stdout);
+
     // run necessary code from other modules
     if (d->f->Nfilters > 0)
     {
@@ -426,118 +439,39 @@ void prepare_cov(all_data *d, int complete)
     create_breakpoints_or_monotonize(d);
     create_op(d);
 
-    if (complete)
+    create_corr(d);
+
+    create_phi_indep(d);
+    
+    // create phi grid
+    create_phigrid(d);
+    
+    // allocate the workspaces
+    create_tp_ws(d);
+    
+    // create covariance matrix
+    create_cov(d);
+
+    // create noisy covariance matrix
+    if (d->ns->noise > 0.0)
     {
-        create_corr(d);
-
-        create_phi_indep(d);
-        
-        // create phi grid
-        create_phigrid(d);
-        
-        // allocate the workspaces
-        create_tp_ws(d);
-        
-        // create covariance matrix
-        create_cov(d);
+        create_noisy_cov(d);
     }
+
 }//}}}
 
-static
-void load_cov(all_data *d, char *fname)
+void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
 {//{{{
-    int Nlines;
-    double **_x = fromfile(fname, &Nlines, 1);
-    if (Nlines != d->n->Nsignal*d->n->Nsignal)
-    {
-        fprintf(stdout, "In get_cov : cov matrix loaded from file %s "
-                        "not compatible with Nsignal. Aborting.\n", fname);
-        fflush(stdout);
-        return;
-    }
-    d->cov->Cov = _x[0];
-}//}}}
-
-static
-void save_cov(all_data *d, char *fname)
-{//{{{
-    tofile(fname, d->n->Nsignal*d->n->Nsignal, 1, d->cov->Cov);
-}//}}}
-
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, char *name)
-{//{{{
-    if (noisy && d->op->noise<0.0)
+    if (noisy && d->ns->noise<0.0)
     {
         fprintf(stdout, "Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
         fflush(stdout);
         return;
     }
 
-    char covfile[512];
-    char corrfile[512];
-    if (Nbins == 0 && name == NULL)
-    {
-        fprintf(stdout, "ERROR : both Nbins=0 and name=NULL,\nnothing to do in get_cov.\n");
-        fflush(stdout);
-        return;
-    }
+    // perform the computation
+    prepare_cov(d);
 
-    if (name != NULL)
-    {
-        sprintf(covfile, "%s_cov.bin", name);
-        sprintf(corrfile, "%s_corr.bin", name);
-    }
-
-    // allocate the covariance matrix (if not allocated yet)
-    if (d->cov->Cov == NULL)
-    {
-        d->cov->Cov = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
-    }
-
-    // allocate the diagnostic correlation function (if not allocated yet)
-    if (d->cov->corr_diagn == NULL)
-    {
-        d->cov->corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
-    }
-
-    int to_compute = 1;
-    if (name != NULL)
-    {
-        if (isfile(covfile))
-        // covariance matrix has already been computed, we just need binning
-        {
-            if (Nbins == 0)
-            {
-                fprintf(stdout, "ERROR : covariance matrix named %s already exists,\n"
-                                "and you requested no binning.\n"
-                                "Nothing to do in get_cov.\n", covfile);
-                fflush(stdout);
-                return;
-            }
-            load_cov(d, covfile);
-            to_compute = 0;
-        }
-        else
-        {
-            fprintf(stdout, "\t\tIn get_cov : file %s not found. Will compute.\n", covfile);
-            fflush(stdout);
-        }
-    }
-
-    // perform the computation if necessary
-    prepare_cov(d, to_compute);
-
-    // save the raw data if necessary
-    if ((name != NULL) && (to_compute))
-    {
-        save_cov(d, covfile);
-        tofile(corrfile, d->n->Nphi, 3, d->n->phigrid,
-               d->n->phiweights, d->cov->corr_diagn);
-    }
-
-    if (Nbins > 0)
-    // binning requested
-    {
         // if kappa, adjust the bins
         double _binedges[Nbins+1];
         memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
@@ -549,45 +483,20 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy, c
             }
         }
 
-        // prepare final covariance matrix
-        int N = (noisy) ? d->n->Nsignal_noisy : d->n->Nsignal;
-        double *final_cov = (double *)malloc(N * N * sizeof(double));
-        if (noisy)
-        {
-            zero_real(N * N, final_cov);
-            int len_kernel = (d->n->Nsignal_noisy - d->n->Nsignal)/2;
-            for (int ii=0; ii<d->n->Nsignal; ii++)
-            {
-                memcpy(final_cov + (len_kernel+ii)*d->n->Nsignal_noisy + len_kernel,
-                       d->cov->Cov + ii*d->n->Nsignal, d->n->Nsignal * sizeof(double));
-            }
-        }
-        else
-        {
-            memcpy(final_cov, d->cov->Cov, N * N * sizeof(double));
-        }
-        
-        // add the off-diagonal shot-noise elements
-        add_shotnoise_offdiag((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                              final_cov,
-                              (noisy) ? d->op->PDFc_noisy : d->op->PDFc);
+    // perform the binning
+    fprintf(stdout, "\t\tbinning the covariance matrix\n");
+    fflush(stdout);
+    bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+           (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+           (noisy) ? d->cov->Cov_noisy : d->cov->Cov,
+           COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
 
-        // perform the binning
-        fprintf(stdout, "\t\tbinning the covariance matrix\n");
-        fflush(stdout);
-        bin_2d(N, (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
-               final_cov, COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
+    // compute the shot noise term
+    double *temp = (double *)malloc(Nbins * sizeof(double));
+    get_op(d, Nbins, binedges, temp, cl, noisy);
+    add_shotnoise_diag(Nbins, out, temp);
+    free(temp);
 
-        // compute the shot noise term
-        double *temp = (double *)malloc(Nbins * sizeof(double));
-        get_op(d, Nbins, binedges, temp, cl, noisy);
-        add_shotnoise_diag(Nbins, out, temp);
-        free(temp);
-
-        // normalize properly
-        rescale_to_fsky1(d, Nbins, out);
-
-        free(final_cov);
-    }
-
+    // normalize properly
+    rescale_to_fsky1(d, Nbins, out);
 }//}}}

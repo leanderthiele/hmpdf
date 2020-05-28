@@ -163,7 +163,7 @@ void add_psnoise(all_data *d, int N, double *Cell)
     double Omegapix = gsl_pow_2(d->f->pixelside);
     for (int ii=0; ii<N; ii++)
     {
-        Cell[ii] += Omegapix * gsl_pow_2(d->op->noise);
+        Cell[ii] += Omegapix * gsl_pow_2(d->ns->noise);
     }
 }//}}}
 
@@ -195,7 +195,7 @@ void create_Cell(all_data *d)
     apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_tot,
                   d->ps->Cell_tot, 1, filter_ps, NULL);
 
-    if (d->op->noise>0.0 && d->f->pixelside>0.0)
+    if (d->ns->noise>0.0 && d->f->pixelside>0.0)
     {
         d->ps->Cell_noisy = (double *)malloc(d->ps->Nell * sizeof(double));
         memcpy(d->ps->Cell_noisy, d->ps->Cell_tot, d->ps->Nell * sizeof(double));
@@ -247,7 +247,7 @@ void create_Cphi(all_data *d)
         d->ps->Cphi_tot[ii] *= 0.5 * M_1_PI * hankel_norm;
     }
 
-    if (d->op->noise>0.0 && d->f->pixelside>0.0)
+    if (d->ns->noise>0.0 && d->f->pixelside>0.0)
     {
         d->ps->Cphi_noisy = (double *)malloc(d->ps->Nell_corr * sizeof(double));
         get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, total, 1);
@@ -406,7 +406,7 @@ void get_Cell(all_data *d, int Nbins, double *binedges, double *Cell, Cell_mode 
         fflush(stderr);
         return;
     }
-    if (noisy && d->op->noise<0.0)
+    if (noisy && d->ns->noise<0.0)
     {
         fprintf(stderr, "Error : You requested noisy power spectrum "
                         "but no/invalid noise level was passed.\n");
@@ -445,7 +445,7 @@ void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode, 
         fflush(stderr);
         return;
     }
-    if (noisy && d->op->noise<0.0)
+    if (noisy && d->ns->noise<0.0)
     {
         fprintf(stderr, "Error : You requested noisy correlation function "
                         "but no/invalid noise level was passed.\n");
@@ -484,7 +484,7 @@ void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode, 
 
 void get_Cell_cov(all_data *d, int Nbins, double *binedges, double *Covell, int noisy)
 {//{{{
-    if (noisy && d->op->noise<0.0)
+    if (noisy && d->ns->noise<0.0)
     {
         fprintf(stderr, "Error : You requested noisy Cell covariance matrix "
                         "but no/invalid noise level was passed.\n");

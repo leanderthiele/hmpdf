@@ -18,6 +18,7 @@
 void null_onepoint(all_data *d)
 {//{{{
     d->op->created_op = 0;
+    d->op->created_noisy_op = 0;
     d->op->PDFu = NULL;
     d->op->PDFc = NULL;
     d->op->PDFu_noisy = NULL;
@@ -207,6 +208,10 @@ void get_mean_signal(all_data *d)
 void create_noisy_op(all_data *d)
 // convolves the original PDF with a Gaussian kernel of width sigma = noise
 {//{{{
+    if (d->op->created_noisy_op) { return; }
+    fprintf(stdout, "\tcreate_noisy_op\n");
+    fflush(stdout);
+
     double *in[] = {d->op->PDFu, d->op->PDFc};
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
     for (int ii=0; ii<2; ii++)
@@ -214,6 +219,8 @@ void create_noisy_op(all_data *d)
         *out[ii] = (double *)malloc(d->n->Nsignal_noisy * sizeof(double));
         noise_vect(d, in[ii], *out[ii]);
     }
+
+    d->op->created_noisy_op = 1;
 }//}}}
 
 void create_op(all_data *d)
@@ -245,12 +252,6 @@ void create_op(all_data *d)
     fftw_destroy_plan(plan_u);
     fftw_destroy_plan(plan_c);
 
-    if (d->op->noise > 0.0)
-    // include gaussian noise
-    {
-        create_noisy_op(d);
-    }
-
     // compute the mean of the distributions if needed later
     get_mean_signal(d);
 
@@ -263,6 +264,7 @@ void prepare_op(all_data *d)
 {//{{{
     fprintf(stdout, "In onepoint.h -> prepare_op :\n");
     fflush(stdout);
+
     if (d->f->Nfilters > 0)
     {
         create_conj_profiles(d);
@@ -270,11 +272,17 @@ void prepare_op(all_data *d)
     }
     create_breakpoints_or_monotonize(d);
     create_op(d);
+    if (d->ns->noise > 0.0)
+    // include gaussian noise
+    {
+        create_noisy_op(d);
+    }
+
 }//}}}
 
 void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode, int noisy)
 {//{{{
-    if (noisy && d->op->noise<0.0)
+    if (noisy && d->ns->noise<0.0)
     {
         fprintf(stderr, "Error: noisy pdf requested but no/invalid noise level passed.\n");
         fflush(stderr);
