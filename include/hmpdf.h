@@ -115,6 +115,8 @@ void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out);
 
 void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy);
 
+void get_cov_diagnostics(all_data *d, int *Nphi, double *phi, double *phiweights, double *corr_diagn);
+
 typedef enum//{{{
 {
     onehalo,

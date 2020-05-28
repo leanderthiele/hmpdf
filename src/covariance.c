@@ -500,3 +500,11 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
     // normalize properly
     rescale_to_fsky1(d, Nbins, out);
 }//}}}
+
+void get_cov_diagnostics(all_data *d, int *Nphi, double *phi, double *phiweights, double *corr_diagn)
+{//{{{
+    *Nphi = d->n->Nphi;
+    phi = d->n->phigrid;
+    phiweights = d->n->phiweights;
+    corr_diagn = d->cov->corr_diagn;
+}//}}}
