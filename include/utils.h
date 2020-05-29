@@ -19,35 +19,6 @@
 
 #include "hmpdf.h"
 
-typedef enum//{{{
-{
-    interp_linear,
-    interp_polynomial,
-    interp_cspline,
-    interp_cspline_periodic,
-    interp_akima,
-    interp_akima_periodic,
-    interp_steffen,
-}//}}}
-interp_mode;
-
-typedef enum//{{{
-{
-    interp2d_bilinear,
-    interp2d_bicubic,
-}//}}}
-interp2d_mode;
-
-typedef enum//{{{
-{
-    filter_pdf,
-    filter_ps,
-    filter_end,
-}//}}}
-filter_mode;
-
-typedef double (*filter_fct)(void * /*all_data*/, double /*ell*/, filter_mode /*pdf or ps*/, int * /*z_index*/);
-
 int ispwr2(int N, int *k);
 
 void linspace(int N, double xmin, double xmax, double *x);
@@ -60,6 +31,7 @@ int all_zero(int N, double *x, double threshold);
 
 int wait(void);
 
+typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
 gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode);
 void show(gnuplot *gp);
@@ -73,6 +45,17 @@ int isfile(char *fname);
 int num_cores(void);
 int this_core(void);
 
+typedef enum//{{{
+{
+    interp_linear,
+    interp_polynomial,
+    interp_cspline,
+    interp_cspline_periodic,
+    interp_akima,
+    interp_akima_periodic,
+    interp_steffen,
+}//}}}
+interp_mode;
 typedef struct interp1d_s interp1d;
 interp1d *new_interp1d(int N, double *x, double *y, double ylo, double yhi,
                        interp_mode m, gsl_interp_accel *a);
@@ -81,6 +64,12 @@ double interp1d_eval(interp1d *interp, double x);
 double interp1d_eval_deriv(interp1d *interp, double x);
 double interp1d_eval_integ(interp1d *interp, double a, double b);
 
+typedef enum//{{{
+{
+    interp2d_bilinear,
+    interp2d_bicubic,
+}//}}}
+interp2d_mode;
 typedef struct interp2d_s interp2d;
 interp2d *new_interp2d(int N, double *x, double *z,
                        double zlo, double zhi,

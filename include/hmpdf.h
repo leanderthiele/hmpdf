@@ -76,17 +76,6 @@ typedef enum//{{{
 }//}}}
 configs;
 
-void linspace(int N, double xmin, double xmax, double *x);
-void logspace(int N, double xmin, double xmax, double *x);
-
-void savetxt(char *fname, int Nlines, int Nvec, ...);
-double **loadtxt(char *fname, int *Nlines, int Nvec);
-void tofile(char *fname, int Nlines, int Nvec, ...);
-
-typedef struct gnuplot_s gnuplot;
-gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
-void show(gnuplot *gp);
-
 // custom filters
 typedef double (*ell_filter)(double /*ell 2d wavenumber*/,
                              void * /*user parameters*/);

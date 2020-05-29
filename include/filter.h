@@ -6,6 +6,15 @@
 
 #include "hmpdf.h"
 
+typedef enum//{{{
+{
+    filter_pdf,
+    filter_ps,
+    filter_end,
+}//}}}
+filter_mode;
+typedef double (*filter_fct)(void * /*all_data*/, double /*ell*/, filter_mode /*pdf or ps*/, int * /*z_index*/);
+
 typedef struct//{{{
 {
     int inited_filters;
