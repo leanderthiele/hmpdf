@@ -503,6 +503,9 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
 
 void get_cov_diagnostics(all_data *d, int *Nphi, double *phi, double *phiweights, double *corr_diagn)
 {//{{{
+    // perform the computation
+    prepare_cov(d);
+
     *Nphi = d->n->Nphi;
     phi = d->n->phigrid;
     phiweights = d->n->phiweights;
