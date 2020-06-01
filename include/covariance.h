@@ -24,7 +24,7 @@ covariance_t;
 void null_covariance(all_data *d);
 void reset_covariance(all_data *d);
 void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy);
-void get_cov_diagnostics(all_data *d, int *Nphi, double *phi,
-                         double *phiweights, double *corr_diagn);
+void get_cov_diagnostics(all_data *d, int *Nphi, double **phi,
+                         double **phiweights, double **corr_diagn);
 
 #endif
