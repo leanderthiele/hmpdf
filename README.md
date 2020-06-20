@@ -1,1 +1,1 @@
-[Documentation](./doc/html/index.html)
+[Documentation](./doc/index.html)
