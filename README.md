@@ -1,1 +1,1 @@
-[Documentation](https://leander97.github.io/hmpdf/html/)
+[Documentation](https://leanderthiele.github.io/hmpdf/html/)
