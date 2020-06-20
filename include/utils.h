@@ -6,9 +6,6 @@
 #define SIGMATHOMSON 6.98684e-74 // Mpc^2
 #define MELECTRON    4.58110e-61 // Msun
 
-#define HPLANCK      6.62607004e-34 // SI
-#define KBOLTZMANN   1.38064852e-23 // SI
-
 #define ERRLOC printf("Error in %s line %d: \n\t", __FILE__, __LINE__);
 #define SAFECLASS(expr, errmsg) if (expr==_FAILURE_) \
                                 { ERRLOC; printf("CLASS error %s\n", errmsg); exit(1); }

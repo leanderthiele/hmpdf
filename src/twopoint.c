@@ -16,7 +16,7 @@
 
 #include "hmpdf.h"
 
-void null_twopoint(all_data *d)
+void null_twopoint(hmpdf_obj *d)
 {//{{{
     d->tp->created_phi_indep = 0;
     d->tp->dtsq = NULL;
@@ -24,9 +24,12 @@ void null_twopoint(all_data *d)
     d->tp->ac = NULL;
     d->tp->au = NULL;
     d->tp->ws = NULL;
+    d->tp->last_phi = -1.0;
+    d->tp->pdf = NULL;
+    d->tp->pdf_noisy = NULL;
 }//}}}
 
-void reset_twopoint(all_data *d)
+void reset_twopoint(hmpdf_obj *d)
 {//{{{
     if (d->tp->dtsq != NULL)
     {
@@ -86,9 +89,11 @@ void reset_twopoint(all_data *d)
         fftw_destroy_plan(d->tp->ws->ppdf_c2r);
         free(d->tp->ws);
     }
+    if (d->tp->pdf != NULL) { free(d->tp->pdf); }
+    if (d->tp->pdf_noisy != NULL) { free(d->tp->pdf_noisy); }
 }//}}}
 
-void create_phi_indep(all_data *d)
+void create_phi_indep(hmpdf_obj *d)
 // computes tp->dtsq, tp->t, tp->ac
 {//{{{
     if (d->tp->created_phi_indep) { return; }
@@ -173,7 +178,7 @@ double triang_A(double a, double b, double c)
 }//}}}
 
 static
-void tp_Mint(all_data *d, int z_index, double phi, twopoint_workspace *ws)
+void tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 // adds to pdf_real, with the required zweight * Mweight, including the unclustered 1pt PDF contributions
 // creates new tempc_real (nulls first) --> tempc created with fftw_malloc
 // pdf_real, tempc_real are not symmetrized!
@@ -248,7 +253,7 @@ complex redundant(int N, complex *a, int ii)
 }//}}}
 
 static
-complex clustered_term(all_data *d, int z_index, double phi,
+complex clustered_term(hmpdf_obj *d, int z_index, double phi,
                        int i1/*long direction*/, int i2/*short direction*/,
                        complex *b12)
 // computes 1/2 * (alpha1^2 + alpha2^2) * zeta(0)
@@ -268,7 +273,7 @@ complex clustered_term(all_data *d, int z_index, double phi,
 }//}}}
 
 static
-void tp_zint(all_data *d, double phi, twopoint_workspace *ws)
+void tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // z-integral of the unclustered terms, without FFT 
 // z-integral of the clustered terms, including FFT (of course)
 {//{{{
@@ -314,43 +319,8 @@ void tp_zint(all_data *d, double phi, twopoint_workspace *ws)
     }
 }//}}}
 
-static
-double regu(double lambda)
-// lambda in units of lambda_max
-{//{{{
-    static double l = 0.7; // measure of where the regularization kicks in
-    static double w = 0.2; // measure of width of transition region
-    static int p = 10; // measure of strength of suppression
-    return gsl_pow_uint(0.5 * (1.0 - tanh((lambda-l)/w)), p);
-}//}}}
-
-static
-void regularize(int N, complex *x)
-// regularizes the high frequency part for smoother output
-{//{{{
-    for (int ii=1; ii<N/2+1; ii++)
-    // loop over long direction
-    // start loops at 1 to ensure normalization
-    {
-        for (int jj=1; jj<N/2+1; jj++)
-        // loop over short direction
-        {
-            // compute relative wavnumbers
-            double li = (double)(ii)/(double)(N/2+1);
-            double lj = (double)(jj)/(double)(N/2+1);
-            // upper plane
-            x[ii*(N/2+1)+jj] *= regu(li)*regu(lj);
-            // lower plane
-            x[(N-ii)*(N/2+1)+jj] *= regu(li)*regu(lj);
-        }
-    }
-}//}}}
-
-void create_tp(all_data *d, double phi, twopoint_workspace *ws)
+void create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // computes one 2pt PDF
-// TODO separate functions in covariance.h :
-//      compute correlation function for this phi-value and store somewhere
-//      add to covariance matrix
 {//{{{
     // perform the redshift integration
     tp_zint(d, phi, ws);
@@ -387,14 +357,20 @@ void create_tp(all_data *d, double phi, twopoint_workspace *ws)
         }
     }
 
-    // if requested and we are likely to have problems, regularize
-    if (d->tp->regularize && phi < TPREG_MAXPHI)
-    {
-        regularize(d->n->Nsignal, ws->pdf_comp);
-    }
-
     // perform backward FFT pdf_comp -> pdf_real
     fftw_execute(ws->ppdf_c2r);
+}//}}}
+
+void create_noisy_tp(hmpdf_obj *d)
+{//{{{
+    if (d->tp->pdf_noisy == NULL)
+    {
+        d->tp->pdf_noisy = (double *)malloc(d->n->Nsignal_noisy
+                                           * d->n->Nsignal_noisy
+                                           * sizeof(double));
+    }
+
+    noise_matr(d, d->tp->pdf, d->tp->pdf_noisy);
 }//}}}
 
 twopoint_workspace *new_tp_ws(int N)
@@ -438,7 +414,7 @@ twopoint_workspace *new_tp_ws(int N)
 }//}}}
 
 static
-void prepare_tp(all_data *d, double phi)
+void prepare_tp(hmpdf_obj *d, double phi)
 {//{{{
     fprintf(stdout, "In twopoint.h -> prepare_tp :\n");
     fflush(stdout);
@@ -472,16 +448,52 @@ void prepare_tp(all_data *d, double phi)
     }
 
     create_tp(d, phi, d->tp->ws);
+    
+    // copy PDF into contiguous array (tp->pdf_real has padding from the FFTs)
+    if (d->tp->pdf == NULL)
+    {
+        d->tp->pdf = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
+    }
+    for (int ii=0; ii<d->n->Nsignal; ii++)
+    {
+        memcpy(d->tp->pdf+ii*d->n->Nsignal,
+               d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
+               d->n->Nsignal * sizeof(double));
+    }
+
+    if (d->ns->noise > 0.0)
+    {
+        create_noisy_tp(d);
+    }
 }//}}}
 
-void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out)
+void hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out, int noisy)
 {//{{{
-    prepare_tp(d, phi);
+    if (noisy && d->ns->noise<0.0)
+    {
+        fprintf(stderr, "Error: noisy twopoint pdf requested but no/invalid noise level passed.\n");
+        fflush(stderr);
+        return;
+    }
+
+    if (not_monotonic(Nbins+1, binedges, NULL))
+    {
+        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
+        fflush(stderr);
+        return;
+    }
+
+    // perform computation if necessary
+    if (fabs(1.0 - d->tp->last_phi/phi) > TP_PHI_EQ_TOL)
+    {
+        prepare_tp(d, phi);
+    }
+    d->tp->last_phi = phi;
 
     double _binedges[Nbins+1];
     memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    // shift bins if physically motivated
-    if (d->p->stype == kappa)
+    // if kappa, adjust the bins
+    if (d->p->stype == hmpdf_kappa)
     {
         for (int ii=0; ii<= Nbins; ii++)
         {
@@ -489,20 +501,11 @@ void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out)
         }
     }
 
-    // copy PDF into contiguous array (tp->pdf_real has padding from the FFTs)
-    double *temp_tp = (double *)malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double));
-    for (int ii=0; ii<d->n->Nsignal; ii++)
-    {
-        memcpy(temp_tp+ii*d->n->Nsignal,
-               d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
-               d->n->Nsignal * sizeof(double));
-    }
-
     fprintf(stdout, "\t\tbinning the twopoint pdf\n");
     fflush(stdout);
-    bin_2d(d->n->Nsignal, d->n->signalgrid, temp_tp, TPINTEGR_N,
-           Nbins, _binedges, out, TPINTERP_TYPE);
-
-    free(temp_tp);
+    bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
+           (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+           (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
+           TPINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE);
 }//}}}
 

@@ -15,7 +15,7 @@
 #include "numerics.h"
 #include "onepoint.h"
 
-void null_onepoint(all_data *d)
+void null_onepoint(hmpdf_obj *d)
 {//{{{
     d->op->created_op = 0;
     d->op->created_noisy_op = 0;
@@ -25,7 +25,7 @@ void null_onepoint(all_data *d)
     d->op->PDFc_noisy = NULL;
 }//}}}
 
-void reset_onepoint(all_data *d)
+void reset_onepoint(hmpdf_obj *d)
 {//{{{
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
@@ -34,7 +34,7 @@ void reset_onepoint(all_data *d)
 }//}}}
 
 static
-void op_Mint_invertible(all_data *d, int z_index, double *au, double *ac)
+void op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 // performs the mass integrals, for the invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
@@ -58,7 +58,7 @@ void op_Mint_invertible(all_data *d, int z_index, double *au, double *ac)
 }//}}}
 
 static
-complex not_inv_integral(all_data *d, int z_index, int M_index, int lambda_index)
+complex not_inv_integral(hmpdf_obj *d, int z_index, int M_index, int lambda_index)
 // TODO do this w/ Gauss fixed point (linear weight function)
 {//{{{
     complex *integr = (complex *)malloc(d->p->prtilde_Ntheta * sizeof(complex));
@@ -92,7 +92,7 @@ complex not_inv_integral(all_data *d, int z_index, int M_index, int lambda_index
 }//}}}
 
 static
-void lambda_loop(all_data *d, int z_index, int M_index, complex *out)
+void lambda_loop(hmpdf_obj *d, int z_index, int M_index, complex *out)
 {//{{{
     for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
@@ -101,7 +101,7 @@ void lambda_loop(all_data *d, int z_index, int M_index, complex *out)
 }//}}}
 
 static
-void op_Mint_notinvertible(all_data *d, int z_index, complex *au, complex *ac)
+void op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 // performs the mass integration over the non-invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
@@ -124,7 +124,7 @@ void op_Mint_notinvertible(all_data *d, int z_index, complex *au, complex *ac)
 }//}}}
 
 static
-void op_zint(all_data *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
+void op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
 {//{{{
     double *ac_real = (double *)fftw_malloc((d->n->Nsignal+2) * sizeof(double));
     complex *ac_comp = (complex *)ac_real;
@@ -199,13 +199,13 @@ double _mean(int N, double *x, double *p)
 }//}}}
 
 static
-void get_mean_signal(all_data *d)
+void get_mean_signal(hmpdf_obj *d)
 {//{{{
     d->op->signalmeanu = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFu);
     d->op->signalmeanc = _mean(d->n->Nsignal, d->n->signalgrid, d->op->PDFc);
 }//}}}
 
-void create_noisy_op(all_data *d)
+void create_noisy_op(hmpdf_obj *d)
 // convolves the original PDF with a Gaussian kernel of width sigma = noise
 {//{{{
     if (d->op->created_noisy_op) { return; }
@@ -223,7 +223,7 @@ void create_noisy_op(all_data *d)
     d->op->created_noisy_op = 1;
 }//}}}
 
-void create_op(all_data *d)
+void create_op(hmpdf_obj *d)
 {//{{{
     if (d->op->created_op) { return; }
     fprintf(stdout, "\tcreate_op\n");
@@ -259,7 +259,7 @@ void create_op(all_data *d)
 }//}}}
 
 static
-void prepare_op(all_data *d)
+void prepare_op(hmpdf_obj *d)
 // does the necessary create calls
 {//{{{
     fprintf(stdout, "In onepoint.h -> prepare_op :\n");
@@ -280,7 +280,7 @@ void prepare_op(all_data *d)
 
 }//}}}
 
-void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode, int noisy)
+void hmpdf_get_op(hmpdf_obj *d, int Nbins, double *binedges, double *out, int incl_2h, int noisy)
 {//{{{
     if (noisy && d->ns->noise<0.0)
     {
@@ -289,22 +289,29 @@ void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl m
         return;
     }
 
+    if (not_monotonic(Nbins+1, binedges, NULL))
+    {
+        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
+        fflush(stderr);
+        return;
+    }
+
     prepare_op(d);
     
     double _binedges[Nbins+1];
     memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    if (d->p->stype == kappa)
+    if (d->p->stype == hmpdf_kappa)
     {
         for (int ii=0; ii<=Nbins; ii++)
         {
-            _binedges[ii] += (mode==uncl) ? d->op->signalmeanu : d->op->signalmeanc;
+            _binedges[ii] += (incl_2h) ? d->op->signalmeanc : d->op->signalmeanu;
         }
     }
 
     bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
            (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
-           (noisy) ?  ((mode==uncl) ? d->op->PDFu_noisy : d->op->PDFc_noisy)
-           : ((mode==uncl) ? d->op->PDFu : d->op->PDFc),
+           (noisy) ?  ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
+           : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
            Nbins, _binedges, out, OPINTERP_TYPE);
 }//}}}
 

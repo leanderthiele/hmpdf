@@ -21,10 +21,10 @@ typedef struct//{{{
 }//}}}
 covariance_t;
 
-void null_covariance(all_data *d);
-void reset_covariance(all_data *d);
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy);
-void get_cov_diagnostics(all_data *d, int *Nphi, double **phi,
-                         double **phiweights, double **corr_diagn);
+void null_covariance(hmpdf_obj *d);
+void reset_covariance(hmpdf_obj *d);
+void hmpdf_get_cov(hmpdf_obj *d, int Nbins, double *binedges, double *out, int noisy);
+void hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi,
+                               double **phiweights, double **corr_diagn);
 
 #endif

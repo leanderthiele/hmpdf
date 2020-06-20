@@ -10,7 +10,7 @@
 #include "hmpdf.h"
 
 static
-void alloc_class(all_data *d)
+void alloc_class(hmpdf_obj *d)
 {//{{{
     d->cls->pr = malloc(sizeof(struct precision));
     d->cls->ba = malloc(sizeof(struct background));
@@ -25,7 +25,7 @@ void alloc_class(all_data *d)
 }//}}}
 
 static
-void run_class(all_data *d)
+void run_class(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\trun_class\n");
     fflush(stdout);
@@ -54,7 +54,7 @@ void run_class(all_data *d)
     SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
 }//}}}
 
-void init_class_interface(all_data *d)
+void init_class_interface(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In class_interface.h -> init_class.\n");
     fflush(stdout);
@@ -88,7 +88,7 @@ void init_class_interface(all_data *d)
     free(argv);
 }//}}}
 
-void null_class_interface(all_data *d)
+void null_class_interface(hmpdf_obj *d)
 {//{{{
     d->cls->pr = NULL;
     d->cls->ba = NULL;
@@ -102,7 +102,7 @@ void null_class_interface(all_data *d)
     d->cls->tr = NULL;
 }//}}}
 
-void reset_class_interface(all_data *d)
+void reset_class_interface(hmpdf_obj *d)
 {//{{{
     if (d->cls->op != NULL) { free(d->cls->op); }
     if (d->cls->le != NULL) { free(d->cls->le); }

@@ -20,7 +20,7 @@
 #define PKINTEGR_EPSABS 0.0
 #define PKINTEGR_EPSREL 1e-6
 
-#define MDEF_GLOBAL mdef_m // FIXME this needs to be automatic
+#define MDEF_GLOBAL hmpdf_mdef_m // FIXME this needs to be automatic
 
 #define CINTERP_NC 10000
 #define CINTERP_CMIN 0.1
@@ -53,12 +53,12 @@
 #define COVINTEGR_N 100 // this is slow but we want to be sure that we pick out
                         //   possible oscillatory behaviour
 
-// TODO go to fixed point integration here
+#define BATTINTEGR_LIMIT 1000
+#define BATTINTEGR_KEY 6
 #define BATTINTEGR_EPSABS 0.0
 #define BATTINTEGR_EPSREL 1e-4
 
-// TODO think about this
-#define TPREG_MAXPHI (2.0/*arcmin*/*M_PI/60.0/180.0)
+#define TP_PHI_EQ_TOL 1e-10
 
 #define PU_R2C_MODE FFTW_MEASURE
 #define PPDF_C2R_MODE FFTW_MEASURE
@@ -79,15 +79,15 @@ struct DEFAULTS {int Ncores; char *class_pre;
                  int Npoints_z; double z_min; double z_max; double z_source;
                  int Npoints_M; double M_min; double M_max;
                  int Npoints_signal; double signal_min; double max_kappa; double max_tsz;
-                 int Npoints_theta; double rout_scale; mdef rout_rdef;
+                 int Npoints_theta; double rout_scale; hmpdf_mdef_e rout_rdef;
                  double pixel_sidelength; double tophat_radius; double gaussian_fwhm;
-                 ell_filter custom_ell_filter; void *custom_ell_filter_params;
-                 k_filter custom_k_filter; void *custom_k_filter_params;
+                 hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;
+                 hmpdf_k_filter_f custom_k_filter; void *custom_k_filter_params;
                  int Nphi; double phimax; int pixelexactmax;
                  double phijitter; double phipwr; int regularize_tp;
                  int monotonize;
-                 integr_mode zintegr_type; double zintegr_alpha; double zintegr_beta;
-                 integr_mode Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
+                 hmpdf_integr_mode_e zintegr_type; double zintegr_alpha; double zintegr_beta;
+                 hmpdf_integr_mode_e Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p;
                  double noise; };
 

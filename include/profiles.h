@@ -12,7 +12,7 @@ typedef struct//{{{
 
     double *Battaglia12_params;
 
-    signaltype stype;
+    hmpdf_signaltype_e stype;
 
     double rout_scale;
     int rout_def;
@@ -42,16 +42,16 @@ typedef struct//{{{
 }//}}}
 profiles_t;
 
-void null_profiles(all_data *d);
-void reset_profiles(all_data *d);
-void init_profiles(all_data *d);
-void create_conj_profiles(all_data *d);
-void create_filtered_profiles(all_data *d);
-void create_breakpoints_or_monotonize(all_data *d);
+void null_profiles(hmpdf_obj *d);
+void reset_profiles(hmpdf_obj *d);
+void init_profiles(hmpdf_obj *d);
+void create_conj_profiles(hmpdf_obj *d);
+void create_filtered_profiles(hmpdf_obj *d);
+void create_breakpoints_or_monotonize(hmpdf_obj *d);
 
-void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s);
-void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, double *s);
-void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq);
-void t_of_s(all_data *d, int z_index, int M_index, double *t);
+void s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
+void s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
+void dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq);
+void t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t);
 
 #endif

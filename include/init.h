@@ -5,6 +5,6 @@
 
 #include "hmpdf.h"
 
-void init(all_data *d, char *class_ini, signaltype stype, ...);
+void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...);
 
 #endif

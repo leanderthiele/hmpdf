@@ -23,8 +23,8 @@ typedef struct//{{{
 }//}}}
 class_interface_t;
 
-void null_class_interface(all_data *d);
-void reset_class_interface(all_data *d);
-void init_class_interface(all_data *d);
+void null_class_interface(hmpdf_obj *d);
+void reset_class_interface(hmpdf_obj *d);
+void init_class_interface(hmpdf_obj *d);
 
 #endif

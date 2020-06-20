@@ -2,7 +2,7 @@
 
 #include "hmpdf.h"
 
-void null_data(all_data *d)
+void null_data(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tnull_data\n");
     fflush(stdout);
@@ -21,11 +21,11 @@ void null_data(all_data *d)
     null_covariance(d);
 }//}}}
 
-all_data *new_data(void)
+hmpdf_obj *hmpdf_new(void)
 {//{{{
     fprintf(stdout, "In data.h -> new_data.\n");
     fflush(stdout);
-    all_data *d = malloc(sizeof(all_data));
+    hmpdf_obj *d = malloc(sizeof(hmpdf_obj));
 
     d->n = malloc(sizeof(numerics_t));
     d->cls = malloc(sizeof(class_interface_t));
@@ -43,7 +43,7 @@ all_data *new_data(void)
     return d;
 }//}}}
 
-void reset_data(all_data *d)
+void reset_data(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In data.h -> reset_data.\n");
     fflush(stdout);
@@ -64,7 +64,7 @@ void reset_data(all_data *d)
     null_data(d);
 }//}}}
 
-void delete_data(all_data *d)
+void hmpdf_delete(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In data.h -> delete_data.\n");
     fflush(stdout);

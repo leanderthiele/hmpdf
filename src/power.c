@@ -13,7 +13,7 @@
 #include "numerics.h"
 #include "power.h"
 
-void null_power(all_data *d)
+void null_power(hmpdf_obj *d)
 {//{{{
     d->pwr->inited_power = 0;
     d->pwr->k_arr = NULL;
@@ -25,7 +25,7 @@ void null_power(all_data *d)
     d->pwr->corr_accel = NULL;
 }//}}}
 
-void reset_power(all_data *d)
+void reset_power(hmpdf_obj *d)
 {//{{{
     if (d->pwr->k_arr != NULL) { free(d->pwr->k_arr); }
     if (d->pwr->Pk_arr != NULL) { free(d->pwr->Pk_arr); }
@@ -52,7 +52,7 @@ void reset_power(all_data *d)
     }
 }//}}}
 
-double Pk_linear(all_data *d, double k)
+double Pk_linear(hmpdf_obj *d, double k)
 // k is logk if LOGK is defined
 {//{{{
     #ifdef LOGK
@@ -90,7 +90,7 @@ double Pk_linear(all_data *d, double k)
 }//}}}
 
 static
-double power_kernel(all_data *d, double k)
+double power_kernel(hmpdf_obj *d, double k)
 // kernel = k^2 P(k) / 2\pi^2
 {//{{{
     #ifdef LOGK
@@ -102,7 +102,7 @@ double power_kernel(all_data *d, double k)
 
 typedef struct
 {//{{{
-    all_data *d;
+    hmpdf_obj *d;
     gsl_function F;
 }//}}}
 power_integrand_params;
@@ -116,7 +116,7 @@ double power_integrand(double k, void *params)
 }//}}}
 
 static
-double power_integral(all_data *d, power_integrand_params *p)
+double power_integral(hmpdf_obj *d, power_integrand_params *p)
 {//{{{
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
@@ -166,7 +166,7 @@ double tophat_Wsqprime(double k, void *params)
 }//}}}
 
 static
-double _ssq(all_data *d, double M, double *dssq)
+double _ssq(hmpdf_obj *d, double M, double *dssq)
 // return sigma^2(M), write d sigma^2 / dlogM into return value
 {//{{{
     double R = cbrt(3.0*M/4.0/M_PI/d->c->rho_m_0);
@@ -183,7 +183,7 @@ double _ssq(all_data *d, double M, double *dssq)
 }//}}}
 
 static
-void create_ssq(all_data *d)
+void create_ssq(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_ssq\n");
     fflush(stdout);
@@ -207,7 +207,7 @@ double autocorr_kernel(double k, void *params)
 }//}}}
 
 static
-double _autocorr(all_data *d)
+double _autocorr(hmpdf_obj *d)
 {//{{{
     power_integrand_params p;
     p.d = d;
@@ -217,14 +217,14 @@ double _autocorr(all_data *d)
 }//}}}
 
 static
-void create_autocorr(all_data *d)
+void create_autocorr(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_autocorr\n");
     fflush(stdout);
     d->pwr->autocorr = _autocorr(d);
 }//}}}
 
-void create_corr(all_data *d)
+void create_corr(hmpdf_obj *d)
 // computes the z=0 matter correlation function
 {//{{{
     if (d->pwr->created_corr) { return; }
@@ -274,7 +274,7 @@ void create_corr(all_data *d)
     d->pwr->created_corr = 1;
 }//}}}
 
-double corr(all_data *d, int z_index, double phi)
+double corr(hmpdf_obj *d, int z_index, double phi)
 {//{{{
     double r = d->c->comoving[z_index] * phi;
     return d->c->Dsq[z_index]
@@ -282,7 +282,7 @@ double corr(all_data *d, int z_index, double phi)
                              d->pwr->corr_accel[this_core()]);
 }//}}}
 
-void init_power(all_data *d)
+void init_power(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In power.h -> init_power :\n");
     fflush(stdout);

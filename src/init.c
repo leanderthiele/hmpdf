@@ -33,7 +33,7 @@ dtype;
 
 typedef struct
 {//{{{
-    configs indx;
+    hmpdf_configs_e indx;
     void *target;
     dtype dt;
     int depends_on_stype;
@@ -42,7 +42,7 @@ typedef struct
 }//}}}
 param;
 
-void init(all_data *d, char *class_ini, signaltype stype, ...)
+void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 {//{{{
     fprintf(stdout, "In init.h -> init.\n");
     fflush(stdout);
@@ -54,9 +54,17 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
 
+    va_list valist;
+    va_start(valist, stype);
+
+    if (d->p->stype == hmpdf_kappa)
+    {
+        d->n->zsource = va_arg(valist, double);
+    }
+
     param p[] = {//{{{
         //indx       target         dt       depst default { kappa, tsz }
-        {hmpdf_N_cores,
+        {hmpdf_N_threads,
             &(d->Ncores),           int_type,     0, {&(def.Ncores), }},
         {hmpdf_class_pre,
             &(d->cls->class_pre),        str_type,     0, {&(def.class_pre), }},
@@ -65,9 +73,7 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         {hmpdf_z_min,
             &(d->n->zmin),      dbl_type,     0, {&(def.z_min), }},
         {hmpdf_z_max,
-            &(d->n->zmax),      dbl_type,     1, {NULL, &(def.z_max)}},
-        {hmpdf_z_source,
-            &(d->n->zsource),       dbl_type,     0, {&(def.z_source), }},
+            &(d->n->zmax),      dbl_type,     1, {&(d->n->zsource), &(def.z_max)}},
         {hmpdf_N_M,
             &(d->n->NM),        int_type,     0, {&(def.Npoints_M), }},
         {hmpdf_M_min,
@@ -110,8 +116,6 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
             &(d->n->phijitter), dbl_type,     0, {&(def.phijitter), }},
         {hmpdf_phi_pwr,
             &(d->n->phipwr),    dbl_type,     0, {&(def.phipwr), }},
-        {hmpdf_regularize_tp,
-            &(d->tp->regularize),   int_type,     0, {&(def.regularize_tp), }},
         {hmpdf_monotonize,
             &(d->n->monotonize),    int_type,     0, {&(def.monotonize), }},
         {hmpdf_zintegr_type,
@@ -142,11 +146,9 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
         p[ii].set = 0;
     }
 
-    va_list valist;
-    va_start(valist, stype);
     for (;;)
     {
-        configs c = va_arg(valist, configs);
+        hmpdf_configs_e c = va_arg(valist, hmpdf_configs_e);
         if (c == hmpdf_end_configs)
         {
             break;
@@ -162,13 +164,13 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
                                  break;
             case (dptr_type)   : *((double **)(p[c].target)) = va_arg(valist, double *);
                                  break;
-            case (mdef_type)   : *((mdef *)(p[c].target)) = va_arg(valist, mdef);
+            case (mdef_type)   : *((hmpdf_mdef_e *)(p[c].target)) = va_arg(valist, hmpdf_mdef_e);
                                  break;
-            case (integr_type) : *((integr_mode *)(p[c].target)) = va_arg(valist, integr_mode);
+            case (integr_type) : *((hmpdf_integr_mode_e *)(p[c].target)) = va_arg(valist, hmpdf_integr_mode_e);
                                  break;
-            case (lf_type)     : *((ell_filter *)(p[c].target)) = va_arg(valist, ell_filter);
+            case (lf_type)     : *((hmpdf_ell_filter_f *)(p[c].target)) = va_arg(valist, hmpdf_ell_filter_f);
                                  break;
-            case (kf_type)     : *((k_filter *)(p[c].target)) = va_arg(valist, k_filter);
+            case (kf_type)     : *((hmpdf_k_filter_f *)(p[c].target)) = va_arg(valist, hmpdf_k_filter_f);
                                  break;
             case (vptr_type)   : *((void **)(p[c].target)) = va_arg(valist, void *);
                                  break;
@@ -212,25 +214,25 @@ void init(all_data *d, char *class_ini, signaltype stype, ...)
                                         *((double **)(p[ii].def[stype]))
                                         : *((double **)(p[ii].def[0]));
                                    break;
-            case (mdef_type)     : *((mdef *)(p[ii].target)) =
+            case (mdef_type)     : *((hmpdf_mdef_e *)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 
-                                        *((mdef *)(p[ii].def[stype]))
-                                        : *((mdef *)(p[ii].def[0]));
+                                        *((hmpdf_mdef_e *)(p[ii].def[stype]))
+                                        : *((hmpdf_mdef_e *)(p[ii].def[0]));
                                    break;
-            case (integr_type)   : *((integr_mode *)(p[ii].target)) =
+            case (integr_type)   : *((hmpdf_integr_mode_e *)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 
-                                        *((integr_mode *)(p[ii].def[stype]))
-                                        : *((integr_mode *)(p[ii].def[0]));
+                                        *((hmpdf_integr_mode_e *)(p[ii].def[stype]))
+                                        : *((hmpdf_integr_mode_e *)(p[ii].def[0]));
+                                   break; 
+            case (lf_type)       : *((hmpdf_ell_filter_f *)(p[ii].target)) =
+                                        (p[ii].depends_on_stype) ? 
+                                        *((hmpdf_ell_filter_f *)(p[ii].def[stype]))
+                                        : *((hmpdf_ell_filter_f *)(p[ii].def[0]));
                                    break;
-            case (lf_type)       : *((ell_filter *)(p[ii].target)) =
+            case (kf_type)       : *((hmpdf_k_filter_f *)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 
-                                        *((ell_filter *)(p[ii].def[stype]))
-                                        : *((ell_filter *)(p[ii].def[0]));
-                                   break;
-            case (kf_type)       : *((k_filter *)(p[ii].target)) =
-                                        (p[ii].depends_on_stype) ? 
-                                        *((k_filter *)(p[ii].def[stype]))
-                                        : *((k_filter *)(p[ii].def[0]));
+                                        *((hmpdf_k_filter_f *)(p[ii].def[stype]))
+                                        : *((hmpdf_k_filter_f *)(p[ii].def[0]));
                                    break;
             case (vptr_type)     : *((void **)(p[ii].target)) =
                                         (p[ii].depends_on_stype) ? 

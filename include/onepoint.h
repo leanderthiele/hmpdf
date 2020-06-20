@@ -18,9 +18,9 @@ typedef struct
 }//}}}
 onepoint_t;
 
-void null_onepoint(all_data *d);
-void reset_onepoint(all_data *d);
-void create_op(all_data *d);
-void get_op(all_data *d, int Nbins, double *binedges, double *out, pdf_cl_uncl mode, int noisy);
+void null_onepoint(hmpdf_obj *d);
+void reset_onepoint(hmpdf_obj *d);
+void create_op(hmpdf_obj *d);
+void hmpdf_get_op(hmpdf_obj *d, int Nbins, double *binedges, double *out, int incl_2h, int noisy);
 
 #endif

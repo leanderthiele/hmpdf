@@ -11,7 +11,7 @@
 #include "data.h"
 #include "halo_model.h"
 
-void null_halo_model(all_data *d)
+void null_halo_model(hmpdf_obj *d)
 {//{{{
     d->h->inited_halo = 0;
     d->h->hmf = NULL;
@@ -20,7 +20,7 @@ void null_halo_model(all_data *d)
     d->h->c_accel = NULL;
 }//}}}
 
-void reset_halo_model(all_data *d)
+void reset_halo_model(hmpdf_obj *d)
 {//{{{
     if (d->h->hmf != NULL)
     {
@@ -53,55 +53,55 @@ void reset_halo_model(all_data *d)
 }//}}}
 
 static
-double DeltaVir_BryanNorman98(all_data *d, int z_index)
+double DeltaVir_BryanNorman98(hmpdf_obj *d, int z_index)
 {//{{{
     double x = d->c->Om[z_index] - 1.0;
     return 18.0*M_PI*M_PI + 82.0*x - 39.0*x*x;
 }//}}}
 
 static
-double density_threshold(all_data *d, int z_index, mdef mdef)
+double density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef)
 {//{{{{
     switch (mdef)
     {
-        case mdef_c : return 200.0 * d->c->rho_c[z_index];
-        case mdef_v : return DeltaVir_BryanNorman98(d, z_index) * d->c->rho_c[z_index];
-        case mdef_m : return 200.0 * d->c->rho_m[z_index];
+        case hmpdf_mdef_c : return 200.0 * d->c->rho_c[z_index];
+        case hmpdf_mdef_v : return DeltaVir_BryanNorman98(d, z_index) * d->c->rho_c[z_index];
+        case hmpdf_mdef_m : return 200.0 * d->c->rho_m[z_index];
         default     : return 0.0;
     }
 }//}}}
 
 static
-double RofM(all_data *d, int z_index, int M_index)
+double RofM(hmpdf_obj *d, int z_index, int M_index)
 {//{{{
     return cbrt(3.0*d->n->Mgrid[M_index]/4.0/M_PI
                 / density_threshold(d, z_index, MDEF_GLOBAL));
 }//}}}
 
 static
-double MofR(all_data *d, int z_index, double R, mdef mdef)
+double MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef)
 {//{{{
     return 4.0*M_PI*density_threshold(d, z_index, mdef)*gsl_pow_3(R)/3.0;
 }//}}}
 
 static
-double _c_Duffy08(all_data *d, double z, double M, mdef mdef)
+double _c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
 {//{{{
     // convert to Msun/h
     M *= d->c->h;
     return d->h->Duffy08_params[(int)mdef*3+0]
-           * pow(M/2.0e12, d->h->Duffy08_params[(int)mdef*3+1])
+           * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
            * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
 }//}}}
 static
-double c_Duffy08(all_data *d, int z_index, int M_index)
+double c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
 {//{{{
     return _c_Duffy08(d, d->n->zgrid[z_index],
                       d->n->Mgrid[M_index],
                       MDEF_GLOBAL);
 }//}}}
 
-double NFW_fundamental(all_data *d, int z_index, int M_index, double *rs)
+double NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rs)
 // returns rhos via function call and rs via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
@@ -112,7 +112,7 @@ double NFW_fundamental(all_data *d, int z_index, int M_index, double *rs)
 }//}}}
 
 static
-void create_c_of_y(all_data *d)
+void create_c_of_y(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_c_of_y\n");
     fflush(stdout);
@@ -137,14 +137,14 @@ void create_c_of_y(all_data *d)
 }//}}}
 
 static
-double c_of_y(all_data *d, double y)
+double c_of_y(hmpdf_obj *d, double y)
 // inverts the function y(c) = 3/c^3 * (log(1+c)-c/(1+c))
 // this function is much smoother on loglog scale, so do the interpolation this way
 {//{{{
     return exp(gsl_spline_eval(d->h->c_interp, log(y), d->h->c_accel[this_core()]));
 }//}}}
 
-double Mconv(all_data *d, int z_index, int M_index, mdef mdef_out, double *R, double *c)
+double Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out, double *R, double *c)
 // returns the converted mass via function call and the new radius and concentration via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
@@ -156,14 +156,14 @@ double Mconv(all_data *d, int z_index, int M_index, mdef mdef_out, double *R, do
 }//}}}
 
 static
-double _fnu_Tinker10_primitive(all_data *d, int n, double z)
+double _fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
 {//{{{
     return d->h->Tinker10_params[n*2]
            *pow(1.0+z, d->h->Tinker10_params[n*2 + 1]);
 }//}}}
 
 static
-double fnu_Tinker10(all_data *d, double nu, double z)
+double fnu_Tinker10(hmpdf_obj *d, double nu, double z)
 {//{{{
     z = (z<3.0) ? z : 3.0;
     double beta  = _fnu_Tinker10_primitive(d, 0, z);
@@ -188,7 +188,7 @@ double bnu_Tinker10(double nu)
 }//}}}
 
 static
-double _dndlogM(all_data *d, int z_index, int M_index, double *bias)
+double _dndlogM(hmpdf_obj *d, int z_index, int M_index, double *bias)
 {//{{{
     double sigma_squared = d->pwr->ssq[M_index][0];
     double sigma_squared_prime = d->pwr->ssq[M_index][1];
@@ -202,7 +202,7 @@ double _dndlogM(all_data *d, int z_index, int M_index, double *bias)
 }//}}}
 
 static
-void create_dndlogM(all_data *d)
+void create_dndlogM(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_dndlogM\n");
     fflush(stdout);
@@ -221,7 +221,7 @@ void create_dndlogM(all_data *d)
     }
 }//}}}
 
-void init_halo_model(all_data *d)
+void init_halo_model(hmpdf_obj *d)
 {//{{{
     if (d->h->inited_halo) { return; }
     fprintf(stdout, "In halo_model.h -> init_halo_model :\n");

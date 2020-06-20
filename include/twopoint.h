@@ -32,19 +32,22 @@ typedef struct//{{{
     complex **ac; // [ z_index, lambda_index ]
     complex *au; // [ lambda_index ] // allocated with fftw_malloc
     
-    int regularize;
+    double last_phi;
 
     // buffer regions --> one for each core
     twopoint_workspace *ws;
+
+    double *pdf;
+    double *pdf_noisy;
 }//}}}
 twopoint_t;
 
 twopoint_workspace *new_tp_ws(int N);
 
-void null_twopoint(all_data *d);
-void reset_twopoint(all_data *d);
-void create_phi_indep(all_data *d);
-void create_tp(all_data *d, double phi, twopoint_workspace *ws);
-void get_tp(all_data *d, double phi, int Nbins, double *binedges, double *out);
+void null_twopoint(hmpdf_obj *d);
+void reset_twopoint(hmpdf_obj *d);
+void create_phi_indep(hmpdf_obj *d);
+void create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws);
+void hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out, int noisy);
 
 #endif

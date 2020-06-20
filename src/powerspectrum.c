@@ -18,7 +18,7 @@
 
 #include "hmpdf.h"
 
-void null_powerspectrum(all_data *d)
+void null_powerspectrum(hmpdf_obj *d)
 {//{{{
     d->ps->created_Cell = 0;
     d->ps->ell = NULL;
@@ -32,7 +32,7 @@ void null_powerspectrum(all_data *d)
     d->ps->Cphi_tot = NULL;
 }//}}}
 
-void reset_powerspectrum(all_data *d)
+void reset_powerspectrum(hmpdf_obj *d)
 {//{{{
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
@@ -44,7 +44,7 @@ void reset_powerspectrum(all_data *d)
     if (d->ps->Cphi_tot != NULL) { free(d->ps->Cphi_tot); }
 }//}}}
 
-int find_Nell(all_data *d)
+int find_Nell(hmpdf_obj *d)
 {//{{{
     int N = 0;
     if (d->f->pixelside > 0.0)
@@ -73,7 +73,7 @@ int find_Nell(all_data *d)
     return N;
 }//}}}
 
-void ps_Mint(all_data *d, int z_index, double *oneh, double *twoh)
+void ps_Mint(hmpdf_obj *d, int z_index, double *oneh, double *twoh)
 // oneh, twoh are d->ps->Nell long
 // this function nulls oneh, twoh first
 // function includes squaring of the two-halo term,
@@ -110,7 +110,7 @@ void ps_Mint(all_data *d, int z_index, double *oneh, double *twoh)
     free(temp);
 }//}}}
 
-void ps_zint(all_data *d, double *oneh, double *twoh)
+void ps_zint(hmpdf_obj *d, double *oneh, double *twoh)
 // oneh, twoh are d->ps->Nell long
 // this function nulls oneh, twoh first
 {//{{{
@@ -146,7 +146,7 @@ void ps_zint(all_data *d, double *oneh, double *twoh)
     free(twoh_z);
 }//}}}
 
-void create_Cell(all_data *d)
+void create_Cell(hmpdf_obj *d)
 {//{{{
     if (d->ps->created_Cell) { return; }
     fprintf(stdout, "\tcreate_Cell\n");
@@ -176,7 +176,7 @@ void create_Cell(all_data *d)
 }//}}}
 
 static
-void create_Cphi(all_data *d)
+void create_Cphi(hmpdf_obj *d)
 {//{{{
     if (d->ps->created_Cphi) { return; }
     fprintf(stdout, "\tcreate_Cphi\n");
@@ -201,13 +201,13 @@ void create_Cphi(all_data *d)
                                    / gsl_dht_x_sample(t, 0));
 
     // 1halo term
-    get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, onehalo);
+    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_onehalo);
     gsl_dht_apply(t, temp_Cell, d->ps->Cphi_1h);
     // 2halo term
-    get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, twohalo);
+    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_twohalo);
     gsl_dht_apply(t, temp_Cell, d->ps->Cphi_2h);
     // total
-    get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, total);
+    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_total);
     gsl_dht_apply(t, temp_Cell, d->ps->Cphi_tot);
     // normalizetion
     for (int ii=0; ii<d->ps->Nell_corr; ii++)
@@ -225,7 +225,7 @@ void create_Cphi(all_data *d)
 }//}}}
 
 static
-void prepare_Cell(all_data *d)
+void prepare_Cell(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In powerspectrum.h -> prepare_Cell.\n");
     fflush(stdout);
@@ -234,7 +234,7 @@ void prepare_Cell(all_data *d)
 }//}}}
 
 static
-void prepare_Cphi(all_data *d)
+void prepare_Cphi(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In powerspectrum.h -> prepare_Cphi :\n");
     fflush(stdout);
@@ -243,16 +243,16 @@ void prepare_Cphi(all_data *d)
     create_Cphi(d);
 }//}}}
 
-void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode)
+void hmpdf_get_Cell(hmpdf_obj *d, int Nell, double *ell, double *Cell, hmpdf_Cell_mode_e mode)
 {//{{{
     prepare_Cell(d);
 
     double *C;
     switch (mode)
     {
-        case onehalo : C = d->ps->Cell_1h; break;
-        case twohalo : C = d->ps->Cell_2h; break;
-        case total   : C = d->ps->Cell_tot; break;
+        case hmpdf_onehalo : C = d->ps->Cell_1h; break;
+        case hmpdf_twohalo : C = d->ps->Cell_2h; break;
+        case hmpdf_total   : C = d->ps->Cell_tot; break;
         default      : fprintf(stderr, "Invalid Cell_mode in get_Cell.\n"); return;
                        fflush(stderr);
     }
@@ -266,16 +266,16 @@ void get_Cell(all_data *d, int Nell, double *ell, double *Cell, Cell_mode mode)
     delete_interp1d(interp);
 }//}}}
 
-void get_Cphi(all_data *d, int Nphi, double *phi, double *Cphi, Cell_mode mode)
+void hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double *phi, double *Cphi, hmpdf_Cell_mode_e mode)
 {//{{{
     prepare_Cphi(d);
 
     double *C;
     switch (mode)
     {
-        case onehalo : C = d->ps->Cphi_1h; break;
-        case twohalo : C = d->ps->Cphi_2h; break;
-        case total   : C = d->ps->Cphi_tot; break;
+        case hmpdf_onehalo : C = d->ps->Cphi_1h; break;
+        case hmpdf_twohalo : C = d->ps->Cphi_2h; break;
+        case hmpdf_total   : C = d->ps->Cphi_tot; break;
         default      : fprintf(stderr, "Invalid Cphi_mode in get_Cphi.\n"); return;
                        fflush(stderr);
     }

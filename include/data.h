@@ -17,7 +17,7 @@
 
 #include "hmpdf.h"
 
-struct all_data_s
+struct hmpdf_obj_s
 {//{{{
     int Ncores;
 
@@ -35,8 +35,8 @@ struct all_data_s
     covariance_t *cov;
 };//}}}
 
-all_data *new_data(void);
-void reset_data(all_data *d);
-void delete_data(all_data *d);
+hmpdf_obj *hmpdf_new(void);
+void reset_data(hmpdf_obj *d);
+void hmpdf_delete(hmpdf_obj *d);
 
 #endif

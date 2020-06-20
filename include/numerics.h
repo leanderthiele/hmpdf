@@ -41,11 +41,11 @@ typedef struct//{{{
 
     // following options have no effect if
     // monotonize is set to false = 0
-    integr_mode zintegr_type;
+    hmpdf_integr_mode_e zintegr_type;
     double zintegr_alpha;
     double zintegr_beta;
 
-    integr_mode Mintegr_type;
+    hmpdf_integr_mode_e Mintegr_type;
     double Mintegr_alpha;
     double Mintegr_beta;
     //
@@ -54,10 +54,14 @@ typedef struct//{{{
 }//}}}
 numerics_t;
 
-void null_numerics(all_data *d);
-void reset_numerics(all_data *d);
+void null_numerics(hmpdf_obj *d);
+void reset_numerics(hmpdf_obj *d);
 double integr_real(int N, double dx, int stride, double *f);
 complex integr_comp(int N, double dx, int stride, complex *f);
-void init_numerics(all_data *d);
+void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
+                       double a, double b, double alpha, double beta,
+                       double *nodes, double *weights,
+                       int neutralize_weights);
+void init_numerics(hmpdf_obj *d);
 
 #endif

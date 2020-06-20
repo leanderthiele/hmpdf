@@ -22,7 +22,7 @@
 #include "filter.h"
 #include "profiles.h"
 
-void null_profiles(all_data *d)
+void null_profiles(hmpdf_obj *d)
 {//{{{
     d->p->inited_profiles = 0;
     d->p->decr_tgrid = NULL;
@@ -41,7 +41,7 @@ void null_profiles(all_data *d)
     d->p->reci_tgrid_accel = NULL;
 }//}}}
 
-void reset_profiles(all_data *d)
+void reset_profiles(hmpdf_obj *d)
 {//{{{
     if (d->p->decr_tgrid != NULL) { free(d->p->decr_tgrid); }
     if (d->p->incr_tgrid != NULL) { free(d->p->incr_tgrid); }
@@ -91,7 +91,7 @@ void reset_profiles(all_data *d)
 }//}}}
 
 static
-void create_angle_grids(struct all_data_s *d)
+void create_angle_grids(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_angle_grids\n");
     fflush(stdout);
@@ -134,7 +134,7 @@ void fix_endpoints(int N, double *x, double *y)
 }//}}}
 
 static
-void kappa_profile(all_data *d, int z_index, int M_index,
+void kappa_profile(hmpdf_obj *d, int z_index, int M_index,
                    double theta_out, double Rout, double *p)
 {//{{{
     // find the NFW parameters
@@ -146,7 +146,6 @@ void kappa_profile(all_data *d, int z_index, int M_index,
     {
         double t = d->p->decr_tgrid[ii] * theta_out;
         double Rproj = tan(t) * d->c->angular_diameter[z_index];
-        double lin = 0.0;
         double lout = sqrt(Rout*Rout - Rproj*Rproj);
 
         if (Rproj > rs)
@@ -171,7 +170,7 @@ void kappa_profile(all_data *d, int z_index, int M_index,
             p[ii] = 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
         // TODO check if rho_m here physical or comoving
-        p[ii] -= 2.0*(lout-lin)*d->c->rho_m[z_index];
+        p[ii] -= 2.0*lout*d->c->rho_m[z_index];
         p[ii] /= d->c->Scrit[z_index];
     }
 }//}}}
@@ -187,7 +186,7 @@ typedef struct
 Battmodel_params;
 
 static
-double _Battmodel_primitive(all_data *d, double M200c, double z, int n)
+double _Battmodel_primitive(hmpdf_obj *d, double M200c, double z, int n)
 {
     return d->p->Battaglia12_params[n*3+0]
            * pow(M200c/1e14, d->p->Battaglia12_params[n*3+1])
@@ -201,47 +200,54 @@ double Battmodel_integrand(double z, void *params)
     return pow(r, p->gamma) / pow(1.0 + pow(r, p->alpha), p->beta);
 }
 static
-void tsz_profile(all_data *d, int z_index, int M_index,
+void tsz_profile(hmpdf_obj *d, int z_index, int M_index,
                  double theta_out, double Rout, double *p)
 {
     // convert to 200c
     double M200c, R200c, c200c;
-    M200c = Mconv(d, z_index, M_index, mdef_c, &R200c, &c200c);
+    M200c = Mconv(d, z_index, M_index, hmpdf_mdef_c, &R200c, &c200c);
     double P0 = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
     double xc = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
+
     // prepare the integration
     Battmodel_params par;
     par.alpha = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
     par.beta  = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
     par.gamma = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
+
     gsl_function integrand;
     integrand.function = &Battmodel_integrand;
     integrand.params = &par;
+    gsl_integration_workspace *ws
+        = gsl_integration_workspace_alloc(BATTINTEGR_LIMIT);
+
     // loop over angles
-    for (int ii=0; ii<d->p->Ntheta; ii++)
+    for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
     {
         double t = d->p->decr_tgrid[ii] * theta_out;
         par.rproj = tan(t) * d->c->angular_diameter[z_index] / R200c / xc;
-        double lin  = 0.0;
         double lout = sqrt(Rout*Rout - par.rproj*par.rproj);
+        
         double err;
-        size_t neval;
-        gsl_integration_qng(&integrand, lin, lout,
+        gsl_integration_qag(&integrand, 0.0, lout,
                             BATTINTEGR_EPSABS, BATTINTEGR_EPSREL,
-                            p+ii, &err, &neval);
+                            BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                            ws, p+ii, &err);
+
         // normalize
         p[ii] *= P0 * xc * M200c * 200.0
-                 // TODO check if rho_c here comoving or physical
-                 * d->c->rho_c[z_index] * d->c->Ob_0/d->c->Om_0
+                 * d->c->rho_c[z_index] * d->c->Ob_0 / d->c->Om_0
                  * GNEWTON * SIGMATHOMSON / MELECTRON / gsl_pow_2(SPEEDOFLIGHT)
                  / 1.932; // convert from thermal to electron pressure
     }
+
+    gsl_integration_workspace_free(ws);
 }
 //}}}
 
 static
-double profile(all_data *d, int z_index, int M_index, double *p)
+double profile(hmpdf_obj *d, int z_index, int M_index, double *p)
 // returns theta_out and writes the profile into return value
 {//{{{
     // find the outer radius on the sky
@@ -250,11 +256,11 @@ double profile(all_data *d, int z_index, int M_index, double *p)
     Rout *= d->p->rout_scale;
     double theta_out = atan(Rout/d->c->angular_diameter[z_index]);
 
-    if (d->p->stype == kappa)
+    if (d->p->stype == hmpdf_kappa)
     {
         kappa_profile(d, z_index, M_index, theta_out, Rout, p);
     }
-    else if (d->p->stype == tsz)
+    else if (d->p->stype == hmpdf_tsz)
     {
         tsz_profile(d, z_index, M_index, theta_out, Rout, p);
     }
@@ -263,7 +269,7 @@ double profile(all_data *d, int z_index, int M_index, double *p)
 }//}}}
 
 static
-void create_profiles(all_data *d)
+void create_profiles(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_profiles\n");
     fflush(stdout);
@@ -285,7 +291,7 @@ void create_profiles(all_data *d)
     }
 }//}}}
 
-void create_conj_profiles(all_data *d)
+void create_conj_profiles(hmpdf_obj *d)
 // computes the conjugate space profiles
 {//{{{
     if (d->p->created_conj_profiles) { return; }
@@ -317,7 +323,7 @@ void create_conj_profiles(all_data *d)
     d->p->created_conj_profiles = 1;
 }//}}}
 
-void create_filtered_profiles(all_data *d)
+void create_filtered_profiles(hmpdf_obj *d)
 {//{{{
     if (d->p->created_filtered_profiles) { return; }
     if (d->f->Nfilters == 0 ) { return; }
@@ -376,7 +382,7 @@ int find_breakpoint(int N, int *x)
 }//}}}
 
 static
-void adjust_breakpoint(all_data *d, int *bp)
+void adjust_breakpoint(hmpdf_obj *d, int *bp)
 {//{{{
     if (GSL_IS_ODD(*bp))
     // we want to do simpson integrations with odd number of sample points
@@ -493,7 +499,7 @@ void monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
     */
 }//}}}
 
-void create_breakpoints_or_monotonize(all_data *d)
+void create_breakpoints_or_monotonize(hmpdf_obj *d)
 {//{{{
     if (d->p->created_breakpoints) { return; }
     fprintf(stdout, "\tcreate_breakpoints_or_monotonize\n");
@@ -545,7 +551,7 @@ void create_breakpoints_or_monotonize(all_data *d)
     d->p->created_breakpoints = 1;
 }//}}}
 
-void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s)
+void s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
 {//{{{
     double *temp = (double *)malloc((d->p->Ntheta+1) * sizeof(double));
@@ -561,7 +567,7 @@ void s_of_t(all_data *d, int z_index, int M_index, int Nt, double *t, double *s)
     delete_interp1d(interp);
 }//}}}
 
-void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, double *s)
+void s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s)
 // returns the conjugate space profile at z_index, M_index,
 //    interpolated at the ell-values passed
 {//{{{
@@ -578,7 +584,7 @@ void s_of_ell(all_data *d, int z_index, int M_index, int Nell, double *ell, doub
     delete_interp1d(interp);
 }//}}}
 
-void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
+void dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq)
 // write dtheta^2(signal)/dsignal*dsignal into return values
 {//{{{
     if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
@@ -599,7 +605,7 @@ void dtsq_of_s(all_data *d, int z_index, int M_index, double *dtsq)
     delete_interp1d(interp);
 }//}}}
 
-void t_of_s(all_data *d, int z_index, int M_index, double *t)
+void t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t)
 // only valid results if monotonize is True
 {//{{{
     if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
@@ -619,7 +625,7 @@ void t_of_s(all_data *d, int z_index, int M_index, double *t)
     delete_interp1d(interp);
 }//}}}
 
-void init_profiles(all_data *d)
+void init_profiles(hmpdf_obj *d)
 {//{{{
     if (d->p->inited_profiles) { return; }
     fprintf(stdout, "In profiles.h -> init_profiles :\n");

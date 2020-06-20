@@ -13,7 +13,7 @@
 #include "data.h"
 #include "filter.h"
 
-void null_filters(all_data *d)
+void null_filters(hmpdf_obj *d)
 {//{{{
     d->f->inited_filters = 0;
     d->f->ffilters = NULL;
@@ -24,7 +24,7 @@ void null_filters(all_data *d)
     d->f->quadraticpixel_ellmax = NULL;
 }//}}}
 
-void reset_filters(all_data *d)
+void reset_filters(hmpdf_obj *d)
 {//{{{
     if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
@@ -89,7 +89,7 @@ static
 double (*Bell[])(double, void *) = {Bell_pdf, Bell_ps};
 
 static
-void _quadraticpixelinterp(all_data *d, filter_mode mode)
+void _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
 {//{{{
     double **Well;
     char fname[512];
@@ -183,7 +183,7 @@ static
 double filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard)
 // assumes called with the physical reci_theta, i.e. reci_theta = j_n_0/theta_out
 {//{{{
-    all_data *_d = (all_data *)d;
+    hmpdf_obj *_d = (hmpdf_obj *)d;
     // rescale ell to unit half pixel sidelenght
     ell *= 0.5 * _d->f->pixelside;
     if (ell < _d->f->quadraticpixel_ellmin[m])
@@ -207,7 +207,7 @@ double filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard)
 static
 double filter_tophat(void *d, double ell, filter_mode m, int *discard)
 {//{{{
-    all_data *_d = (all_data *)d;
+    hmpdf_obj *_d = (hmpdf_obj *)d;
     ell *= _d->f->tophat_radius;
 
     switch (m)
@@ -223,7 +223,7 @@ double filter_tophat(void *d, double ell, filter_mode m, int *discard)
 static
 double filter_gaussian(void *d, double ell, filter_mode m, int *discard)
 {//{{{
-    all_data *_d = (all_data *)d;
+    hmpdf_obj *_d = (hmpdf_obj *)d;
     ell *= _d->f->gaussian_sigma;
 
     switch (m)
@@ -239,7 +239,7 @@ double filter_gaussian(void *d, double ell, filter_mode m, int *discard)
 static
 double filter_custom_ell(void *d, double ell, filter_mode m, int *discard)
 {//{{{
-    all_data *_d = (all_data *)d;
+    hmpdf_obj *_d = (hmpdf_obj *)d;
     double w =  _d->f->custom_ell(ell, _d->f->custom_ell_p);
     switch (m)
     {
@@ -254,7 +254,7 @@ double filter_custom_ell(void *d, double ell, filter_mode m, int *discard)
 static
 double filter_custom_k(void *d, double ell, filter_mode m, int *z_index)
 {//{{{
-    all_data *_d = (all_data *)d;
+    hmpdf_obj *_d = (hmpdf_obj *)d;
     // figure out comoving wavenumber corresponding to ell
     double k = ell / _d->c->comoving[*z_index];
     double w =  _d->f->custom_k(k, _d->n->zgrid[*z_index], _d->f->custom_k_p);
@@ -268,7 +268,7 @@ double filter_custom_k(void *d, double ell, filter_mode m, int *z_index)
     }
 }//}}}
 
-void apply_filters(all_data *d, int N, double *ell, double *in, double *out, int stride, filter_mode mode, int *z_index)
+void apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out, int stride, filter_mode mode, int *z_index)
 // (1) if *z_index == NULL, applies only the z-independent filters
 // (2) if *z_index != NULL and mode == filter_pdf, apply all filters
 // (3)                     and mode == filter_ps,  apply only the z-dependent filters
@@ -297,7 +297,7 @@ void apply_filters(all_data *d, int N, double *ell, double *in, double *out, int
 
 }//}}}
 
-void init_filters(all_data *d)
+void init_filters(hmpdf_obj *d)
 {//{{{
     if (d->f->inited_filters) { return; }
     fprintf(stdout, "In filter.h -> init_filters.\n");

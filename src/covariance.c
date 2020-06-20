@@ -21,7 +21,7 @@
 
 #include "hmpdf.h"
 
-void null_covariance(all_data *d)
+void null_covariance(hmpdf_obj *d)
 {//{{{{
     d->cov->ws = NULL;
     d->cov->Cov = NULL;
@@ -33,7 +33,7 @@ void null_covariance(all_data *d)
     d->cov->created_noisy_cov = 0;
 }//}}}
 
-void reset_covariance(all_data *d)
+void reset_covariance(hmpdf_obj *d)
 {//{{{
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
     if (d->cov->Cov_noisy != NULL) { free(d->cov->Cov_noisy); }
@@ -77,7 +77,7 @@ static int comp_int(const void *a, const void *b)
 }//}}}
 
 static
-void create_phigrid(all_data *d)
+void create_phigrid(hmpdf_obj *d)
 {//{{{
     if (d->cov->created_phigrid) { return; }
     fprintf(stdout, "\tcreate_phigrid\n");
@@ -246,7 +246,7 @@ void create_phigrid(all_data *d)
 }//}}}
 
 static
-void create_tp_ws(all_data *d)
+void create_tp_ws(hmpdf_obj *d)
 {//{{{
     if (d->cov->created_tp_ws) { return; }
     fprintf(stdout, "\tcreate_tp_ws\n");
@@ -280,7 +280,7 @@ void create_tp_ws(all_data *d)
 }//}}}
 
 static
-double corr_diagn(all_data *d, twopoint_workspace *ws)
+double corr_diagn(hmpdf_obj *d, twopoint_workspace *ws)
 {//{{{
     double out = 0.0;
     for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -320,7 +320,7 @@ void add_shotnoise_diag(int N, double *cov, double *p)
 }//}}}
 
 static
-void rescale_to_fsky1(all_data *d, int N, double *cov)
+void rescale_to_fsky1(hmpdf_obj *d, int N, double *cov)
 // divides covariance matrix by number of pixels in the sky
 {//{{{
     double Npixels = 4.0*M_PI/gsl_pow_2(d->f->pixelside);
@@ -331,7 +331,7 @@ void rescale_to_fsky1(all_data *d, int N, double *cov)
 }//}}}
 
 static
-void create_noisy_cov(all_data *d)
+void create_noisy_cov(hmpdf_obj *d)
 {//{{{
     if (d->cov->created_noisy_cov) { return; }
     fprintf(stdout, "\tcreate_noisy_cov\n");
@@ -346,7 +346,7 @@ void create_noisy_cov(all_data *d)
 }//}}}
 
 static
-void create_cov(all_data *d)
+void create_cov(hmpdf_obj *d)
 {//{{{
     if (d->cov->created_cov) { return; }
     fprintf(stdout, "\tcreate_cov\n");
@@ -425,7 +425,7 @@ void create_cov(all_data *d)
 }//}}}
 
 static
-void prepare_cov(all_data *d)
+void prepare_cov(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In covariance.h -> prepare_cov :\n");
     fflush(stdout);
@@ -460,12 +460,19 @@ void prepare_cov(all_data *d)
 
 }//}}}
 
-void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
+void hmpdf_get_cov(hmpdf_obj *d, int Nbins, double *binedges, double *out, int noisy)
 {//{{{
     if (noisy && d->ns->noise<0.0)
     {
-        fprintf(stdout, "Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
-        fflush(stdout);
+        fprintf(stderr, "Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
+        fflush(stderr);
+        return;
+    }
+
+    if (not_monotonic(Nbins+1, binedges, NULL))
+    {
+        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
+        fflush(stderr);
         return;
     }
 
@@ -475,7 +482,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
     // if kappa, adjust the bins
     double _binedges[Nbins+1];
     memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    if (d->p->stype == kappa)
+    if (d->p->stype == hmpdf_kappa)
     {
         for (int ii=0; ii<=Nbins; ii++)
         {
@@ -493,7 +500,7 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
 
     // compute the shot noise term
     double *temp = (double *)malloc(Nbins * sizeof(double));
-    get_op(d, Nbins, binedges, temp, cl, noisy);
+    hmpdf_get_op(d, Nbins, binedges, temp, 1, noisy);
     add_shotnoise_diag(Nbins, out, temp);
     free(temp);
 
@@ -501,13 +508,17 @@ void get_cov(all_data *d, int Nbins, double *binedges, double *out, int noisy)
     rescale_to_fsky1(d, Nbins, out);
 }//}}}
 
-void get_cov_diagnostics(all_data *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)
+void hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)
 {//{{{
     // perform the computation
     prepare_cov(d);
 
     *Nphi = d->n->Nphi;
-    *phi = d->n->phigrid;
-    *phiweights = d->n->phiweights;
-    *corr_diagn = d->cov->corr_diagn;
+    *phi = (double *)malloc(d->n->Nphi * sizeof(double));
+    *phiweights = (double *)malloc(d->n->Nphi * sizeof(double));
+    *corr_diagn = (double *)malloc(d->n->Nphi * sizeof(double));
+
+    memcpy(*phi, d->n->phigrid, d->n->Nphi * sizeof(double));
+    memcpy(*phiweights, d->n->phiweights, d->n->Nphi * sizeof(double));
+    memcpy(*corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
 }//}}}

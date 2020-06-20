@@ -13,17 +13,17 @@
 
 #include "hmpdf.h"
 
-void null_noise(all_data *d)
+void null_noise(hmpdf_obj *d)
 {//{{{
     d->ns->toepl = NULL;
 }//}}}
 
-void reset_noise(all_data *d)
+void reset_noise(hmpdf_obj *d)
 {//{{{
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
 }//}}}
 
-void create_noisy_grids(all_data *d)
+void create_noisy_grids(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_noisy_grids\n");
     fflush(stdout);
@@ -41,7 +41,7 @@ void create_noisy_grids(all_data *d)
     linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
 }//}}}
 
-void create_toepl(all_data *d)
+void create_toepl(hmpdf_obj *d)
 // creates Toeplitz matrix nrows=Nsignal, ncols=Nsignal_noisy
 {//{{{
     fprintf(stdout, "\tcreate_toepl\n");
@@ -66,7 +66,7 @@ void create_toepl(all_data *d)
     }
 }//}}}
 
-void noise_vect(all_data *d, double *in, double *out)
+void noise_vect(hmpdf_obj *d, double *in, double *out)
 // assumes len(in) = Nsignal, len(out) = Nsignal_noisy
 {//{{{
     if (d->ns->toepl == NULL)
@@ -84,7 +84,7 @@ void noise_vect(all_data *d, double *in, double *out)
                 out/*output vector Y*/, 1/*stride of Y*/);
 }//}}}
 
-void noise_matr(all_data *d, double *in, double *out)
+void noise_matr(hmpdf_obj *d, double *in, double *out)
 // assumes [in] = Nsignal*Nsignal, [out] = Nsignal_noisy*Nsignal_noisy
 {//{{{
     if (d->ns->toepl == NULL)
@@ -119,7 +119,7 @@ void noise_matr(all_data *d, double *in, double *out)
     free(temp);
 }//}}}
 
-void init_noise(all_data *d)
+void init_noise(hmpdf_obj *d)
 {//{{{
     if (d->ns->noise > 0.0)
     {

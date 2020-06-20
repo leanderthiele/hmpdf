@@ -11,7 +11,7 @@
 #include "class_interface.h"
 #include "cosmology.h"
 
-void null_cosmology(all_data *d)
+void null_cosmology(hmpdf_obj *d)
 {//{{{
     d->c->inited_cosmo = 0;
     d->c->hubble = NULL;
@@ -24,7 +24,7 @@ void null_cosmology(all_data *d)
     d->c->Om = NULL;
 }//}}}
 
-void reset_cosmology(all_data *d)
+void reset_cosmology(hmpdf_obj *d)
 {//{{{
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }
@@ -37,7 +37,7 @@ void reset_cosmology(all_data *d)
 }//}}}
 
 static
-void alloc_cosmo(all_data *d)
+void alloc_cosmo(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\talloc_cosmo\n");
     fflush(stdout);
@@ -48,14 +48,14 @@ void alloc_cosmo(all_data *d)
     d->c->Om = (double *)malloc(d->n->Nz * sizeof(double));
     d->c->rho_m = (double *)malloc(d->n->Nz * sizeof(double));
     d->c->rho_c = (double *)malloc(d->n->Nz * sizeof(double));
-    if (d->p->stype == kappa)
+    if (d->p->stype == hmpdf_kappa)
     {
         d->c->Scrit = (double *)malloc(d->n->Nz * sizeof(double));
     }
 }//}}}
 
 static
-void fill_background(all_data *d)
+void fill_background(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tfill_background\n");
     fflush(stdout);
@@ -92,7 +92,7 @@ void fill_background(all_data *d)
         d->c->rho_m[z_index] = d->c->Om[z_index] * d->c->rho_c[z_index];
     }
 
-    if (d->p->stype == kappa) // need to compute critical surface density
+    if (d->p->stype == hmpdf_kappa) // need to compute critical surface density
     {
         // find distances to source position
         background_tau_of_z(ba, d->n->zsource, &tau);
@@ -113,7 +113,7 @@ void fill_background(all_data *d)
     free(pvecback);
 }//}}}
 
-void init_cosmology(all_data *d)
+void init_cosmology(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "In cosmology.h -> init_cosmo.\n");
     fflush(stdout);

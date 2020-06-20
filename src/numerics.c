@@ -12,7 +12,7 @@
 #include "data.h"
 #include "numerics.h"
 
-void null_numerics(all_data *d)
+void null_numerics(hmpdf_obj *d)
 {//{{{
     d->n->inited_numerics = 0;
     d->n->zgrid = NULL;
@@ -26,7 +26,7 @@ void null_numerics(all_data *d)
     d->n->phiweights = NULL;
 }//}}}
 
-void reset_numerics(all_data *d)
+void reset_numerics(hmpdf_obj *d)
 {//{{{
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
@@ -40,29 +40,28 @@ void reset_numerics(all_data *d)
 }//}}}
 
 static
-double weight_fct(integr_mode m,
+double weight_fct(hmpdf_integr_mode_e m,
                   double a, double b, double alpha, double beta,
                   double x)
 {//{{{
     switch (m)
     {
-        case legendre    : return 1.0;
-        case chebyshev   : return 1.0 / sqrt((b-x)*(x-a));
-        case gegenbauer  : return pow((b-x)*(x-a), alpha);
-        case jacobi      : return pow(b-x, alpha) * pow(x-a, beta);
-        case laguerre    : return pow(x-a, alpha) * exp(-b*(x-a));
-        case hermite     : return pow(fabs(x-a), alpha) * exp(-b*gsl_pow_2(x-a));
-        case exponential : return pow(fabs(x-0.5*(a+b)), alpha);
-        case rational    : return pow(x-a, alpha) * pow(x+b, beta);
-        case chebyshev2  : return sqrt((b-x)*(x-a));
+        case hmpdf_legendre    : return 1.0;
+        case hmpdf_chebyshev   : return 1.0 / sqrt((b-x)*(x-a));
+        case hmpdf_gegenbauer  : return pow((b-x)*(x-a), alpha);
+        case hmpdf_jacobi      : return pow(b-x, alpha) * pow(x-a, beta);
+        case hmpdf_laguerre    : return pow(x-a, alpha) * exp(-b*(x-a));
+        case hmpdf_hermite     : return pow(fabs(x-a), alpha) * exp(-b*gsl_pow_2(x-a));
+        case hmpdf_exponential : return pow(fabs(x-0.5*(a+b)), alpha);
+        case hmpdf_rational    : return pow(x-a, alpha) * pow(x+b, beta);
+        case hmpdf_chebyshev2  : return sqrt((b-x)*(x-a));
         default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
                            fflush(stderr);
                            return 0.0;
     }
 }//}}}
 
-static
-void gauss_fixed_point(integr_mode m, int N,
+void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
                        double a, double b, double alpha, double beta,
                        double *nodes, double *weights,
                        int neutralize_weights)
@@ -70,15 +69,15 @@ void gauss_fixed_point(integr_mode m, int N,
     const gsl_integration_fixed_type *T;
     switch (m)
     {
-        case legendre    : T = gsl_integration_fixed_legendre; break;
-        case chebyshev   : T = gsl_integration_fixed_chebyshev; break;
-        case gegenbauer  : T = gsl_integration_fixed_gegenbauer; break;
-        case jacobi      : T = gsl_integration_fixed_jacobi; break;
-        case laguerre    : T = gsl_integration_fixed_laguerre; break;
-        case hermite     : T = gsl_integration_fixed_hermite; break;
-        case exponential : T = gsl_integration_fixed_exponential; break;
-        case rational    : T = gsl_integration_fixed_rational; break;
-        case chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
+        case hmpdf_legendre    : T = gsl_integration_fixed_legendre; break;
+        case hmpdf_chebyshev   : T = gsl_integration_fixed_chebyshev; break;
+        case hmpdf_gegenbauer  : T = gsl_integration_fixed_gegenbauer; break;
+        case hmpdf_jacobi      : T = gsl_integration_fixed_jacobi; break;
+        case hmpdf_laguerre    : T = gsl_integration_fixed_laguerre; break;
+        case hmpdf_hermite     : T = gsl_integration_fixed_hermite; break;
+        case hmpdf_exponential : T = gsl_integration_fixed_exponential; break;
+        case hmpdf_rational    : T = gsl_integration_fixed_rational; break;
+        case hmpdf_chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
         default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
                            fflush(stderr);
                            return;
@@ -104,7 +103,7 @@ void gauss_fixed_point(integr_mode m, int N,
 }//}}}
 
 static
-void create_grids(all_data *d)
+void create_grids(hmpdf_obj *d)
 {//{{{
     fprintf(stdout, "\tcreate_grids\n");
     fflush(stdout);
@@ -258,17 +257,13 @@ complex integr_comp(int N, double dx, int stride, complex *f)
     }
 }//}}}
 
-void init_numerics(all_data *d)
+void init_numerics(hmpdf_obj *d)
 {//{{{
     if (d->n->inited_numerics) { return; }
     fprintf(stdout, "In numerics.h -> init_numerics :\n");
     fflush(stdout);
-    create_grids(d);
 
-    // TODO this is somewhat awkward here
-    d->n->zsource = (d->n->zsource < 0.0) ?
-                    d->n->zmax+0.001
-                    : d->n->zsource;
+    create_grids(d);
 
     d->n->inited_numerics = 1;
 }//}}}
