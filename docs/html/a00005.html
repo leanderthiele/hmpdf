@@ -204,6 +204,7 @@ Enumerations</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>W(ell) window function at ell </dd></dl>
 
 </div>
 </div>
@@ -226,6 +227,7 @@ Enumerations</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>W(k,z) window function at k and z </dd></dl>
 
 </div>
 </div>
@@ -330,7 +332,9 @@ Enumerations</h2></td></tr>
 </ul>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428"></a>hmpdf_N_threads&#160;</td><td class="fielddoc"><p>number of threads to use in multithreaded parts of the code. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>only applicable if code compiled with OpenMP. </dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>only applicable if code compiled with OpenMP. </dd>
+<dd>
+this does <em>not</em> control the multithreading behaviour of CLASS </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ad3762c49b7f951bd88e226e6f5ea4dea"></a>hmpdf_class_pre&#160;</td><td class="fielddoc"><p>optional CLASS precision file. </p><dl class="section user"><dt></dt><dd>Type: char *. Default: None (use CLASS's default precision settings). </dd></dl>
 </td></tr>
@@ -387,11 +391,11 @@ negative values have no effect (and will not trigger a warning). </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>negative values have no effect (and will not trigger a warning). </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>PDFs computed with more than 5 arcmin in this setting should be treated with caution. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff"></a>hmpdf_custom_ell_filter&#160;</td><td class="fielddoc"><p>pass a user-defined ell-space filter. Signature of this function pointer has to conform to the typedef <a class="el" href="a00005.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00005.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>. Default: None. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff"></a>hmpdf_custom_ell_filter&#160;</td><td class="fielddoc"><p>pass a user-defined ell-space filter (for example, to include effect of a Wiener filter). Signature of this function pointer has to conform to the typedef <a class="el" href="a00005.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00005.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>. Default: None. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea"></a>hmpdf_custom_ell_filter_params&#160;</td><td class="fielddoc"><p>pass parameters to the ell-space filter (as its last argument). </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871"></a>hmpdf_custom_k_filter&#160;</td><td class="fielddoc"><p>pass a user-defined k-space filter (with possible redshift-dependence). Signature of this function pointer has to conform to the typedef <a class="el" href="a00005.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00005.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>. Default: None. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871"></a>hmpdf_custom_k_filter&#160;</td><td class="fielddoc"><p>pass a user-defined k-space filter, with possible redshift-dependence (for example, to emulate small-scale simulation resolution issues). Signature of this function pointer has to conform to the typedef <a class="el" href="a00005.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00005.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>. Default: None. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0"></a>hmpdf_custom_k_filter_params&#160;</td><td class="fielddoc"><p>pass parameters to the k-space filter (as its last argument). </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
 </td></tr>

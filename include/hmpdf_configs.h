@@ -90,6 +90,7 @@ typedef enum
                     *   \par
                     *   Type: int. Default: 1.
                     *   \remark only applicable if code compiled with OpenMP.
+                    *   \remark this does *not* control the multithreading behaviour of CLASS
                     */
     hmpdf_class_pre, /*!< optional CLASS precision file.
                       *   \par
@@ -186,7 +187,8 @@ typedef enum
                           *   \warning PDFs computed with more than 5 arcmin in this setting should be treated
                           *            with caution.
                           */
-    hmpdf_custom_ell_filter, /*!< pass a user-defined ell-space filter.
+    hmpdf_custom_ell_filter, /*!< pass a user-defined ell-space filter
+                              *   (for example, to include effect of a Wiener filter).
                               *   Signature of this function pointer has to conform
                               *   to the typedef #hmpdf_ell_filter_f.
                               *   \par
@@ -196,7 +198,8 @@ typedef enum
                                      *   \par
                                      *   Type: void *. Default: None.
                                      */
-    hmpdf_custom_k_filter, /*!< pass a user-defined k-space filter (with possible redshift-dependence).
+    hmpdf_custom_k_filter, /*!< pass a user-defined k-space filter, with possible redshift-dependence
+                            *   (for example, to emulate small-scale simulation resolution issues).
                             *   Signature of this function pointer has to conform
                             *   to the typedef #hmpdf_k_filter_f.
                             *   \par
@@ -305,19 +308,21 @@ typedef enum
 
 /*! Function pointer typedef for user-defined ell-space filter.
  *  Passed to hmpdf_init() as #hmpdf_custom_ell_filter.
- *  \param ell  angular wavenumber
- *  \param p    pointer that allows user to pass other parameters.
- *              Passed to hmpdf_init() as #hmpdf_custom_ell_filter_params.
+ *  \param ell      angular wavenumber
+ *  \param p        pointer that allows user to pass other parameters.
+ *                  Passed to hmpdf_init() as #hmpdf_custom_ell_filter_params.
+ *  \return W(ell)  window function at ell
  */
 typedef double (*hmpdf_ell_filter_f)(double,
                                      void *);
 
 /*! Function pointer typedef for user-defined k-space filter.
  *  Passed to hmpdf_init() as #hmpdf_custom_k_filter.
- *  \param k    comoving wavenumber in 1/Mpc
- *  \param z    redshift
- *  \param p    pointer that allows user to pass other parameters.
- *              Passed to hmpdf_init() as #hmpdf_custom_k_filter_params.
+ *  \param k        comoving wavenumber in 1/Mpc
+ *  \param z        redshift
+ *  \param p        pointer that allows user to pass other parameters.
+ *                  Passed to hmpdf_init() as #hmpdf_custom_k_filter_params.
+ *  \return W(k,z)  window function at k and z
  */
 typedef double (*hmpdf_k_filter_f)(double,
                                    double,

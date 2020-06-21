@@ -60,6 +60,7 @@ void op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 static
 complex not_inv_integral(hmpdf_obj *d, int z_index, int M_index, int lambda_index)
 // TODO do this w/ Gauss fixed point (linear weight function)
+// FIXME calling s_of_t for each lambda is super slow!!!
 {//{{{
     complex *integr = (complex *)malloc(d->p->prtilde_Ntheta * sizeof(complex));
     double *temp = (double *)malloc(d->p->prtilde_Ntheta * sizeof(double));
@@ -106,6 +107,7 @@ void op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 // integrals are _added_ to au, ac
 {//{{{
     complex *temp = (complex *)malloc((d->n->Nsignal/2+1) * sizeof(complex));
+    // FIXME parallelize
     for (int M_index=0; M_index<d->p->breakpoints[z_index]; M_index++)
     {
         lambda_loop(d, z_index, M_index, temp);

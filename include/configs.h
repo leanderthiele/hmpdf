@@ -75,21 +75,21 @@
 #define COV_STATUS_PERIOD 100
 //}}}
 
-struct DEFAULTS {int Ncores; char *class_pre;
-                 int Npoints_z; double z_min; double z_max; double z_source;
-                 int Npoints_M; double M_min; double M_max;
-                 int Npoints_signal; double signal_min; double max_kappa; double max_tsz;
-                 int Npoints_theta; double rout_scale; hmpdf_mdef_e rout_rdef;
-                 double pixel_sidelength; double tophat_radius; double gaussian_fwhm;
+struct DEFAULTS {int Ncores[3]; char *class_pre;
+                 int Npoints_z[3]; double z_min[3]; double z_max[3];
+                 int Npoints_M[3]; double M_min[3]; double M_max[3];
+                 int Npoints_signal[3]; double signal_min[3]; double max_kappa[3]; double max_tsz[3];
+                 int Npoints_theta[3]; double rout_scale[3]; hmpdf_mdef_e rout_rdef[3];
+                 double pixel_sidelength[3]; double tophat_radius[3]; double gaussian_fwhm[3];
                  hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;
                  hmpdf_k_filter_f custom_k_filter; void *custom_k_filter_params;
-                 int Nphi; double phimax; int pixelexactmax;
-                 double phijitter; double phipwr; int regularize_tp;
+                 int Nphi[3]; double phimax[3]; int pixelexactmax[3];
+                 double phijitter[3]; double phipwr;
                  int monotonize;
-                 hmpdf_integr_mode_e zintegr_type; double zintegr_alpha; double zintegr_beta;
-                 hmpdf_integr_mode_e Mintegr_type; double Mintegr_alpha; double Mintegr_beta;
+                 hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;
+                 hmpdf_integr_mode_e Mintegr_type[3]; double Mintegr_alpha; double Mintegr_beta;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p;
-                 double noise; };
+                 double noise[3]; };
 
 struct DEFAULTS def;
 

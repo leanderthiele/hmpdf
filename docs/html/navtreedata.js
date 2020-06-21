@@ -25,6 +25,14 @@
 var NAVTREE =
 [
   [ "hmpdf", "index.html", [
+    [ "hmpdf Documentation", "index.html", [
+      [ "Introduction", "index.html#intro", null ],
+      [ "Building", "index.html#build", null ],
+      [ "Usage", "index.html#use", null ],
+      [ "Options", "index.html#opt", null ],
+      [ "Runtime", "index.html#time", null ],
+      [ "Thread safety", "index.html#threads", null ]
+    ] ],
     [ "Files", "files.html", [
       [ "File List", "files.html", "files_dup" ],
       [ "Globals", "globals.html", [

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: Main Page</title>
+<title>hmpdf: hmpdf Documentation</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -91,17 +91,66 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </iframe>
 </div>
 
-<div class="header">
+<div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">hmpdf Documentation</div>  </div>
+<div class="title">hmpdf Documentation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<ul><li><a href="index.html"><span>Main&#160;Page</span></a>
-</li><li><a href="files.html"><span>Files</span></a>
-<ul><li><a href="files.html"><span>File&#160;List</span></a>
-</li><li><a href="globals.html"><span>Globals</span></a>
-</li></ul>
-</li></ul>
+<div class="textblock"><h1><a class="anchor" id="intro"></a>
+Introduction</h1>
+<p>The hmpdf code computes one- and two-point PDFs, the covariance matrix of the one-point PDF, and the angular power spectrum/correlation function of cosmological fields.</p>
+<p>The formalism is based on the halo model, thus, only fields that are mainly sourced by virialized matter make sense.</p>
+<p>Currently, two fields are supported:</p><ul>
+<li>thermal Sunyaev-Zel'dovich effect (Compton-y)</li>
+<li>weak lensing convergence</li>
+</ul>
+<h1><a class="anchor" id="build"></a>
+Building</h1>
+<p>Dependencies:</p><ul>
+<li><a href="http://www.fftw.org/">FFTW3</a></li>
+<li><a href="https://www.gnu.org/software/gsl/">GSL</a></li>
+<li><a href="https://lesgourg.github.io/class_public/class.html">CLASS</a></li>
+</ul>
+<p>Compilation should be straightforward. You may have to edit the following parts of the Makefile:</p><ul>
+<li>adapt PATHTOCLASS to your CLASS installation</li>
+<li>add FFTW3/GSL locations to LINKER if those are non-standard</li>
+<li>remove the OpenMP flag if you do not wish parallel execution</li>
+</ul>
+<h1><a class="anchor" id="use"></a>
+Usage</h1>
+<p>All exposed objects' names start with hmpdf_ to help you keep your name space clean.</p>
+<p>Workflow is as follows:</p><ol type="1">
+<li>allocate a new <a class="el" href="a00011.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00011.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>.</li>
+<li>set all options (required and optional) with <a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a>, this will also compute the data needed for all outputs. See <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for optional inputs.</li>
+<li>get your output (<a class="el" href="a00017.html#a0eba46345726e2eb69190b82cd4e71a5">hmpdf_get_op</a>, <a class="el" href="a00023.html#a307112182c5aeab0de74d1e94266bf05">hmpdf_get_tp</a>, <a class="el" href="a00008.html#ac79be8a617122d39576ba96ed8c31539">hmpdf_get_cov</a>, <a class="el" href="a00020.html#a00fa2754c302fcf3ed64176661fd7af3">hmpdf_get_Cell</a>, <a class="el" href="a00020.html#ac6fbfc5260d7b305452fa32c3e61d10a">hmpdf_get_Cphi</a>).</li>
+<li>go to (3.) if you require any other outputs; go to (2.) if you want to re-run the code with different options.</li>
+<li>free the memory associated with the <a class="el" href="a00011.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00011.html#a9eab1fe0c3c91747a3985839a65e164e">hmpdf_delete()</a>.</li>
+</ol>
+<h1><a class="anchor" id="opt"></a>
+Options</h1>
+<p>There is a number of optional arguments to <a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a>, the most important ones to get you started are</p><ul>
+<li>pixelization: <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></li>
+<li>ell space filters: <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> (and <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>)</li>
+<li>pixel-wise Gaussian noise: <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a></li>
+<li>multithreading: <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></li>
+</ul>
+<p>See the documentation of <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for all options.</p>
+<h1><a class="anchor" id="time"></a>
+Runtime</h1>
+<p>The following are empirically found with standard settings (and only approximate!). All functions scale as <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a3d0fe1b9c6a879c262ff8626012cbe59">hmpdf_N_M</a> x <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574">hmpdf_N_z</a>, this is omitted in the following:</p><ul>
+<li><a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a>: ~3 seconds on a single thread. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a> to <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a>^2. Different if CLASS runtime starts to dominate. <a class="el" href="a00005.html#a217886565815a6572ecbb844dcebe7d7aa097749963cade7cee4edc8c9821bed8">hmpdf_tsz</a> takes longer than <a class="el" href="a00005.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>.</dd></dl>
+</li>
+<li><a class="el" href="a00017.html#a0eba46345726e2eb69190b82cd4e71a5">hmpdf_get_op()</a>: fast if <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8">hmpdf_monotonize</a> is set to non-zero (default), otherwise ~1 min (?) <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a></dd></dl>
+</li>
+<li><a class="el" href="a00023.html#a307112182c5aeab0de74d1e94266bf05">hmpdf_get_tp()</a>: ~1 min on a single thread. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2.</dd></dl>
+</li>
+<li><a class="el" href="a00008.html#ac79be8a617122d39576ba96ed8c31539">hmpdf_get_cov()</a>: ~20 min on 40 threads. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2 x <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2">hmpdf_N_phi</a>.</dd></dl>
+Other functions are fast in comparison to <a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a>. <a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a> and <a class="el" href="a00008.html#ac79be8a617122d39576ba96ed8c31539">hmpdf_get_cov()</a> are parallelized in critical parts, while <a class="el" href="a00023.html#a307112182c5aeab0de74d1e94266bf05">hmpdf_get_tp()</a> does not get faster if <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a> is increased.</li>
+</ul>
+<h1><a class="anchor" id="threads"></a>
+Thread safety</h1>
+<p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00011.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour. </p>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
