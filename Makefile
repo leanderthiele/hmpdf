@@ -5,7 +5,7 @@ CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
-CFLAGS = -std=c99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
+CFLAGS = -std=gnu99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
 OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 
@@ -20,9 +20,9 @@ OBJDIR = ./obj
 OUTDIR = ./lib
 SODIR  = .
 
-.PHONY: objdirectory
+.PHONY: directories
 
-all: objdirectory $(SHARED) $(ARCHIVE)
+all: directories $(SHARED) $(ARCHIVE)
 
 $(SHARED): $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
 	$(CC) -shared -o $(SODIR)/$@ $^ $(LINKER) $(OMPFLAGS)
@@ -33,10 +33,11 @@ $(ARCHIVE): $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(OPTFLAGS) $(OMPFLAGS) -o $@ $<
 
-objdirectory: $(OBJDIR)
+directories: $(OBJDIR)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
+	mkdir -p $(OUTDIR)
 
 .PHONY: clean
 clean:
@@ -44,3 +45,4 @@ clean:
 	rmdir $(OBJDIR)
 	rm $(SODIR)/$(SHARED)
 	rm $(OUTDIR)/$(ARCHIVE)
+	rmdir $(OUTDIR)
