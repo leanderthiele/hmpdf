@@ -14,7 +14,7 @@
  *                  this output array
  *  \param noisy    if set to non-zero, the two-point PDF will be convolved with a Gaussian
  *                  of standard deviation #hmpdf_noise
- *  \return void
+ *  \return errno   error code
  *  
  *  \remark If the two-point PDF has already been computed with the same value of phi
  *          and since then no hmpdf_init() has been called on d
@@ -24,8 +24,8 @@
 int hmpdf_get_tp(hmpdf_obj *d,
                  double phi,
                  int Nbins,
-                 double *binedges,
-                 double *out,
+                 double binedges[Nbins+1],
+                 double out[Nbins*Nbins],
                  int noisy);
 
 

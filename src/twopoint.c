@@ -19,7 +19,7 @@
 int
 null_twopoint(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->tp->created_phi_indep = 0;
     d->tp->dtsq = NULL;
@@ -31,14 +31,13 @@ null_twopoint(hmpdf_obj *d)
     d->tp->pdf = NULL;
     d->tp->pdf_noisy = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_twopoint(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->tp->dtsq != NULL)
     {
@@ -101,20 +100,18 @@ reset_twopoint(hmpdf_obj *d)
     if (d->tp->pdf != NULL) { free(d->tp->pdf); }
     if (d->tp->pdf_noisy != NULL) { free(d->tp->pdf_noisy); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_phi_indep(hmpdf_obj *d)
 // computes tp->dtsq, tp->t, tp->ac
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->tp->created_phi_indep) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_phi_indep\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_phi_indep\n")
     
     SAFEALLOC(, d->tp->dtsq, malloc(d->n->Nz * sizeof(double **)))
     SAFEALLOC(, d->tp->t,    malloc(d->n->Nz * sizeof(double **)))
@@ -189,8 +186,7 @@ create_phi_indep(hmpdf_obj *d)
 
     d->tp->created_phi_indep = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static double
@@ -207,7 +203,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 // creates new tempc_real (nulls first) --> tempc created with fftw_malloc
 // pdf_real, tempc_real are not symmetrized!
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     // null tempc
     for (int ii=0; ii<d->n->Nsignal*(d->n->Nsignal+2); ii++)
@@ -260,8 +256,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
         */
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static complex
@@ -289,7 +284,7 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
 //          + beta12 * (alpha1 + alpha2) * zeta(phi/2)
 // takes care of the zero modes in b12 (a1, a2 are already zeroed)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     *out = 0.0; // to avoid maybe-uninitialized
 
@@ -305,8 +300,7 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
            + a1*a2 * corr1
            + b*(a1 + a2) * corr2;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -314,7 +308,7 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // z-integral of the unclustered terms, without FFT 
 // z-integral of the clustered terms, including FFT (of course)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     // zero the integrals
     for (int ii=0; ii<d->n->Nsignal*(d->n->Nsignal+2); ii++)
@@ -360,15 +354,14 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         }
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // computes one 2pt PDF
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     // perform the redshift integration
     SAFEHMPDF(tp_zint(d, phi, ws))
@@ -408,14 +401,13 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     // perform backward FFT pdf_comp -> pdf_real
     fftw_execute(ws->ppdf_c2r);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_noisy_tp(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->tp->pdf_noisy == NULL)
     {
@@ -427,14 +419,14 @@ create_noisy_tp(hmpdf_obj *d)
 
     SAFEHMPDF(noise_matr(d, d->tp->pdf, d->tp->pdf_noisy))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 new_tp_ws(int N, twopoint_workspace **out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
+
     SAFEALLOC(, *out, malloc(sizeof(twopoint_workspace)))
     twopoint_workspace *ws = *out; // for convenience
 
@@ -473,25 +465,19 @@ new_tp_ws(int N, twopoint_workspace **out)
     ws->tempc_comp = (complex *)(ws->tempc_real);
     ws->pc_r2c = fftw_plan_dft_r2c_2d(N, N, ws->tempc_real, ws->tempc_comp, PC_R2C_MODE);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 prepare_tp(hmpdf_obj *d, double phi)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In twopoint.h -> prepare_tp :\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "prepare_tp\n")
 
     if (!(d->n->monotonize))
     {
-        fprintf(stderr, "Error: Twopoint only possible if monotonize=1.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("twopoint only possible if monotonize=1.")
     }
 
     // run necessary code from other modules
@@ -510,11 +496,7 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(new_tp_ws(d->n->Nsignal, &(d->tp->ws)))
         if (d->tp->ws == NULL)
         {
-            fprintf(stderr, "Error: Out of memory in twopoint.h -> prepare_tp.\n");
-            fflush(stderr);
-            ERRLOC
-            hmpdf_status |= 1;
-            return hmpdf_status;
+            HMPDFERR("OOM.")
         }
     }
 
@@ -537,31 +519,22 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(create_noisy_tp(d))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
-hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out, int noisy)
+hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double out[Nbins*Nbins], int noisy)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (noisy && d->ns->noise<0.0)
     {
-        fprintf(stderr, "Error: noisy twopoint pdf requested but no/invalid noise level passed.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.")
     }
 
     if (not_monotonic(Nbins+1, binedges, NULL))
     {
-        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("binedges not monotonically increasing.")
     }
 
     // perform computation if necessary
@@ -582,14 +555,12 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out,
         }
     }
 
-    fprintf(stdout, "\t\tbinning the twopoint pdf\n");
-    fflush(stdout);
+    HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
                      TPINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

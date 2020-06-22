@@ -65,6 +65,7 @@ typedef enum
  *      + multithreading: #hmpdf_N_threads
  *  
  *  Less frequently used options:
+ *      + verbosity: #hmpdf_verbosity
  *      + halo model fit parameters: #hmpdf_Duffy08_conc_params,
  *                                   #hmpdf_Tinker10_hmf_params,
  *                                   #hmpdf_Battaglia12_tsz_params
@@ -92,6 +93,11 @@ typedef enum
                     *   \remark only applicable if code compiled with OpenMP.
                     *   \remark this does *not* control the multithreading behaviour of CLASS
                     */
+    hmpdf_verbosity, /*!< larger values yield more detailed print output.
+                      *   If 0 (default), only error messages are printed.
+                      *   \par
+                      *   Type: int. Default: 0.
+                      */
     hmpdf_class_pre, /*!< optional CLASS precision file.
                       *   \par
                       *   Type: char *. Default: None (use CLASS's default precision settings).

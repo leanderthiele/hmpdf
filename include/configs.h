@@ -75,7 +75,7 @@
 #define COV_STATUS_PERIOD 100
 //}}}
 
-struct DEFAULTS {int Ncores[3]; char *class_pre;
+struct DEFAULTS {int Ncores[3]; int verbosity; char *class_pre;
                  int Npoints_z[3]; double z_min[3]; double z_max[3];
                  int Npoints_M[3]; double M_min[3]; double M_max[3];
                  int Npoints_signal[3]; double signal_min[3]; double max_kappa[3]; double max_tsz[3];

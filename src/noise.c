@@ -16,32 +16,29 @@
 int
 null_noise(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->ns->toepl = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_noise(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_noisy_grids(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tcreate_noisy_grids\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_noisy_grids\n")
 
     // can in principle make this a user setting
     d->ns->len_kernel = d->n->Nsignal;
@@ -55,18 +52,16 @@ create_noisy_grids(hmpdf_obj *d)
     double smax = d->n->signalmax + extra_signal;
     linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_toepl(hmpdf_obj *d)
 // creates Toeplitz matrix nrows=Nsignal, ncols=Nsignal_noisy
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tcreate_toepl\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_toepl\n")
 
     SAFEALLOC(, d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
                                      * sizeof(double)))
@@ -86,24 +81,18 @@ create_toepl(hmpdf_obj *d)
                (2*d->ns->len_kernel+1) * sizeof(double));
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 noise_vect(hmpdf_obj *d, double *in, double *out)
 // assumes len(in) = Nsignal, len(out) = Nsignal_noisy
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->ns->toepl == NULL)
     {
-        ERRLOC
-        fprintf(stderr, "Error : Toeplitz matrix not computed. "
-                        "Invalid call to noise_vect.\n");
-        fflush(stderr);
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("Toeplitz matrix not computed.")
     }
 
     cblas_dgemv(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
@@ -112,24 +101,18 @@ noise_vect(hmpdf_obj *d, double *in, double *out)
                 in/*input vector X*/, 1/*stride of X*/, 0.0/*beta*/,
                 out/*output vector Y*/, 1/*stride of Y*/);
     
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 noise_matr(hmpdf_obj *d, double *in, double *out)
 // assumes [in] = Nsignal*Nsignal, [out] = Nsignal_noisy*Nsignal_noisy
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->ns->toepl == NULL)
     {
-        ERRLOC
-        fprintf(stderr, "Error : Toeplitz matrix not computed. "
-                        "Invalid call to noise_matr.\n");
-        fflush(stderr);
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("Toeplitz matrix not computed.")
     }
 
     // no aliasing allowed, so we need intermediate storage
@@ -155,24 +138,21 @@ noise_matr(hmpdf_obj *d, double *in, double *out)
 
     free(temp);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 init_noise(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->ns->noise > 0.0)
     {
-        fprintf(stdout, "In noise.h -> init_noise.\n");
-        fflush(stdout);
+        HMPDFPRINT(1, "init_noise\n")
 
         SAFEHMPDF(create_noisy_grids(d))
         SAFEHMPDF(create_toepl(d))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}

@@ -19,7 +19,7 @@ double def_Battaglia12_tsz_params[] = { 18.1  ,  0.154  , -0.758,   // P0
                                          4.35 ,  0.0393 ,  0.415,   // beta
                                         -0.3  ,  0.0    ,  0.0  , };// gamma
 
-struct DEFAULTS def = { .Ncores={1,1,1000}, .class_pre="none",
+struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .class_pre="none",
                         .Npoints_z={65,10,1000}, .z_min={0.0,0.0,6.0}, .z_max={6.0,0.1,10.0},
                         .Npoints_M={65,10,1000}, .M_min={1e11,1e7,1e14}, .M_max={1e16,1e13,1e19},
                         .Npoints_signal={1024,32,100000}, .signal_min={0.0,0.0,0.0},

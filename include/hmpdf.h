@@ -25,8 +25,11 @@
  *
  *  Dependencies:
  *      + <a href="http://www.fftw.org/">FFTW3</a>
- *      + <a href="https://www.gnu.org/software/gsl/">GSL</a>
+ *      + <a href="https://www.gnu.org/software/gsl/">GSL</a> (>= 2.4)
  *      + <a href="https://lesgourg.github.io/class_public/class.html">CLASS</a>
+ *        (as of writing, the latest version has a
+ *         <a href="https://github.com/lesgourg/class_public/issues/329">bug</a>
+ *         that can occasionally cause segfaults; the fix is simple)
  *  
  *  Compilation should be straightforward.
  *  You may have to edit the following parts of the Makefile:
@@ -87,11 +90,31 @@
  *  hmpdf_init() and hmpdf_get_cov() are parallelized in critical parts,
  *  while hmpdf_get_tp() does not get faster if #hmpdf_N_threads is increased.
  *
+ *  \section errrors Error handling
+ *
+ *  All functions [except hmpdf_new()] return a non-zero int if an error occured.
+ *  A traceback will be printed to stderr.
  *
  *  \section threads Thread safety
  *
  *  All functions are *not* threadsafe: making two calls on the same #hmpdf_obj
  *  concurrently results in undefined behaviour.
+ *
+ *  \section examples Examples
+ *
+ *  Some examples are collected in examples/example.c.
+ *  After adding a main function, you can compile it with
+ *  \snippet example.c compile
+ *
+ *  A simple calculation of the weak lensing convergence one-point PDF
+ *  with all settings at default would look like this:
+ *  \snippet example.c example_kappa_onepoint
+ *
+ *  Including the effect of an ell-space filter would look like this:
+ *  \snippet example.c example_ell_filter_use
+ *  Here, we defined the function example_ell_filter conforming to the
+ *  typedef #hmpdf_ell_filter_f:
+ *  \snippet example.c example_ell_filter
  *
  */
 

@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <fenv.h>
-#include <math.h>
 #include <errno.h>
 #include <complex.h>
 
@@ -35,16 +33,17 @@
 //      consider important
 
 //SAFECLASS{{{
-#define SAFECLASS(expr, errmsg)                      \
-    if (UNLIKELY(expr==_FAILURE_))                   \
-    {                                                \
-        fprintf(stderr, "CLASS error %s\n", errmsg); \
-        fflush(stderr);                              \
-        ERRLOC                                       \
-        hmpdf_status = 1;                            \
-        return hmpdf_status;                         \
-    }                                                \
-    errno = 0;                                       \
+#define SAFECLASS(expr, errmsg)                 \
+    if (UNLIKELY(expr==_FAILURE_))              \
+    {                                           \
+        fprintf(stderr, "***CLASS error: %s\n", \
+                        errmsg);                \
+        fflush(stderr);                         \
+        ERRLOC                                  \
+        hmpdf_status = 1;                       \
+        return hmpdf_status;                    \
+    }                                           \
+    errno = 0;                                  \
 //}}}
 
 int hmpdf_status_update(int *status, int result);
@@ -54,7 +53,7 @@ int hmpdf_status_update(int *status, int result);
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                                      expr)))         \
     {                                                \
-        fprintf(stderr, "GSL error %s\n",            \
+        fprintf(stderr, "***GSL error: %s\n",        \
                         gsl_strerror(hmpdf_status)); \
         fflush(stderr);                              \
         ERRLOC                                       \
@@ -68,7 +67,7 @@ int hmpdf_status_update(int *status, int result);
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                             expr)))                  \
     {                                                \
-        fprintf(stderr, "GSL error %s\n",            \
+        fprintf(stderr, "***GSL error: %s\n",        \
                         gsl_strerror(hmpdf_status)); \
         fflush(stderr);                              \
         ERRLOC                                       \
@@ -96,25 +95,25 @@ int hmpdf_status_update(int *status, int result);
 //}}}
 
 //SAFEALLOC{{{
-#define SAFEALLOC(dt,var,expr)           \
-    dt var = expr;                       \
-    if (UNLIKELY(!(var)))                \
-    {                                    \
-        fprintf(stderr, "Error: OOM\n"); \
-        fflush(stderr);                  \
-    }                                    \
-    SAFEHMPDF(!(var))                    \
+#define SAFEALLOC(dt,var,expr)             \
+    dt var = expr;                         \
+    if (UNLIKELY(!(var)))                  \
+    {                                      \
+        fprintf(stderr, "***OOM error\n"); \
+        fflush(stderr);                    \
+    }                                      \
+    SAFEHMPDF(!(var))                      \
 //}}}
 
 //SAFEALLOC_NORETURN{{{
-#define SAFEALLOC_NORETURN(dt,var,expr)  \
-    dt var = expr;                       \
-    if (UNLIKELY(!(var)))                \
-    {                                    \
-        perror("C Error (likely wrong "  \
-               "description)");          \
-    }                                    \
-    SAFEHMPDF_NORETURN(!(var))           \
+#define SAFEALLOC_NORETURN(dt,var,expr)    \
+    dt var = expr;                         \
+    if (UNLIKELY(!(var)))                  \
+    {                                      \
+        fprintf(stderr, "***OOM error\n"); \
+        fflush(stderr);                    \
+    }                                      \
+    SAFEHMPDF_NORETURN(!(var))             \
 //}}}
 
 //CHECKERR{{{
@@ -122,10 +121,49 @@ int hmpdf_status_update(int *status, int result);
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                      errno)))       \
     {                                               \
+        perror("***C error (likely wrong "          \
+               "description)");                     \
         fprintf(stderr, "%s\n", strerror(errno));   \
         fflush(stderr);                             \
         ERRLOC                                      \
     }                                               \
+//}}}
+
+//STARTFCT{{{
+#define STARTFCT          \
+    int hmpdf_status = 0; \
+    errno = 0;            \
+//}}}
+
+//ENDFCT{{{
+#define ENDFCT           \
+    CHECKERR             \
+    return hmpdf_status; \
+//}}}
+
+//HMPDFERR_NORETURN{{{
+#define HMPDFERR_NORETURN(...)           \
+    fprintf(stderr, "***hmpdf error: "); \
+    fprintf(stderr, __VA_ARGS__);        \
+    fprintf(stderr, "\n");               \
+    fflush(stderr);                      \
+    ERRLOC                               \
+    hmpdf_status = 1;                    \
+//}}}
+
+//HMPDFERR{{{
+#define HMPDFERR(...)              \
+    HMPDFERR_NORETURN(__VA_ARGS__) \
+    return hmpdf_status;           \
+//}}}
+
+//HMPDFPRINT{{{
+#define HMPDFPRINT(level, ...)        \
+    if (level <= d->verbosity)        \
+    {                                 \
+        fprintf(stdout, __VA_ARGS__); \
+        fflush(stdout);               \
+    }                                 \
 //}}}
 
 int ispwr2(int N, int *k);

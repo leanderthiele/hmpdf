@@ -1,3 +1,4 @@
+#include "utils.h"
 #include "data.h"
 
 #include "hmpdf.h"
@@ -5,10 +6,9 @@
 int
 null_data(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tnull_data\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tnull_data\n")
 
     SAFEHMPDF(null_numerics(d))
     SAFEHMPDF(null_class_interface(d))
@@ -23,16 +23,12 @@ null_data(hmpdf_obj *d)
     SAFEHMPDF(null_powerspectrum(d))
     SAFEHMPDF(null_covariance(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 hmpdf_obj *hmpdf_new(void)
 {//{{{
-    int hmpdf_status = 0;
-
-    fprintf(stdout, "In data.h -> new_data.\n");
-    fflush(stdout);
+    STARTFCT
 
     SAFEALLOC_NORETURN(hmpdf_obj *, d, malloc(sizeof(hmpdf_obj)))
 
@@ -50,7 +46,7 @@ hmpdf_obj *hmpdf_new(void)
     SAFEALLOC_NORETURN(, d->cov, malloc(sizeof(covariance_t)))
     SAFEHMPDF_NORETURN(null_data(d))
     
-    if (hmpdf_status)
+    if ((hmpdf_status) || (errno))
     {
         return NULL;
     }
@@ -63,10 +59,9 @@ hmpdf_obj *hmpdf_new(void)
 int
 reset_data(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In data.h -> reset_data.\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "reset_data\n")
 
     SAFEHMPDF(reset_numerics(d))
     SAFEHMPDF(reset_cosmology(d))
@@ -83,17 +78,16 @@ reset_data(hmpdf_obj *d)
 
     SAFEHMPDF(null_data(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 hmpdf_delete(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In data.h -> delete_data.\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "delete_data\n")
+
     SAFEHMPDF(reset_data(d))
 
     free(d->cls);
@@ -111,7 +105,6 @@ hmpdf_delete(hmpdf_obj *d)
 
     free(d);
      
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

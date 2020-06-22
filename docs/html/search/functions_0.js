@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['hmpdf_5fdelete_80',['hmpdf_delete',['../a00011.html#a9eab1fe0c3c91747a3985839a65e164e',1,'hmpdf_data.h']]],
-  ['hmpdf_5fget_5fcell_81',['hmpdf_get_Cell',['../a00020.html#a00fa2754c302fcf3ed64176661fd7af3',1,'hmpdf_powerspectrum.h']]],
-  ['hmpdf_5fget_5fcov_82',['hmpdf_get_cov',['../a00008.html#ac79be8a617122d39576ba96ed8c31539',1,'hmpdf_covariance.h']]],
-  ['hmpdf_5fget_5fcov_5fdiagnostics_83',['hmpdf_get_cov_diagnostics',['../a00008.html#a36d32784ac280e084f00ba0fb8503b43',1,'hmpdf_covariance.h']]],
-  ['hmpdf_5fget_5fcphi_84',['hmpdf_get_Cphi',['../a00020.html#ac6fbfc5260d7b305452fa32c3e61d10a',1,'hmpdf_powerspectrum.h']]],
-  ['hmpdf_5fget_5fop_85',['hmpdf_get_op',['../a00017.html#a0eba46345726e2eb69190b82cd4e71a5',1,'hmpdf_onepoint.h']]],
-  ['hmpdf_5fget_5ftp_86',['hmpdf_get_tp',['../a00023.html#a307112182c5aeab0de74d1e94266bf05',1,'hmpdf_twopoint.h']]],
-  ['hmpdf_5finit_87',['hmpdf_init',['../a00014.html#a017cdf8e679bea6e52f6dfb516afaea8',1,'hmpdf_init.h']]],
-  ['hmpdf_5fnew_88',['hmpdf_new',['../a00011.html#ab087598ef780813528136bcde80deed2',1,'hmpdf_data.h']]]
+  ['hmpdf_5fdelete_81',['hmpdf_delete',['../a00029.html#a3ab51e3102e0a3e08341135f5fec99f8',1,'hmpdf_data.h']]],
+  ['hmpdf_5fget_5fcell_82',['hmpdf_get_Cell',['../a00038.html#a2b2b780272724460d05b616068140cf2',1,'hmpdf_powerspectrum.h']]],
+  ['hmpdf_5fget_5fcov_83',['hmpdf_get_cov',['../a00026.html#a09c16a96b3a10beecc52a2d8c7578fac',1,'hmpdf_covariance.h']]],
+  ['hmpdf_5fget_5fcov_5fdiagnostics_84',['hmpdf_get_cov_diagnostics',['../a00026.html#ac6a1a1025cee09dede78b935767325c8',1,'hmpdf_covariance.h']]],
+  ['hmpdf_5fget_5fcphi_85',['hmpdf_get_Cphi',['../a00038.html#abf66b768e57cf7db8551cba341d8d9e2',1,'hmpdf_powerspectrum.h']]],
+  ['hmpdf_5fget_5fop_86',['hmpdf_get_op',['../a00035.html#a62ae09250843195f69fa9430d343f509',1,'hmpdf_onepoint.h']]],
+  ['hmpdf_5fget_5ftp_87',['hmpdf_get_tp',['../a00041.html#a52a9043430fd5ce4c9964727ff9cf869',1,'hmpdf_twopoint.h']]],
+  ['hmpdf_5finit_88',['hmpdf_init',['../a00032.html#a50e240808803a05cbcc912177ebb7087',1,'hmpdf_init.h']]],
+  ['hmpdf_5fnew_89',['hmpdf_new',['../a00029.html#ab087598ef780813528136bcde80deed2',1,'hmpdf_data.h']]]
 ];

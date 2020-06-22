@@ -211,7 +211,7 @@ show(gnuplot *gp)
     }
     fflush(gp->gp);
     wait();
-    fclose(gp->gp);
+    pclose(gp->gp);
     free(gp);
 }//}}}
 
@@ -433,7 +433,7 @@ int
 new_interp1d(int N, double *x, double *y, double ylo, double yhi,
              interp_mode m, gsl_interp_accel *a, interp1d **out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     const gsl_interp_type *T;
     switch (m)
@@ -453,11 +453,7 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
         case interp_steffen          : T = gsl_interp_steffen;
                                        break;
         default                      : T = NULL;
-                                       fprintf(stderr, "Error: Unknown gsl_interp_type.\n");
-                                       fflush(stderr);
-                                       ERRLOC
-                                       hmpdf_status = 1;
-                                       return hmpdf_status;
+                                       HMPDFERR("Unkown interpolation type.")
     }
     SAFEALLOC(, *out, malloc(sizeof(interp1d)))
     (*out)->N = N;
@@ -484,8 +480,7 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
         delete_interp1d(*out);
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 void
@@ -502,7 +497,7 @@ delete_interp1d(interp1d *interp)
 int
 interp1d_eval(interp1d *interp, double x, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (x < interp->x[0])
     {
@@ -518,14 +513,13 @@ interp1d_eval(interp1d *interp, double x, double *out)
                                   interp->a, out))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 interp1d_eval_deriv(interp1d *interp, double x, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (x < interp->x[0])
     {
@@ -541,14 +535,13 @@ interp1d_eval_deriv(interp1d *interp, double x, double *out)
                                         interp->a, out))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 interp1d_eval_integ(interp1d *interp, double a, double b, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     double _a = GSL_MAX(a, interp->x[0]); // _a >= a
     double _b = GSL_MIN(b, interp->x[interp->N-1]); // _b <= b
@@ -563,8 +556,7 @@ interp1d_eval_integ(interp1d *interp, double a, double b, double *out)
         *out += (_a - a) * interp->ylo + (b - _b) * interp->yhi;
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 struct
@@ -586,7 +578,7 @@ new_interp2d(int N, double *x, double *z,
              double zlo, double zhi,
              interp2d_mode m, gsl_interp_accel *a, interp2d **out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     const gsl_interp2d_type *T;
     switch (m)
@@ -596,11 +588,7 @@ new_interp2d(int N, double *x, double *z,
         case interp2d_bicubic  : T = gsl_interp2d_bicubic;
                                  break;
         default                : T = NULL;
-                                 fprintf(stderr, "Unknown gsl_interp2d_type.\n");
-                                 fflush(stderr);
-                                 ERRLOC
-                                 hmpdf_status = 1;
-                                 return hmpdf_status;
+                                 HMPDFERR("Unkown interpolation type.")
     }
     SAFEALLOC(, *out, malloc(sizeof(interp2d)))
     (*out)->N = N;
@@ -626,8 +614,7 @@ new_interp2d(int N, double *x, double *z,
         delete_interp2d(*out);
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 void
@@ -644,7 +631,7 @@ delete_interp2d(interp2d *interp)
 int
 interp2d_eval(interp2d *interp, double x, double y, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (x < interp->x[0] || y < interp->x[0])
     {
@@ -660,8 +647,7 @@ interp2d_eval(interp2d *interp, double x, double y, double *out)
                                     x, y, interp->a, interp->a, out))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 // CAUTION : these binning functions assume that x is equally spaced,
@@ -672,7 +658,7 @@ int
 bin_1d(int N, double *x, double *y,
        int Nbins, double *binedges, double *out, interp_mode m)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     interp1d *interp;
     SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp))
@@ -683,15 +669,14 @@ bin_1d(int N, double *x, double *y,
     }
     delete_interp1d(interp);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 bin_2d(int N, double *x, double *z, int Nsample,
        int Nbins, double *binedges, double *out, interp2d_mode m)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     interp2d *interp;
     SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp))
@@ -728,6 +713,5 @@ bin_2d(int N, double *x, double *z, int Nsample,
     gsl_integration_glfixed_table_free(t);
     delete_interp2d(interp);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}

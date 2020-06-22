@@ -17,12 +17,12 @@ typedef enum
  *  \param ell      array of length Nell
  *  \param Cell     output array, at least Nell long
  *  \param mode     one of #hmpdf_Cell_mode_e
- *  \return void
+ *  \return errno   error code
  */
 int hmpdf_get_Cell(hmpdf_obj *d,
                    int Nell,
-                   double *ell,
-                   double *Cell,
+                   double ell[Nell],
+                   double Cell[Nell],
                    hmpdf_Cell_mode_e mode);
 
 /*! Returns the angular correlation function.
@@ -32,12 +32,12 @@ int hmpdf_get_Cell(hmpdf_obj *d,
  *  \param phi      array of length Nphi
  *  \param Cphi     output array, at least Nphi long
  *  \param mode     one of #hmpdf_Cell_mode_e
- *  \return void
+ *  \return errno   error code
  */
 int hmpdf_get_Cphi(hmpdf_obj *d,
                    int Nphi,
-                   double *phi,
-                   double *Cphi,
+                   double phi[Nphi],
+                   double Cphi[Nphi],
                    hmpdf_Cell_mode_e mode);
 
 

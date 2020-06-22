@@ -13,7 +13,7 @@
 static int
 alloc_class(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEALLOC(, d->cls->pr, malloc(sizeof(struct precision)))
     SAFEALLOC(, d->cls->ba, malloc(sizeof(struct background)))
@@ -26,17 +26,15 @@ alloc_class(hmpdf_obj *d)
     SAFEALLOC(, d->cls->le, malloc(sizeof(struct lensing)))
     SAFEALLOC(, d->cls->op, malloc(sizeof(struct output)))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 run_class(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\trun_class\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\trun_class\n")
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
@@ -45,33 +43,31 @@ run_class(hmpdf_obj *d)
     struct primordial *pm = (struct primordial *)d->cls->pm;
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
-    fprintf(stdout, "\t\tbackground\n");
-    fflush(stdout);
+    HMPDFPRINT(3, "\t\tbackground\n")
     SAFECLASS(background_init(pr, ba), ba->error_message)
-    fprintf(stdout, "\t\tthermodynamics\n");
-    fflush(stdout);
+
+    HMPDFPRINT(3, "\t\tthermodynamics\n")
     SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message)
-    fprintf(stdout, "\t\tperturbs\n");
-    fflush(stdout);
+    
+    HMPDFPRINT(3, "\t\tperturbs\n")
     SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
-    fprintf(stdout, "\t\tprimordial\n");
-    fflush(stdout);
+    
+    HMPDFPRINT(3, "\t\tprimordial\n")
     SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)
-    fprintf(stdout, "\t\tnonlinear\n");
-    fflush(stdout);
+
+    HMPDFPRINT(3, "\t\tnonlinear\n")
     SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 init_class_interface(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In class_interface.h -> init_class.\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "init_class\n")
+
     SAFEALLOC(char **, argv, malloc(3 * sizeof(char *)))
     argv[1] = d->cls->class_ini;
     argv[2] = d->cls->class_pre;
@@ -101,14 +97,13 @@ init_class_interface(hmpdf_obj *d)
 
     free(argv);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 null_class_interface(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->cls->pr = NULL;
     d->cls->ba = NULL;
@@ -121,14 +116,13 @@ null_class_interface(hmpdf_obj *d)
     d->cls->op = NULL;
     d->cls->tr = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_class_interface(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     struct nonlinear *nl;
     struct perturbs *pt;
@@ -176,6 +170,5 @@ reset_class_interface(hmpdf_obj *d)
         free(d->cls->ba); }
     if (d->cls->pr != NULL) { free(d->cls->pr); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}

@@ -11,15 +11,15 @@
  *                  this output array
  *  \param noisy    if set to non-zero, the covariance matrix will include Gaussian noise
  *                  of standard deviation #hmpdf_noise
- *  \return void
+ *  \return errno   error code
  *
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.
  */
 int hmpdf_get_cov(hmpdf_obj *d,
                   int Nbins,
-                  double *binedges,
-                  double *out,
+                  double binedges[Nbins+1],
+                  double out[Nbins*Nbins],
                   int noisy);
 
 /*! Returns diagnostic outputs for the covariance matrix computation.
@@ -37,7 +37,7 @@ int hmpdf_get_cov(hmpdf_obj *d,
  *  \param corr_diagn   pointer will be set to an array of length Nphi,
  *                      containing the correlation function at the pixel separation sample points.
  *                      Noisy behaviour at small phi is a sign of numerical instability.
- *  \return void
+ *  \return errno       error code
  *
  *  \remark the values in the phi-array are not ordered
  *  \remark while the code does perform the memory allocation for phi, phiweights, and corr_diagn

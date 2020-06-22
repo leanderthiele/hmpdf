@@ -18,7 +18,7 @@
 int
 null_onepoint(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->op->created_op = 0;
     d->op->created_noisy_op = 0;
@@ -27,22 +27,20 @@ null_onepoint(hmpdf_obj *d)
     d->op->PDFu_noisy = NULL;
     d->op->PDFc_noisy = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_onepoint(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
     if (d->op->PDFu_noisy != NULL) { free(d->op->PDFu_noisy); }
     if (d->op->PDFc_noisy != NULL) { free(d->op->PDFc_noisy); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -50,7 +48,7 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 // performs the mass integrals, for the invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEALLOC(double *, temp, malloc(d->n->Nsignal * sizeof(double)))
 
@@ -70,8 +68,7 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 
     free(temp);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -79,7 +76,7 @@ not_inv_integral(hmpdf_obj *d, int z_index, int M_index, int lambda_index, compl
 // TODO do this w/ Gauss fixed point (linear weight function)
 // FIXME calling s_of_t for each lambda is super slow!!!
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEALLOC(complex *, integr, malloc(d->p->prtilde_Ntheta * sizeof(complex)))
     SAFEALLOC(double *, temp, malloc(d->p->prtilde_Ntheta * sizeof(double)))
@@ -106,27 +103,25 @@ not_inv_integral(hmpdf_obj *d, int z_index, int M_index, int lambda_index, compl
     }
     */
     // perform the integration
-    complex res = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1), 1, integr);
+    *out = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1), 1, integr);
     free(integr);
     free(temp);
-    *out = res * 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
+    *out *= 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 lambda_loop(hmpdf_obj *d, int z_index, int M_index, complex *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
         SAFEHMPDF(not_inv_integral(d, z_index, M_index, ii, out+ii))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -134,7 +129,7 @@ op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 // performs the mass integration over the non-invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEALLOC(complex *, temp, malloc((d->n->Nsignal/2+1) * sizeof(complex)))
     // FIXME parallelize
@@ -154,14 +149,13 @@ op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 
     free(temp);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEALLOC(double *, ac_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)))
     complex *ac_comp = (complex *)ac_real;
@@ -221,14 +215,13 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
     fftw_destroy_plan(plan_u);
     fftw_destroy_plan(plan_c);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 _mean(int N, double *x, double *p, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     *out = 0.0;
     double norm = 0.0;
@@ -239,33 +232,31 @@ _mean(int N, double *x, double *p, double *out)
     }
     *out /= norm;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 get_mean_signal(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
                     d->op->PDFu, &(d->op->signalmeanu)))
     SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
                     d->op->PDFc, &(d->op->signalmeanc)))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_noisy_op(hmpdf_obj *d)
 // convolves the original PDF with a Gaussian kernel of width sigma = noise
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->op->created_noisy_op) { return hmpdf_status; }
-    fprintf(stdout, "\tcreate_noisy_op\n");
-    fflush(stdout);
+
+    HMPDFPRINT(2, "\tcreate_noisy_op\n")
 
     double *in[] = {d->op->PDFu, d->op->PDFc};
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
@@ -277,19 +268,17 @@ create_noisy_op(hmpdf_obj *d)
 
     d->op->created_noisy_op = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_op(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->op->created_op) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_op\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_op\n")
     
     SAFEALLOC(, d->op->PDFu, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
     SAFEALLOC(, d->op->PDFc, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
@@ -320,18 +309,16 @@ create_op(hmpdf_obj *d)
 
     d->op->created_op = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 prepare_op(hmpdf_obj *d)
 // does the necessary create calls
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In onepoint.h -> prepare_op :\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "prepare_op\n")
 
     if (d->f->Nfilters > 0)
     {
@@ -346,31 +333,22 @@ prepare_op(hmpdf_obj *d)
         SAFEHMPDF(create_noisy_op(d))
     }
     
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
-hmpdf_get_op(hmpdf_obj *d, int Nbins, double *binedges, double *out, int incl_2h, int noisy)
+hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double out[Nbins], int incl_2h, int noisy)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (noisy && d->ns->noise<0.0)
     {
-        fprintf(stderr, "Error: noisy pdf requested but no/invalid noise level passed.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("noisy pdf requested but no/invalid noise level passed.")
     }
 
     if (not_monotonic(Nbins+1, binedges, NULL))
     {
-        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("binedges not monotonically increasing.")
     }
 
     SAFEHMPDF(prepare_op(d))
@@ -391,7 +369,6 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double *binedges, double *out, int incl_2h
                      : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
                      Nbins, _binedges, out, OPINTERP_TYPE))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

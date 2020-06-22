@@ -8,12 +8,17 @@
  *  \param class_ini    path to a CLASS .ini file
  *  \param stype        signal type (either #hmpdf_kappa or #hmpdf_tsz)
  *  \param ...          variable argument list for optional arguments
- *  \return void
+ *  \return errno       error code
  *  
  *  \attention if stype=#hmpdf_kappa, the first entry in ... must be the source
  *             redshift (double)
  *  \attention the last argument in ... must be #hmpdf_end_configs, regardless
  *             of whether ... is empty otherwise.
+ *  \remark    this function performs some basic sanity checks on the user inputs.
+ *             If inputs fall out of recommended bounds,
+ *             an error message will be printed.
+ *             However, execution will continue (for the unlikely case the input was
+ *                                               what you intended it to be).
  *
  *  The syntax to pass additional non-default settings through ... is as follows:
  *  A setting is passed as a pair <name>, <val>, where <name> is one of

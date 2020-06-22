@@ -20,6 +20,7 @@
 struct hmpdf_obj_s
 {//{{{
     int Ncores;
+    int verbosity;
 
     numerics_t *n;
     class_interface_t *cls;

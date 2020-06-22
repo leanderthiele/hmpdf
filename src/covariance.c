@@ -24,7 +24,7 @@
 int
 null_covariance(hmpdf_obj *d)
 {//{{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->cov->ws = NULL;
     d->cov->Cov = NULL;
@@ -35,14 +35,13 @@ null_covariance(hmpdf_obj *d)
     d->cov->created_cov = 0;
     d->cov->created_noisy_cov = 0;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_covariance(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
     if (d->cov->Cov_noisy != NULL) { free(d->cov->Cov_noisy); }
@@ -65,8 +64,7 @@ reset_covariance(hmpdf_obj *d)
         free(d->cov->ws);
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -92,12 +90,12 @@ comp_int(const void *a, const void *b)
 static int
 create_phigrid(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->cov->created_phigrid) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_phigrid\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_phigrid\n");
+
     SAFEALLOC(double *, _phigrid, malloc(2 * d->n->Nphi * sizeof(double)))
     SAFEALLOC(double *, _phiweights, malloc(2 * d->n->Nphi * sizeof(double)))
     // allocate twice as much as we probably need to be safe,
@@ -128,11 +126,7 @@ create_phigrid(hmpdf_obj *d)
         }
         if (Nexact >= d->n->Nphi)
         {
-            fprintf(stderr, "Error: N_phi = %d too small.\n", d->n->Nphi);
-            fflush(stderr);
-            ERRLOC 
-            hmpdf_status |= 1;
-            return hmpdf_status;
+            HMPDFERR("N_phi = %d too small.", d->n->Nphi)
         }
         _phigrid[Nexact] = sqrt((double)(_rsq[ii]))
                                     * d->f->pixelside;
@@ -191,10 +185,9 @@ create_phigrid(hmpdf_obj *d)
 
     if (Nexact > d->n->Nphi)
     {
-        fprintf(stdout, "Error : N_phi = %d too small "
-                        "(suggested increase to at least %d)\n",
-                        d->n->Nphi, 2*Nexact);
-        fflush(stdout);
+        HMPDFERR("N_phi = %d too small "
+                 "(suggested increase at least to %d)",
+                 d->n->Nphi, 2*Nexact)
     }
 
     // now fill the rest of the phi-grid
@@ -234,8 +227,9 @@ create_phigrid(hmpdf_obj *d)
         }
     }
     d->n->Nphi = nn;
-    fprintf(stdout, "\t\tNphi=%d, Nexact=%d\n", d->n->Nphi, Nexact);
-    fflush(stdout);
+    
+    HMPDFPRINT(4, "\t\t\tNphi = %d, Nexact = %d\n", d->n->Nphi, Nexact)
+
     gsl_integration_fixed_free(t);
 
     // now copy into the main grids
@@ -262,21 +256,18 @@ create_phigrid(hmpdf_obj *d)
 
     d->cov->created_phigrid = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_tp_ws(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->cov->created_tp_ws) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_tp_ws\n");
-    fflush(stdout);
-    fprintf(stdout, "\t\tIn create_tp_ws : Trying to allocate workspaces for %d cores.\n", d->Ncores);
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_tp_ws\n")
+    HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d cores.\n", d->Ncores)
     
     SAFEALLOC(, d->cov->ws, malloc(d->Ncores * sizeof(twopoint_workspace *)))
     d->cov->Nws = 0;
@@ -303,29 +294,24 @@ create_tp_ws(hmpdf_obj *d)
 
     if (d->cov->Nws < d->Ncores)
     {
-        fprintf(stdout, "\t\tAllocated only %d workspaces.\n", d->cov->Nws);
-        fflush(stdout);
+        HMPDFPRINT(1, "Allocated only %d workspaces, "
+                      "because memory ran out.\n", d->cov->Nws);
     }
 
     if (d->cov->Nws < 1)
     {
-        fprintf(stderr, "Error: No workspaces allocated.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status = 1;
-        return hmpdf_status;
+        HMPDFERR("No workspaces allocated.")
     }
 
     d->cov->created_tp_ws = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     *out = 0.0;
     for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -339,14 +325,13 @@ corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
         }
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 status_update(time_t t0, int done, int tot)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     time_t t1 = time(NULL);
     double delta_time = difftime(t1, t0);
@@ -359,29 +344,27 @@ status_update(time_t t0, int done, int tot)
                     "in create_cov.\n", done_perc, hrs, min);
     fflush(stdout);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 add_shotnoise_diag(int N, double *cov, double *p)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     for (int ii=0; ii<N; ii++)
     {
         cov[ii*(N+1)] += p[ii];
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 rescale_to_fsky1(hmpdf_obj *d, int N, double *cov)
 // divides covariance matrix by number of pixels in the sky
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     double Npixels = 4.0*M_PI/gsl_pow_2(d->f->pixelside);
     for (int ii=0; ii<N*N; ii++)
@@ -389,19 +372,17 @@ rescale_to_fsky1(hmpdf_obj *d, int N, double *cov)
         cov[ii] /= Npixels;
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_noisy_cov(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->cov->created_noisy_cov) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_noisy_cov\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_noisy_cov\n")
 
     SAFEALLOC(, d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
                                           * d->n->Nsignal_noisy
@@ -410,18 +391,17 @@ create_noisy_cov(hmpdf_obj *d)
 
     d->cov->created_noisy_cov = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_cov(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->cov->created_cov) { return hmpdf_status; }
-    fprintf(stdout, "\tcreate_cov\n");
-    fflush(stdout);
+
+    HMPDFPRINT(2, "\tcreate_cov\n")
 
     // allocate storage
     SAFEALLOC(, d->cov->Cov, malloc(d->n->Nsignal * d->n->Nsignal
@@ -475,7 +455,7 @@ create_cov(hmpdf_obj *d)
         #endif
         {
             ++Nstatus;
-            if (Nstatus%COV_STATUS_PERIOD == 0)
+            if ((Nstatus%COV_STATUS_PERIOD == 0) && (d->verbosity > 0))
             {
                 SAFEHMPDF_NORETURN(status_update(start_time, Nstatus, d->n->Nphi))
             }
@@ -501,17 +481,15 @@ create_cov(hmpdf_obj *d)
 
     d->cov->created_cov = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 prepare_cov(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In covariance.h -> prepare_cov :\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "prepare_cov\n")
 
     // run necessary code from other modules
     if (d->f->Nfilters > 0)
@@ -541,31 +519,22 @@ prepare_cov(hmpdf_obj *d)
         SAFEHMPDF(create_noisy_cov(d))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
-hmpdf_get_cov(hmpdf_obj *d, int Nbins, double *binedges, double *out, int noisy)
+hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double out[Nbins*Nbins], int noisy)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (noisy && d->ns->noise<0.0)
     {
-        fprintf(stderr, "Error: noisy cov-matrix requested but no/invalid noise level passed.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.")
     }
 
     if (not_monotonic(Nbins+1, binedges, NULL))
     {
-        fprintf(stderr, "Error: binedges not monotonically increasing.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status |= 1;
-        return hmpdf_status;
+        HMPDFERR("binedges not monotonically increasing.")
     }
 
     // perform the computation
@@ -583,8 +552,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double *binedges, double *out, int noisy)
     }
 
     // perform the binning
-    fprintf(stdout, "\t\tbinning the covariance matrix\n");
-    fflush(stdout);
+    HMPDFPRINT(3, "\t\tbinning the covariance matrix\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->cov->Cov_noisy : d->cov->Cov,
@@ -599,14 +567,13 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double *binedges, double *out, int noisy)
     // normalize properly
     SAFEHMPDF(rescale_to_fsky1(d, Nbins, out))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     // perform the computation
     SAFEHMPDF(prepare_cov(d))
@@ -620,6 +587,5 @@ hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiwei
     memcpy(*phiweights, d->n->phiweights, d->n->Nphi * sizeof(double));
     memcpy(*corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}

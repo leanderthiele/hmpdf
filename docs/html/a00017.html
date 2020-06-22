@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: hmpdf_onepoint.h File Reference</title>
+<title>hmpdf: hmpdf.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -92,91 +92,25 @@ $(document).ready(function(){initNavTree('a00017.html',''); initResizable(); });
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">hmpdf_onepoint.h File Reference</div>  </div>
+<div class="title">hmpdf.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a0eba46345726e2eb69190b82cd4e71a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00017.html#a0eba46345726e2eb69190b82cd4e71a5">hmpdf_get_op</a> (<a class="el" href="a00011.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double *binedges, double *out, int incl_2h, int noisy)</td></tr>
-<tr class="separator:a0eba46345726e2eb69190b82cd4e71a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a0eba46345726e2eb69190b82cd4e71a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0eba46345726e2eb69190b82cd4e71a5">&#9670;&nbsp;</a></span>hmpdf_get_op()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void hmpdf_get_op </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00011.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
-          <td class="paramname"><em>d</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>Nbins</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>binedges</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>out</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>incl_2h</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>noisy</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Returns the one-point PDF.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td><a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a> must have been called on d </td></tr>
-    <tr><td class="paramname">Nbins</td><td>number of bins the one-point PDF will be binned into </td></tr>
-    <tr><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
-    <tr><td class="paramname">out</td><td>the binned one-point PDF will be written into the first Nbins elements of this output array </td></tr>
-    <tr><td class="paramname">incl_2h</td><td>if set to non-zero, the two-halo term (i.e. halo clustering) will be included in the output PDF </td></tr>
-    <tr><td class="paramname">noisy</td><td>if set to non-zero, the one-point PDF will be convolved with a Gaussian of standard deviation <a class="el" href="a00005.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a> </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>void</dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>if the one-point PDF has already been computed and since then no <a class="el" href="a00014.html#a017cdf8e679bea6e52f6dfb516afaea8">hmpdf_init()</a> has been called on d, the pre-computed result is used and only the binning is performed. </dd></dl>
-
-</div>
-</div>
-</div><!-- contents -->
+<div class="textblock"><code>#include &quot;<a class="el" href="a00026.html">hmpdf_data.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00020.html">hmpdf_configs.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00029.html">hmpdf_init.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00032.html">hmpdf_onepoint.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00038.html">hmpdf_twopoint.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00023.html">hmpdf_covariance.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="a00035.html">hmpdf_powerspectrum.h</a>&quot;</code><br />
+</div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>For convenience, you can just include this single header file. </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00017.html">hmpdf_onepoint.h</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00017.html">hmpdf.h</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.18 </li>

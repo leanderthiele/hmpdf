@@ -18,6 +18,7 @@
 #include "hmpdf.h"
 
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
 
 typedef enum
 {//{{{
@@ -120,11 +121,13 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
 static int 
 init_params(hmpdf_obj *d, param *p)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     int ctr = 0;
     INIT_P_B(hmpdf_N_threads,
              d->Ncores, int_type, def.Ncores)
+    INIT_P(hmpdf_verbosity,
+           d->verbosity, int_type, def.verbosity)
     INIT_P(hmpdf_class_pre,
            d->cls->class_pre, str_type, def.class_pre)
     INIT_P_B(hmpdf_N_z,
@@ -200,15 +203,10 @@ init_params(hmpdf_obj *d, param *p)
 
     if (ctr != hmpdf_end_configs)
     {
-        fprintf(stderr, "In init_params not all params filled, "
-                        "ctr = %d.\n", ctr);
-        fflush(stderr);
-        ERRLOC;
-        hmpdf_status |= 1;
+        HMPDFERR("Not all params filled, ctr = %d.", ctr)
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 #undef INIT_P
@@ -245,13 +243,12 @@ init_params(hmpdf_obj *d, param *p)
 static int 
 assign_set(param *p, va_list *valist, int *invalid_param)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     int comparable = (p->dt < end_comparable_dtypes) ? 1 : 0;
-    DT_DEP_ACTION(p->dt, ASSIGN_SET);
+    DT_DEP_ACTION(p->dt, ASSIGN_SET)
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 #undef ASSIGN_SET
@@ -265,12 +262,11 @@ assign_set(param *p, va_list *valist, int *invalid_param)
 static int
 assign_def(param *p)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    DT_DEP_ACTION(p->dt, ASSIGN_DEF);
+    DT_DEP_ACTION(p->dt, ASSIGN_DEF)
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 #undef ASSIGN_DEF
@@ -296,12 +292,11 @@ assign_def(param *p)
 static int
 printval(FILE *f, void *val, dtype dt)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    DT_DEP_ACTION(dt, PRINTVAL);
+    DT_DEP_ACTION(dt, PRINTVAL)
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 #undef FMT
@@ -311,9 +306,9 @@ printval(FILE *f, void *val, dtype dt)
 static int
 invalid_param_error(param *p)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stderr, "Error: option passed for %s "
+    fprintf(stderr, "***Warning: option passed for %s "
                     "is out of recommended bounds:\n"
                     "you passed ", p->name);
     SAFEHMPDF(printval(stderr, p->target, p->dt))
@@ -327,28 +322,26 @@ invalid_param_error(param *p)
     fflush(stderr);
     ERRLOC
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 unit_conversions(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->n->phimax *= M_PI/180.0/60.0;
     d->f->pixelside *= M_PI/180.0/60.0;
     d->f->tophat_radius *= M_PI/180.0/60.0;
     d->f->gaussian_sigma *= M_PI/180.0/60.0/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 compute_necessary_for_all(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEHMPDF(init_numerics(d))
     SAFEHMPDF(init_class_interface(d))
@@ -359,19 +352,18 @@ compute_necessary_for_all(hmpdf_obj *d)
     SAFEHMPDF(init_profiles(d))
     SAFEHMPDF(init_noise(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 {//{{{
+    STARTFCT
+
     gsl_set_error_handler_off();
 
-    int hmpdf_status = 0;
+    HMPDFPRINT(1, "hmpdf_init\n")
 
-    fprintf(stdout, "In init.h -> init.\n");
-    fflush(stdout);
     // this frees all the computed quantities,
     // since we assume that each call of init changes some
     // parameter (cosmological or numerical)
@@ -379,6 +371,10 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
+    if ((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa))
+    {
+        HMPDFERR("Invalid signal type %d.", d->p->stype)
+    }
 
     va_list valist;
     va_start(valist, stype);
@@ -386,6 +382,10 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     if (d->p->stype == hmpdf_kappa)
     {
         d->n->zsource = va_arg(valist, double);
+    }
+    if ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0))
+    {
+        HMPDFERR("Invalid source redshift %g.", d->n->zsource);
     }
 
     SAFEALLOC(param *, p, malloc((int)(hmpdf_end_configs) * sizeof(param)))
@@ -426,7 +426,7 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     #ifndef _OPENMP
     if (d->Ncores > 1)
     {
-        fprintf(stdout, "Warning : You requested N_cores = %d, "
+        fprintf(stdout, "***Warning: You specified hmpdf_N_threads = %d, "
                         "but code is compiled without OpenMP.\n",
                         d->Ncores);
         fflush(stdout);
@@ -439,7 +439,6 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     // compute things that we need for all output products
     SAFEHMPDF(compute_necessary_for_all(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

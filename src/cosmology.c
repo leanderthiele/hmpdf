@@ -14,7 +14,7 @@
 int
 null_cosmology(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->c->inited_cosmo = 0;
     d->c->hubble = NULL;
@@ -26,14 +26,13 @@ null_cosmology(hmpdf_obj *d)
     d->c->rho_c = NULL;
     d->c->Om = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_cosmology(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }
@@ -44,17 +43,16 @@ reset_cosmology(hmpdf_obj *d)
     if (d->c->rho_c != NULL) { free(d->c->rho_c); }
     if (d->c->Om != NULL) { free(d->c->Om); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 alloc_cosmo(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\talloc_cosmo\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\talloc_cosmo\n")
+
     SAFEALLOC(, d->c->hubble, malloc(d->n->Nz * sizeof(double)))
     SAFEALLOC(, d->c->comoving, malloc(d->n->Nz * sizeof(double)))
     SAFEALLOC(, d->c->angular_diameter, malloc(d->n->Nz * sizeof(double)))
@@ -67,17 +65,16 @@ alloc_cosmo(hmpdf_obj *d)
         SAFEALLOC(, d->c->Scrit, malloc(d->n->Nz * sizeof(double)))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 fill_background(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tfill_background\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tfill_background\n")
+
     double tau; // conformal time in Mpc
     int index = 0; // some internal CLASS thing
 
@@ -135,21 +132,19 @@ fill_background(hmpdf_obj *d)
 
     free(pvecback);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 init_cosmology(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In cosmology.h -> init_cosmo.\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "init_cosmo\n")
+
     SAFEHMPDF(alloc_cosmo(d))
     SAFEHMPDF(fill_background(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

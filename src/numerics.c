@@ -14,7 +14,7 @@
 int
 null_numerics(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->n->inited_numerics = 0;
     d->n->zgrid = NULL;
@@ -27,14 +27,13 @@ null_numerics(hmpdf_obj *d)
     d->n->phigrid = NULL;
     d->n->phiweights = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_numerics(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
@@ -46,8 +45,7 @@ reset_numerics(hmpdf_obj *d)
     if (d->n->phigrid != NULL) { free(d->n->phigrid); }
     if (d->n->phiweights != NULL) { free(d->n->phiweights); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -55,7 +53,7 @@ weight_fct(hmpdf_integr_mode_e m,
            double a, double b, double alpha, double beta,
            double x, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     switch (m)
     {
@@ -69,15 +67,10 @@ weight_fct(hmpdf_integr_mode_e m,
         case hmpdf_rational    : *out = pow(x-a, alpha) * pow(x+b, beta); break;
         case hmpdf_chebyshev2  : *out = sqrt((b-x)*(x-a)); break;
         default                : *out = 0.0; // to avoid maybe-unitialized
-                                 fprintf(stderr, "Error: Unknown gsl_integration_fixed_type.\n");
-                                 fflush(stderr);
-                                 ERRLOC
-                                 hmpdf_status |= 1;
-                                 break;
+                                 HMPDFERR("Unknown integration mode.")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
@@ -86,7 +79,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
                   double *nodes, double *weights,
                   int neutralize_weights)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     const gsl_integration_fixed_type *T;
     switch (m)
@@ -101,11 +94,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         case hmpdf_rational    : T = gsl_integration_fixed_rational; break;
         case hmpdf_chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
         default                : T = NULL;
-                                 fprintf(stderr, "Error: Unknown gsl_integration_fixed_type.\n");
-                                 fflush(stderr);
-                                 ERRLOC;
-                                 hmpdf_status = 1;
-                                 return hmpdf_status;
+                                 HMPDFERR("Unknown integration mode.")
     }
     SAFEALLOC(gsl_integration_fixed_workspace *, ws,
               gsl_integration_fixed_alloc(T, N, a, b, alpha, beta))
@@ -127,17 +116,16 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
     }
     gsl_integration_fixed_free(ws);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_grids(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tcreate_grids\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_grids\n")
+
     SAFEALLOC(, d->n->zgrid,    malloc(d->n->Nz * sizeof(double)))
     SAFEALLOC(, d->n->zweights, malloc(d->n->Nz * sizeof(double)))
     SAFEHMPDF(gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
@@ -170,8 +158,7 @@ create_grids(hmpdf_obj *d)
              0.0, M_PI/(d->n->signalgrid[1]-d->n->signalgrid[0]),
              d->n->lambdagrid);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static
@@ -297,17 +284,16 @@ complex integr_comp(int N, double dx, int stride, complex *f)
 int
 init_numerics(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->n->inited_numerics) { return hmpdf_status; }
-    fprintf(stdout, "In numerics.h -> init_numerics :\n");
-    fflush(stdout);
+
+    HMPDFPRINT(1, "init_numerics\n")
 
     SAFEHMPDF(create_grids(d))
 
     d->n->inited_numerics = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

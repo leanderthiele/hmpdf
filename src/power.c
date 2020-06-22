@@ -16,7 +16,7 @@
 int
 null_power(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->pwr->inited_power = 0;
     d->pwr->ssq = NULL;
@@ -24,14 +24,13 @@ null_power(hmpdf_obj *d)
     d->pwr->corr_interp = NULL;
     d->pwr->corr_accel = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_power(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->pwr->ssq != NULL)
     {
@@ -54,15 +53,14 @@ reset_power(hmpdf_obj *d)
         free(d->pwr->corr_accel);
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 Pk_linear(hmpdf_obj *d, double k, double *out)
 // k is logk if LOGK is defined
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     #ifdef LOGK
     k = exp(k);
@@ -72,37 +70,28 @@ Pk_linear(hmpdf_obj *d, double k, double *out)
     struct primordial *pm = (struct primordial *)d->cls->pm;
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
-    if (nonlinear_pk_at_k_and_z(ba, pm, nl,
-                                pk_linear, k, 0.0,
-                                nl->index_pk_total,
-                                out, NULL) == _FAILURE_)
+    // check if we are at wavenumbers not covered by CLASS interpolator
+    if (UNLIKELY(log(k) > nl->ln_k[nl->k_size-1]))
     {
-        double lnk = log(k);
-        if (lnk > nl->ln_k[nl->k_size-1])
-        // check if k falls out of bounds,
-        //    maximum k needs to be set large enough that linear power is
-        //    essentially zero for larger wavenumbers
-        {
-            *out = 0.0;
-        }
-        else
-        {
-            fprintf(stderr, "CLASS error %s\n", nl->error_message);
-            fflush(stderr);
-            ERRLOC;
-            hmpdf_status |= 1;
-        }
+        *out = 0.0;
+    }
+    else
+    {
+        SAFECLASS(nonlinear_pk_at_k_and_z(ba, pm, nl,
+                                          pk_linear, k, 0.0,
+                                          nl->index_pk_total,
+                                          out, NULL),
+                  nl->error_message)
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 power_kernel(hmpdf_obj *d, double k, double *out)
 // kernel = k^2 P(k) / 2\pi^2
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     SAFEHMPDF(Pk_linear(d, k, out));
     #ifdef LOGK
@@ -111,8 +100,7 @@ power_kernel(hmpdf_obj *d, double k, double *out)
     *out *= k*k/2.0/M_PI/M_PI;
     #endif
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 typedef struct
@@ -137,7 +125,8 @@ power_integrand(double k, void *params)
 static int
 power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
+
     p->hmpdf_status = 0;
 
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
@@ -164,8 +153,7 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
 
     hmpdf_status |= p->hmpdf_status;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static double
@@ -195,7 +183,7 @@ static int
 _ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
 // return sigma^2(M), write d sigma^2 / dlogM into return value
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     double R = cbrt(3.0*M/4.0/M_PI/d->c->rho_m_0);
 
@@ -210,17 +198,15 @@ _ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
     p.F.function = tophat_Wsq;
     SAFEHMPDF(power_integral(d, &p, ssq))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_ssq(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tcreate_ssq\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_ssq\n")
 
     SAFEALLOC(, d->pwr->ssq, malloc(d->n->NM * sizeof(double*)))
     for (int M_index=0; M_index<d->n->NM; M_index++)
@@ -231,8 +217,7 @@ create_ssq(hmpdf_obj *d)
                        d->pwr->ssq[M_index]+1))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static double
@@ -248,7 +233,7 @@ autocorr_kernel(double k, void *params)
 static int
 _autocorr(hmpdf_obj *d, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     power_integrand_params p;
     p.d = d;
@@ -256,33 +241,30 @@ _autocorr(hmpdf_obj *d, double *out)
     p.F.function = autocorr_kernel;
     SAFEHMPDF(power_integral(d, &p, out))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 create_autocorr(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "\tcreate_autocorr\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_autocorr\n")
+
     SAFEHMPDF(_autocorr(d, &(d->pwr->autocorr)))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 create_corr(hmpdf_obj *d)
 // computes the z=0 matter correlation function
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->pwr->created_corr) { return hmpdf_status; }
 
-    fprintf(stdout, "\tcreate_corr_interp\n");
-    fflush(stdout);
+    HMPDFPRINT(2, "\tcreate_corr_interp\n")
     
     double rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
     gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, rmax);
@@ -330,14 +312,13 @@ create_corr(hmpdf_obj *d)
 
     d->pwr->created_corr = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 corr(hmpdf_obj *d, int z_index, double phi, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     double r = d->c->comoving[z_index] * phi;
     SAFEGSL(gsl_spline_eval_e(d->pwr->corr_interp, r,
@@ -345,21 +326,19 @@ corr(hmpdf_obj *d, int z_index, double phi, double *out)
                               out))
     *out *= d->c->Dsq[z_index];
     
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 init_power(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
-    fprintf(stdout, "In power.h -> init_power :\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "init_power\n")
+
     SAFEHMPDF(create_ssq(d))
     SAFEHMPDF(create_autocorr(d))
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 

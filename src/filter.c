@@ -17,7 +17,7 @@
 int
 null_filters(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     d->f->inited_filters = 0;
     d->f->ffilters = NULL;
@@ -27,14 +27,13 @@ null_filters(hmpdf_obj *d)
     d->f->quadraticpixel_ellmin = NULL;
     d->f->quadraticpixel_ellmax = NULL;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 reset_filters(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
@@ -62,8 +61,7 @@ reset_filters(hmpdf_obj *d)
     if (d->f->quadraticpixel_ellmin != NULL) { free(d->f->quadraticpixel_ellmin); }
     if (d->f->quadraticpixel_ellmax != NULL) { free(d->f->quadraticpixel_ellmax); }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
     
 char filter_pdf_ps[][256] = {"pdf", "ps"};
@@ -104,7 +102,7 @@ static double
 static int
 _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     int Nell = PRWINDOW_INTERP_NELL;
     SAFEALLOC(double *, ell, malloc(Nell * sizeof(double)))
@@ -156,14 +154,13 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
     free(ell);
     free(Well);
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 _tophat(double x, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (x > 1e-4)
     {
@@ -178,20 +175,16 @@ _tophat(double x, double *out)
     else
     {
         *out = 0.0;
-        fprintf(stderr, "Error: argument negative.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status = 1;
+        HMPDFERR("argument negative")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 _tophatsq(double x, double *out)
 {//{{{
-    int hmpdf_status = 0.0;
+    STARTFCT
 
     if (x > 1e-4)
     {
@@ -206,21 +199,17 @@ _tophatsq(double x, double *out)
     else
     {
         *out = 0.0;
-        fprintf(stderr, "Error: argument negative.\n");
-        fflush(stderr);
-        ERRLOC
-        hmpdf_status = 1;
+        HMPDFERR("argument negative")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard, double *out)
 // assumes called with the physical reci_theta, i.e. reci_theta = j_n_0/theta_out
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     hmpdf_obj *_d = (hmpdf_obj *)d;
     // rescale ell to unit half pixel sidelength
@@ -243,14 +232,13 @@ filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard, double *
                                   out))
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 filter_tophat(void *d, double ell, filter_mode m, int *discard, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     hmpdf_obj *_d = (hmpdf_obj *)d;
     ell *= _d->f->tophat_radius;
@@ -262,21 +250,16 @@ filter_tophat(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : SAFEHMPDF(_tophatsq(ell, out));
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized 
-                          fprintf(stderr, "Error: Unknown filter mode in filter_tophat\n");
-                          fflush(stderr);
-                          ERRLOC
-                          hmpdf_status |= 1;
-                          break;
+                          HMPDFERR("unknown filter mode.")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 filter_gaussian(void *d, double ell, filter_mode m, int *discard, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     hmpdf_obj *_d = (hmpdf_obj *)d;
     ell *= _d->f->gaussian_sigma;
@@ -288,21 +271,16 @@ filter_gaussian(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : *out = exp(-ell*ell);
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          fprintf(stderr, "Error: Unknown filter mode in filter_gaussian\n");
-                          fflush(stdout);
-                          ERRLOC
-                          hmpdf_status |= 1;
-                          break;
+                          HMPDFERR("Unknown filter mode.")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 filter_custom_ell(void *d, double ell, filter_mode m, int *discard, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     hmpdf_obj *_d = (hmpdf_obj *)d;
     double w =  _d->f->custom_ell(ell, _d->f->custom_ell_p);
@@ -313,21 +291,16 @@ filter_custom_ell(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : *out = w*w;
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          fprintf(stderr, "Error: Unknown filter_mode in filter_custom_ell.\n");
-                          fflush(stderr);
-                          ERRLOC
-                          hmpdf_status |= 1;
-                          break;
+                          HMPDFERR("Unkown filter mode.")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 static int
 filter_custom_k(void *d, double ell, filter_mode m, int *z_index, double *out)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
     
     hmpdf_obj *_d = (hmpdf_obj *)d;
     // figure out comoving wavenumber corresponding to ell
@@ -340,15 +313,10 @@ filter_custom_k(void *d, double ell, filter_mode m, int *z_index, double *out)
         case filter_ps  : *out = w*w;
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          fprintf(stderr, "Error: Unknown filter_mode in filter_custom_k.\n");
-                          fflush(stderr);
-                          ERRLOC
-                          hmpdf_status |= 1;
-                          break;
+                          HMPDFERR("Unknown filter mode.")
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
@@ -359,7 +327,7 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
 // (3)                     and mode == filter_ps,  apply only the z-dependent filters
 // NOTE : function is safe if in and out point to same memory
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (in != out)
     {
@@ -384,19 +352,17 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
         }
     }
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
 int
 init_filters(hmpdf_obj *d)
 {//{{{
-    int hmpdf_status = 0;
+    STARTFCT
 
     if (d->f->inited_filters) { return hmpdf_status; }
 
-    fprintf(stdout, "In filter.h -> init_filters.\n");
-    fflush(stdout);
+    HMPDFPRINT(1, "init_filters\n")
 
     SAFEALLOC(, d->f->ffilters, malloc(10 * sizeof(filter_fct)))
     SAFEALLOC(, d->f->z_dependent, malloc(10 * sizeof(int)))
@@ -404,8 +370,8 @@ init_filters(hmpdf_obj *d)
 
     if (d->f->pixelside > 0.0)
     {//{{{
-        fprintf(stdout, "\twill apply quadratic pixel filter\n");
-        fflush(stdout);
+        HMPDFPRINT(2, "\twill apply pixel filter\n")
+
         SAFEALLOC(, d->f->quadraticpixel_interp,
                   malloc(2 * sizeof(gsl_spline *)))
         SAFEALLOC(, d->f->quadraticpixel_accel,
@@ -422,32 +388,32 @@ init_filters(hmpdf_obj *d)
     }//}}}
     if (d->f->tophat_radius > 0.0)
     {//{{{
-        fprintf(stdout, "\twill apply tophat filter\n");
-        fflush(stdout);
+        HMPDFPRINT(2, "\twill apply tophat filter\n")
+
         d->f->ffilters[d->f->Nfilters] = &filter_tophat;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->gaussian_sigma > 0.0)
     {//{{{
-        fprintf(stdout, "\twill apply gaussian filter\n");
-        fflush(stdout);
+        HMPDFPRINT(2, "\twill apply gaussian filter\n")
+
         d->f->ffilters[d->f->Nfilters] = &filter_gaussian;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->custom_ell != NULL)
     {//{{{
-        fprintf(stdout, "\twill apply user-supplied ell-space filter\n");
-        fflush(stdout);
+        HMPDFPRINT(2, "\twill apply user-supplied ell-space filter\n")
+
         d->f->ffilters[d->f->Nfilters] = &filter_custom_ell;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->custom_k != NULL)
     {//{{{
-        fprintf(stdout, "\twill apply user-supplied k-space filter\n");
-        fflush(stdout);
+        HMPDFPRINT(2, "\twill apply user-supplied k-space filter\n")
+
         d->f->ffilters[d->f->Nfilters] = &filter_custom_k;
         d->f->z_dependent[d->f->Nfilters] = 1;
         ++d->f->Nfilters;
@@ -455,7 +421,6 @@ init_filters(hmpdf_obj *d)
 
     d->f->inited_filters = 1;
 
-    CHECKERR
-    return hmpdf_status;
+    ENDFCT
 }//}}}
 
