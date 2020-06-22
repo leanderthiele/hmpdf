@@ -13,7 +13,7 @@
  *                  will be included in the output PDF
  *  \param noisy    if set to non-zero, the one-point PDF will be convolved with a Gaussian
  *                  of standard deviation #hmpdf_noise
- *  \return errno   error code
+ *  \return error code
  *
  *  \remark if the one-point PDF has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.

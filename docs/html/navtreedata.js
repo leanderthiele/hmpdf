@@ -31,6 +31,7 @@ var NAVTREE =
       [ "Usage", "index.html#use", null ],
       [ "Options", "index.html#opt", null ],
       [ "Runtime", "index.html#time", null ],
+      [ "Error handling", "index.html#errrors", null ],
       [ "Thread safety", "index.html#threads", null ],
       [ "Examples", "index.html#examples", null ]
     ] ],
@@ -49,7 +50,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"a00020.html"
+"a00017.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

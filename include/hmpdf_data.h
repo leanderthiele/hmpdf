@@ -17,7 +17,7 @@ hmpdf_obj *hmpdf_new(void);
 
 /*! Frees all memory associated with the hmpdf_obj.
  *  \param d        #hmpdf_obj created with hmpdf_new()
- *  \return errno   error code
+ *  \return error code
  */
 int hmpdf_delete(hmpdf_obj *d);
 

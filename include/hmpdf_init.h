@@ -8,7 +8,7 @@
  *  \param class_ini    path to a CLASS .ini file
  *  \param stype        signal type (either #hmpdf_kappa or #hmpdf_tsz)
  *  \param ...          variable argument list for optional arguments
- *  \return errno       error code
+ *  \return error code
  *  
  *  \attention if stype=#hmpdf_kappa, the first entry in ... must be the source
  *             redshift (double)

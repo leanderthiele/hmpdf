@@ -17,7 +17,7 @@ typedef enum
  *  \param ell      array of length Nell
  *  \param Cell     output array, at least Nell long
  *  \param mode     one of #hmpdf_Cell_mode_e
- *  \return errno   error code
+ *  \return error code
  */
 int hmpdf_get_Cell(hmpdf_obj *d,
                    int Nell,
@@ -32,7 +32,7 @@ int hmpdf_get_Cell(hmpdf_obj *d,
  *  \param phi      array of length Nphi
  *  \param Cphi     output array, at least Nphi long
  *  \param mode     one of #hmpdf_Cell_mode_e
- *  \return errno   error code
+ *  \return error code
  */
 int hmpdf_get_Cphi(hmpdf_obj *d,
                    int Nphi,
