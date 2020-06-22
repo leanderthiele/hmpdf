@@ -5,7 +5,7 @@ CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
-CFLAGS = -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
+CFLAGS = -std=c99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
 OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 
