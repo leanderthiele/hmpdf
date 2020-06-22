@@ -1,20 +1,132 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdio.h>
+#include <string.h>
+#include <fenv.h>
+#include <math.h>
+#include <errno.h>
+#include <complex.h>
+
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_errno.h>
+
+#include "hmpdf.h"
+
 #define SPEEDOFLIGHT 2997.92458  // 100 km/s
 #define GNEWTON      4.30091e-13 // Mpc/Msun (100 km/s)^2
 #define SIGMATHOMSON 6.98684e-74 // Mpc^2
 #define MELECTRON    4.58110e-61 // Msun
 
-#define ERRLOC printf("Error in %s line %d: \n\t", __FILE__, __LINE__);
-#define SAFECLASS(expr, errmsg) if (expr==_FAILURE_) \
-                                { ERRLOC; printf("CLASS error %s\n", errmsg); exit(1); }
+// branch prediction macros for some obvious cases
+//     (check if those are available)
+#define LIKELY(x)   __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
-#include <complex.h>
+//ERRLOC{{{
+#define ERRLOC                                   \
+    fprintf(stderr, "Error in %s line %d "       \
+                    "(see upward for cause) \n", \
+                    __FILE__, __LINE__);         \
+//}}}
 
-#include <gsl/gsl_interp.h>
+// when calling external code (CLASS, GSL) we set errno=0 afterwards
+//      in order not to catch internal errors the external code doesn't
+//      consider important
 
-#include "hmpdf.h"
+//SAFECLASS{{{
+#define SAFECLASS(expr, errmsg)                      \
+    if (UNLIKELY(expr==_FAILURE_))                   \
+    {                                                \
+        fprintf(stderr, "CLASS error %s\n", errmsg); \
+        fflush(stderr);                              \
+        ERRLOC                                       \
+        hmpdf_status = 1;                            \
+        return hmpdf_status;                         \
+    }                                                \
+    errno = 0;                                       \
+//}}}
+
+int hmpdf_status_update(int *status, int result);
+
+//SAFEGSL{{{
+#define SAFEGSL(expr)                                \
+    if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
+                                     expr)))         \
+    {                                                \
+        fprintf(stderr, "GSL error %s\n",            \
+                        gsl_strerror(hmpdf_status)); \
+        fflush(stderr);                              \
+        ERRLOC                                       \
+        return hmpdf_status;                         \
+    }                                                \
+    errno = 0;                                       \
+//}}}
+
+//SAFEGSL_NORETURN{{{
+#define SAFEGSL_NORETURN(expr)                       \
+    if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
+                            expr)))                  \
+    {                                                \
+        fprintf(stderr, "GSL error %s\n",            \
+                        gsl_strerror(hmpdf_status)); \
+        fflush(stderr);                              \
+        ERRLOC                                       \
+    }                                                \
+    errno = 0;                                       \
+//}}}
+
+//SAFEHMPDF{{{
+#define SAFEHMPDF(expr)                             \
+    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                     expr)))        \
+    {                                               \
+        ERRLOC                                      \
+        return 1;                                   \
+    }                                               \
+//}}}
+
+//SAFEHMPDF_NORETURN{{{
+#define SAFEHMPDF_NORETURN(expr)                    \
+    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                     expr)))        \
+    {                                               \
+        ERRLOC                                      \
+    }                                               \
+//}}}
+
+//SAFEALLOC{{{
+#define SAFEALLOC(dt,var,expr)           \
+    dt var = expr;                       \
+    if (UNLIKELY(!(var)))                \
+    {                                    \
+        fprintf(stderr, "Error: OOM\n"); \
+        fflush(stderr);                  \
+    }                                    \
+    SAFEHMPDF(!(var))                    \
+//}}}
+
+//SAFEALLOC_NORETURN{{{
+#define SAFEALLOC_NORETURN(dt,var,expr)  \
+    dt var = expr;                       \
+    if (UNLIKELY(!(var)))                \
+    {                                    \
+        perror("C Error (likely wrong "  \
+               "description)");          \
+    }                                    \
+    SAFEHMPDF_NORETURN(!(var))           \
+//}}}
+
+//CHECKERR{{{
+#define CHECKERR                                    \
+    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                     errno)))       \
+    {                                               \
+        fprintf(stderr, "%s\n", strerror(errno));   \
+        fflush(stderr);                             \
+        ERRLOC                                      \
+    }                                               \
+//}}}
 
 int ispwr2(int N, int *k);
 
@@ -54,12 +166,12 @@ typedef enum//{{{
 }//}}}
 interp_mode;
 typedef struct interp1d_s interp1d;
-interp1d *new_interp1d(int N, double *x, double *y, double ylo, double yhi,
-                       interp_mode m, gsl_interp_accel *a);
+int new_interp1d(int N, double *x, double *y, double ylo, double yhi,
+                 interp_mode m, gsl_interp_accel *a, interp1d **out);
 void delete_interp1d(interp1d *interp);
-double interp1d_eval(interp1d *interp, double x);
-double interp1d_eval_deriv(interp1d *interp, double x);
-double interp1d_eval_integ(interp1d *interp, double a, double b);
+int interp1d_eval(interp1d *interp, double x, double *out);
+int interp1d_eval_deriv(interp1d *interp, double x, double *out);
+int interp1d_eval_integ(interp1d *interp, double a, double b, double *out);
 
 typedef enum//{{{
 {
@@ -68,16 +180,16 @@ typedef enum//{{{
 }//}}}
 interp2d_mode;
 typedef struct interp2d_s interp2d;
-interp2d *new_interp2d(int N, double *x, double *z,
-                       double zlo, double zhi,
-                       interp2d_mode m, gsl_interp_accel *a);
+int new_interp2d(int N, double *x, double *z,
+                 double zlo, double zhi,
+                 interp2d_mode m, gsl_interp_accel *a, interp2d **out);
 void delete_interp2d(interp2d *interp);
-double interp2d_eval(interp2d *interp, double x, double y);
+int interp2d_eval(interp2d *interp, double x, double y, double *out);
 
-void bin_1d(int N, double *x, double *y,
-            int Nbins, double *binedges, double *out, interp_mode m);
+int bin_1d(int N, double *x, double *y,
+           int Nbins, double *binedges, double *out, interp_mode m);
 
-void bin_2d(int N, double *x, double *z, int Nsample,
-            int Nbins, double *binedges, double *out, interp2d_mode m);
+int bin_2d(int N, double *x, double *z, int Nsample,
+           int Nbins, double *binedges, double *out, interp2d_mode m);
 
 #endif

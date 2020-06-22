@@ -42,16 +42,16 @@ typedef struct//{{{
 }//}}}
 profiles_t;
 
-void null_profiles(hmpdf_obj *d);
-void reset_profiles(hmpdf_obj *d);
-void init_profiles(hmpdf_obj *d);
-void create_conj_profiles(hmpdf_obj *d);
-void create_filtered_profiles(hmpdf_obj *d);
-void create_breakpoints_or_monotonize(hmpdf_obj *d);
+int null_profiles(hmpdf_obj *d);
+int reset_profiles(hmpdf_obj *d);
+int init_profiles(hmpdf_obj *d);
+int create_conj_profiles(hmpdf_obj *d);
+int create_filtered_profiles(hmpdf_obj *d);
+int create_breakpoints_or_monotonize(hmpdf_obj *d);
 
-void s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
-void s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
-void dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq);
-void t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t);
+int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
+int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
+int dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq);
+int t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t);
 
 #endif

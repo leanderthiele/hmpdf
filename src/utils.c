@@ -7,9 +7,8 @@
 
 #ifdef _OPENMP
 #include <omp.h>
-#pragma message "Compiling with OpenMP."
 #else
-#pragma message "Warning : compiling without OpenMP. Covariance matrix will be slow."
+#pragma message "Warning: compiling without OpenMP. Covariance matrix will be slow."
 #endif
 
 #include <termios.h>
@@ -21,7 +20,15 @@
 
 #include "utils.h"
 
-int ispwr2(int N, int *k)
+int
+hmpdf_status_update(int *status, int result)
+{//{{{
+    *status = result;
+    return result;
+}//}}}
+
+int
+ispwr2(int N, int *k)
 // returns 1 if N = 2^k, 0 otherwise
 // k is written into return value
 {//{{{
@@ -35,7 +42,8 @@ int ispwr2(int N, int *k)
     return ((temp == N) ? 1 : 0);
 }//}}}
 
-void linspace(int N, double xmin, double xmax, double *x)
+void
+linspace(int N, double xmin, double xmax, double *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -43,7 +51,8 @@ void linspace(int N, double xmin, double xmax, double *x)
     }
 }//}}}
 
-void logspace(int N, double xmin, double xmax, double *x)
+void
+logspace(int N, double xmin, double xmax, double *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -51,7 +60,8 @@ void logspace(int N, double xmin, double xmax, double *x)
     }
 }//}}}
 
-void reverse(int N, double *in, double *out)
+void
+reverse(int N, double *in, double *out)
 {//{{{
     if (in == out)
     {
@@ -71,7 +81,8 @@ void reverse(int N, double *in, double *out)
     }
 }//}}}
 
-int not_monotonic(int N, double *x, int *problems)
+int
+not_monotonic(int N, double *x, int *problems)
 // checks if x is monotonically increasing
 // (this is what we require for the FFTs to work)
 // if problems != NULL, writes problematic indices into the array
@@ -97,7 +108,8 @@ int not_monotonic(int N, double *x, int *problems)
     return out;
 }//}}}
 
-int all_zero(int N, double *x, double threshold)
+int
+all_zero(int N, double *x, double threshold)
 {//{{{
     int out = 1;
     for (int ii=0; ii<N; ii++)
@@ -111,7 +123,8 @@ int all_zero(int N, double *x, double threshold)
     return out;
 }//}}}
 
-void zero_real(int N, double *x)
+void
+zero_real(int N, double *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -119,7 +132,8 @@ void zero_real(int N, double *x)
     }
 }//}}}
 
-void zero_comp(int N, complex *x)
+void
+zero_comp(int N, complex *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -127,7 +141,8 @@ void zero_comp(int N, complex *x)
     }
 }//}}}
 
-int wait(void)
+int
+wait(void)
 {//{{{
     int ch;
     struct termios oldt, newt;
@@ -140,13 +155,15 @@ int wait(void)
     return ch;
 }//}}}
 
-struct gnuplot_s
+struct
+gnuplot_s
 {//{{{
     FILE *gp;
     int Nlines;
 };//}}}
 
-gnuplot *plot(gnuplot *gp, int N, double *x, double *y)
+gnuplot *
+plot(gnuplot *gp, int N, double *x, double *y)
 {//{{{
     if (gp == NULL)
     {
@@ -165,7 +182,8 @@ gnuplot *plot(gnuplot *gp, int N, double *x, double *y)
     return gp;
 }//}}}
 
-gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
+gnuplot *
+plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
 {//{{{
     if (gp == NULL)
     {
@@ -184,7 +202,8 @@ gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
     return gp;
 }//}}}
 
-void show(gnuplot *gp)
+void
+show(gnuplot *gp)
 {//{{{
     for (int ii=0; ii<(5 - gp->Nlines); ii++)
     {
@@ -196,8 +215,8 @@ void show(gnuplot *gp)
     free(gp);
 }//}}}
 
-static
-int lcounttxt(FILE *f)
+static int
+lcounttxt(FILE *f)
 {//{{{
     //printf("----------COUNTING LINES IN--------------\n");
     fseek(f, 0, SEEK_SET);
@@ -222,8 +241,8 @@ int lcounttxt(FILE *f)
     return ctr;
 }//}}}
 
-static
-int lcountb(FILE *f, int Nvec)
+static int
+lcountb(FILE *f, int Nvec)
 {//{{{
     fseek(f, 0, SEEK_END);
     int len = ftell(f) / sizeof(double);
@@ -236,7 +255,8 @@ int lcountb(FILE *f, int Nvec)
     return len / Nvec;
 }//}}}
 
-void savetxt(char *fname, int Nlines, int Nvec, ...)
+void
+savetxt(char *fname, int Nlines, int Nvec, ...)
 {//{{{
     va_list valist;
     va_start(valist, Nvec);
@@ -265,7 +285,8 @@ void savetxt(char *fname, int Nlines, int Nvec, ...)
     fclose(f);
 }//}}}
 
-double **loadtxt(char *fname, int *Nlines, int Nvec)
+double **
+loadtxt(char *fname, int *Nlines, int Nvec)
 {//{{{
     FILE *f = fopen(fname, "r");
     if (f == NULL)
@@ -321,7 +342,8 @@ double **loadtxt(char *fname, int *Nlines, int Nvec)
     return x;
 }//}}}
 
-void tofile(char *fname, int Nlines, int Nvec, ...)
+void
+tofile(char *fname, int Nlines, int Nvec, ...)
 {//{{{
     va_list valist;
     va_start(valist, Nvec);
@@ -336,7 +358,8 @@ void tofile(char *fname, int Nlines, int Nvec, ...)
     va_end(valist);
 }//}}}
 
-double **fromfile(char *fname, int *Nlines, int Nvec)
+double **
+fromfile(char *fname, int *Nlines, int Nvec)
 {//{{{
     FILE *f = fopen(fname, "rb");
     if (f == NULL)
@@ -367,7 +390,8 @@ double **fromfile(char *fname, int *Nlines, int Nvec)
     return x;
 }//}}}
 
-int isfile(char *fname)
+int
+isfile(char *fname)
 {//{{{
     FILE *f = fopen(fname, "r");
     if (f == NULL)
@@ -381,7 +405,8 @@ int isfile(char *fname)
     }
 }//}}}
 
-int this_core(void)
+int
+this_core(void)
 {//{{{
     #ifdef _OPENMP
     return omp_get_thread_num();
@@ -390,7 +415,8 @@ int this_core(void)
     #endif
 }//}}}
 
-struct interp1d_s
+struct
+interp1d_s
 {//{{{
     gsl_interp *i;
     gsl_interp_accel *a;
@@ -403,44 +429,67 @@ struct interp1d_s
     double yhi;
 };//}}}
 
-interp1d *new_interp1d(int N, double *x, double *y, double ylo, double yhi,
-                       interp_mode m, gsl_interp_accel *a)
+int
+new_interp1d(int N, double *x, double *y, double ylo, double yhi,
+             interp_mode m, gsl_interp_accel *a, interp1d **out)
 {//{{{
+    int hmpdf_status = 0;
+
     const gsl_interp_type *T;
     switch (m)
     {
-        case interp_linear           : T = gsl_interp_linear; break;
-        case interp_polynomial       : T = gsl_interp_polynomial; break;
-        case interp_cspline          : T = gsl_interp_cspline; break;
-        case interp_cspline_periodic : T = gsl_interp_cspline_periodic; break;
-        case interp_akima            : T = gsl_interp_akima; break;
-        case interp_akima_periodic   : T = gsl_interp_akima_periodic; break;
-        case interp_steffen          : T = gsl_interp_steffen; break;
-        default                      : printf("Unknown gsl_interp_type.\n");
-                                       return NULL;
+        case interp_linear           : T = gsl_interp_linear;
+                                       break;
+        case interp_polynomial       : T = gsl_interp_polynomial;
+                                       break;
+        case interp_cspline          : T = gsl_interp_cspline;
+                                       break;
+        case interp_cspline_periodic : T = gsl_interp_cspline_periodic;
+                                       break;
+        case interp_akima            : T = gsl_interp_akima;
+                                       break;
+        case interp_akima_periodic   : T = gsl_interp_akima_periodic;
+                                       break;
+        case interp_steffen          : T = gsl_interp_steffen;
+                                       break;
+        default                      : T = NULL;
+                                       fprintf(stderr, "Error: Unknown gsl_interp_type.\n");
+                                       fflush(stderr);
+                                       ERRLOC
+                                       hmpdf_status = 1;
+                                       return hmpdf_status;
     }
-    interp1d *out = malloc(sizeof(interp1d));
-    out->N = N;
-    out->x = x;
-    out->y = y;
-    out->ylo = ylo;
-    out->yhi = yhi;
-    out->i = gsl_interp_alloc(T, N);
+    SAFEALLOC(, *out, malloc(sizeof(interp1d)))
+    (*out)->N = N;
+    (*out)->x = x;
+    (*out)->y = y;
+    (*out)->ylo = ylo;
+    (*out)->yhi = yhi;
+    SAFEALLOC(, (*out)->i, gsl_interp_alloc(T, (*out)->N))
     if (a == NULL)
     {
-        out->alloced_accel = 1;
-        out->a = gsl_interp_accel_alloc();
+        (*out)->alloced_accel = 1;
+        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
     }
     else
     {
-        out->alloced_accel = 0;
-        out->a = a;
+        (*out)->alloced_accel = 0;
+        (*out)->a = a;
     }
-    gsl_interp_init(out->i, out->x, out->y, out->N);
-    return out;
+    
+    SAFEGSL_NORETURN(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N))
+
+    if (hmpdf_status)
+    {
+        delete_interp1d(*out);
+    }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void delete_interp1d(interp1d *interp)
+void
+delete_interp1d(interp1d *interp)
 {//{{{
     gsl_interp_free(interp->i);
     if (interp->alloced_accel)
@@ -450,54 +499,76 @@ void delete_interp1d(interp1d *interp)
     free(interp);
 }//}}}
 
-double interp1d_eval(interp1d *interp, double x)
+int
+interp1d_eval(interp1d *interp, double x, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     if (x < interp->x[0])
     {
-        return interp->ylo;
+        *out = interp->ylo;
     }
     else if (x > interp->x[interp->N-1])
     {
-        return interp->yhi;
+        *out = interp->yhi;
     }
     else
     {
-        return gsl_interp_eval(interp->i, interp->x, interp->y, x, interp->a);
+        SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
+                                  interp->a, out))
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-double interp1d_eval_deriv(interp1d *interp, double x)
+int
+interp1d_eval_deriv(interp1d *interp, double x, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     if (x < interp->x[0])
     {
-        return 0.0;
+        *out = 0.0;
     }
     else if (x > interp->x[interp->N-1])
     {
-        return 0.0;
+        *out = 0.0;
     }
     else
     {
-        return gsl_interp_eval_deriv(interp->i, interp->x, interp->y, x, interp->a);
+        SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
+                                        interp->a, out))
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-double interp1d_eval_integ(interp1d *interp, double a, double b)
+int
+interp1d_eval_integ(interp1d *interp, double a, double b, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     double _a = GSL_MAX(a, interp->x[0]); // _a >= a
     double _b = GSL_MIN(b, interp->x[interp->N-1]); // _b <= b
     if (_a >= _b)
     {
-        return 0;
+        *out = 0.0;
     }
     else
     {
-        return gsl_interp_eval_integ(interp->i, interp->x, interp->y, _a, _b, interp->a)
-               + (_a - a) * interp->ylo + (b - _b) * interp->yhi;
+        SAFEGSL(gsl_interp_eval_integ_e(interp->i, interp->x, interp->y,
+                                        _a, _b, interp->a, out))
+        *out += (_a - a) * interp->ylo + (b - _b) * interp->yhi;
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-struct interp2d_s
+struct
+interp2d_s
 // on symmetric 2d grid
 {//{{{
     gsl_interp2d *i;
@@ -510,40 +581,57 @@ struct interp2d_s
     double zhi;
 };//}}}
 
-interp2d *new_interp2d(int N, double *x, double *z,
-                       double zlo, double zhi,
-                       interp2d_mode m, gsl_interp_accel *a)
+int
+new_interp2d(int N, double *x, double *z,
+             double zlo, double zhi,
+             interp2d_mode m, gsl_interp_accel *a, interp2d **out)
 {//{{{
+    int hmpdf_status = 0;
+
     const gsl_interp2d_type *T;
     switch (m)
     {
-        case interp2d_bilinear : T = gsl_interp2d_bilinear; break;
-        case interp2d_bicubic  : T = gsl_interp2d_bicubic; break;
-        default                : printf("Unknown gsl_interp2d_type.\n");
-                                 return NULL;
+        case interp2d_bilinear : T = gsl_interp2d_bilinear;
+                                 break;
+        case interp2d_bicubic  : T = gsl_interp2d_bicubic;
+                                 break;
+        default                : T = NULL;
+                                 fprintf(stderr, "Unknown gsl_interp2d_type.\n");
+                                 fflush(stderr);
+                                 ERRLOC
+                                 hmpdf_status = 1;
+                                 return hmpdf_status;
     }
-    interp2d *out = malloc(sizeof(interp2d));
-    out->N = N;
-    out->x = x;
-    out->z = z;
-    out->zlo = zlo;
-    out->zhi = zhi;
-    out->i = gsl_interp2d_alloc(T, out->N, out->N);
+    SAFEALLOC(, *out, malloc(sizeof(interp2d)))
+    (*out)->N = N;
+    (*out)->x = x;
+    (*out)->z = z;
+    (*out)->zlo = zlo;
+    (*out)->zhi = zhi;
+    SAFEALLOC(, (*out)->i, gsl_interp2d_alloc(T, (*out)->N, (*out)->N))
     if (a == NULL)
     {
-        out->alloced_accel = 1;
-        out->a = gsl_interp_accel_alloc();
+        (*out)->alloced_accel = 1;
+        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
     }
     else
     {
-        out->alloced_accel = 0;
-        out->a = a;
+        (*out)->alloced_accel = 0;
+        (*out)->a = a;
     }
-    gsl_interp2d_init(out->i, out->x, out->x, out->z, out->N, out->N);
-    return out;
+    SAFEGSL_NORETURN(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
+                                       (*out)->z, (*out)->N, (*out)->N))
+    if (hmpdf_status)
+    {
+        delete_interp2d(*out);
+    }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void delete_interp2d(interp2d *interp)
+void
+delete_interp2d(interp2d *interp)
 {//{{{
     gsl_interp2d_free(interp->i);
     if (interp->alloced_accel)
@@ -553,45 +641,62 @@ void delete_interp2d(interp2d *interp)
     free(interp);
 }//}}}
 
-double interp2d_eval(interp2d *interp, double x, double y)
+int
+interp2d_eval(interp2d *interp, double x, double y, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     if (x < interp->x[0] || y < interp->x[0])
     {
-        return interp->zlo;
+        *out = interp->zlo;
     }
     else if (x > interp->x[interp->N-1] || y > interp->x[interp->N-1])
     {
-        return interp->zhi;
+        *out = interp->zhi;
     }
     else
     {
-        return gsl_interp2d_eval(interp->i, interp->x, interp->x, interp->z,
-                                 x, y, interp->a, interp->a);
+        SAFEGSL(gsl_interp2d_eval_e(interp->i, interp->x, interp->x, interp->z,
+                                    x, y, interp->a, interp->a, out))
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
 // CAUTION : these binning functions assume that x is equally spaced,
 //           and that y,z are normalized to unit sum.
 //           They normalize the output accordingly.
 
-void bin_1d(int N, double *x, double *y,
-            int Nbins, double *binedges, double *out, interp_mode m)
+int
+bin_1d(int N, double *x, double *y,
+       int Nbins, double *binedges, double *out, interp_mode m)
 {//{{{
-    interp1d *interp = new_interp1d(N, x, y, 0.0, 0.0, m, NULL);
+    int hmpdf_status = 0;
+
+    interp1d *interp;
+    SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp))
     for (int ii=0; ii<Nbins; ii++)
     {
-        // TODO normalization
-        out[ii] = interp1d_eval_integ(interp, binedges[ii], binedges[ii+1])
-                  / (x[1] - x[0]);
+        SAFEHMPDF(interp1d_eval_integ(interp, binedges[ii], binedges[ii+1], out+ii))
+        out[ii] /= (x[1] - x[0]);
     }
     delete_interp1d(interp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void bin_2d(int N, double *x, double *z, int Nsample,
-            int Nbins, double *binedges, double *out, interp2d_mode m)
+int
+bin_2d(int N, double *x, double *z, int Nsample,
+       int Nbins, double *binedges, double *out, interp2d_mode m)
 {//{{{
-    interp2d *interp = new_interp2d(N, x, z, 0.0, 0.0, m, NULL);
-    gsl_integration_glfixed_table *t = gsl_integration_glfixed_table_alloc(Nsample);
+    int hmpdf_status = 0;
+
+    interp2d *interp;
+    SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp))
+    SAFEALLOC(gsl_integration_glfixed_table *, t,
+              gsl_integration_glfixed_table_alloc(Nsample))
 
     for (int ii=0; ii<Nbins; ii++)
     {
@@ -608,11 +713,12 @@ void bin_2d(int N, double *x, double *z, int Nsample,
 
                 for (int ll=0; ll<Nsample; ll++)
                 {
-                    double node_j, weight_j;
-                    gsl_integration_glfixed_point(binedges[jj], binedges[jj+1],
-                                                  ll, &node_j, &weight_j, t);
+                    double node_j, weight_j, temp;
+                    SAFEGSL(gsl_integration_glfixed_point(binedges[jj], binedges[jj+1],
+                                                          ll, &node_j, &weight_j, t))
 
-                    *res += weight_i * weight_j * interp2d_eval(interp, node_i, node_j)
+                    SAFEHMPDF(interp2d_eval(interp, node_i, node_j, &temp))
+                    *res += weight_i * weight_j * temp
                             / gsl_pow_2(x[1] - x[0]);
                 }
             }
@@ -621,4 +727,7 @@ void bin_2d(int N, double *x, double *z, int Nsample,
 
     gsl_integration_glfixed_table_free(t);
     delete_interp2d(interp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}

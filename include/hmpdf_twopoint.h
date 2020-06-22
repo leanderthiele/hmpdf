@@ -21,12 +21,12 @@
  *          or hmpdf_get_tp() has been called with a different value of phi,
  *          the pre-computed result is used and only the binning is performed.
  */
-void hmpdf_get_tp(hmpdf_obj *d,
-                  double phi,
-                  int Nbins,
-                  double *binedges,
-                  double *out,
-                  int noisy);
+int hmpdf_get_tp(hmpdf_obj *d,
+                 double phi,
+                 int Nbins,
+                 double *binedges,
+                 double *out,
+                 int noisy);
 
 
 #endif

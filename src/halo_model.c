@@ -11,17 +11,26 @@
 #include "data.h"
 #include "halo_model.h"
 
-void null_halo_model(hmpdf_obj *d)
+int
+null_halo_model(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->h->inited_halo = 0;
     d->h->hmf = NULL;
     d->h->bias = NULL;
     d->h->c_interp = NULL;
     d->h->c_accel = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_halo_model(hmpdf_obj *d)
+int
+reset_halo_model(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->h->hmf != NULL)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)
@@ -50,42 +59,78 @@ void reset_halo_model(hmpdf_obj *d)
         }
         free(d->h->c_accel);
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double DeltaVir_BryanNorman98(hmpdf_obj *d, int z_index)
+static int 
+DeltaVir_BryanNorman98(hmpdf_obj *d, int z_index, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     double x = d->c->Om[z_index] - 1.0;
-    return 18.0*M_PI*M_PI + 82.0*x - 39.0*x*x;
+    *out = 18.0*M_PI*M_PI + 82.0*x - 39.0*x*x;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef)
+static int
+density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef, double *out)
 {//{{{{
+    int hmpdf_status = 0;
+
+    double dvir = 0.0; // to avoid maybe-uninitialized
     switch (mdef)
     {
-        case hmpdf_mdef_c : return 200.0 * d->c->rho_c[z_index];
-        case hmpdf_mdef_v : return DeltaVir_BryanNorman98(d, z_index) * d->c->rho_c[z_index];
-        case hmpdf_mdef_m : return 200.0 * d->c->rho_m[z_index];
-        default     : return 0.0;
+        case hmpdf_mdef_c : *out = 200.0 * d->c->rho_c[z_index];
+                            break;
+        case hmpdf_mdef_v : SAFEHMPDF(DeltaVir_BryanNorman98(d, z_index, &dvir));
+                            *out = dvir * d->c->rho_c[z_index];
+                            break;
+        case hmpdf_mdef_m : *out = 200.0 * d->c->rho_m[z_index];
+                            break;
+        default           : *out = 0.0; // to avoid maybe-uninitialized
+                            fprintf(stderr, "Error: Unknown mass definition in density_threshold.\n");
+                            fflush(stderr);
+                            ERRLOC
+                            hmpdf_status |= 1;
+                            break;
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double RofM(hmpdf_obj *d, int z_index, int M_index)
+static int 
+RofM(hmpdf_obj *d, int z_index, int M_index, double *out)
 {//{{{
-    return cbrt(3.0*d->n->Mgrid[M_index]/4.0/M_PI
-                / density_threshold(d, z_index, MDEF_GLOBAL));
+    int hmpdf_status = 0;
+
+    double dt;
+    SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt))
+    *out = cbrt(3.0*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef)
+static int
+MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef, double *out)
 {//{{{
-    return 4.0*M_PI*density_threshold(d, z_index, mdef)*gsl_pow_3(R)/3.0;
+    int hmpdf_status = 0;
+
+    double dt;
+    SAFEHMPDF(density_threshold(d, z_index, mdef, &dt));
+    *out = 4.0 * M_PI * dt * gsl_pow_3(R) / 3.0;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double _c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
+static double
+_c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
 {//{{{
     // convert to Msun/h
     M *= d->c->h;
@@ -93,31 +138,40 @@ double _c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
            * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
            * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
 }//}}}
-static
-double c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
+static double
+c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
 {//{{{
     return _c_Duffy08(d, d->n->zgrid[z_index],
                       d->n->Mgrid[M_index],
                       MDEF_GLOBAL);
 }//}}}
 
-double NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rs)
+int
+NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs)
 // returns rhos via function call and rs via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
+    int hmpdf_status = 0;
+
     double c = c_Duffy08(d, z_index, M_index);
-    *rs = RofM(d, z_index, M_index) / c;
-    return d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
-           / (log1p(c)-c/(1.0+c));
+    SAFEHMPDF(RofM(d, z_index, M_index, rs))
+    *rs /= c;
+    *rhos = d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
+            / (log1p(c)-c/(1.0+c));
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void create_c_of_y(hmpdf_obj *d)
+static int
+create_c_of_y(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tcreate_c_of_y\n");
     fflush(stdout);
-    double *logc_grid = (double *)malloc(CINTERP_NC * sizeof(double));
-    double *logy_grid = (double *)malloc(CINTERP_NC * sizeof(double));
+    SAFEALLOC(double *, logc_grid, malloc(CINTERP_NC * sizeof(double)))
+    SAFEALLOC(double *, logy_grid, malloc(CINTERP_NC * sizeof(double)))
     for (int ii=0; ii<CINTERP_NC; ii++)
     {
         logc_grid[ii] = log(CINTERP_CMAX)
@@ -125,45 +179,64 @@ void create_c_of_y(hmpdf_obj *d)
         double _c = exp(logc_grid[ii]);
         logy_grid[ii] = log(3.0) - 3.0*logc_grid[ii] + log(log1p(_c) - _c/(1.0+_c));
     }
-    d->h->c_interp = gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC);
-    d->h->c_accel = (gsl_interp_accel **)malloc(d->Ncores * sizeof(gsl_interp_accel *));
+    SAFEALLOC(, d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC))
+    SAFEALLOC(, d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)))
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        d->h->c_accel[ii] = gsl_interp_accel_alloc();
+        SAFEALLOC(, d->h->c_accel[ii], gsl_interp_accel_alloc())
     }
-    gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC);
+    SAFEGSL(gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC))
     free(logc_grid);
     free(logy_grid);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double c_of_y(hmpdf_obj *d, double y)
+static int
+c_of_y(hmpdf_obj *d, double y, double *out)
 // inverts the function y(c) = 3/c^3 * (log(1+c)-c/(1+c))
 // this function is much smoother on loglog scale, so do the interpolation this way
 {//{{{
-    return exp(gsl_spline_eval(d->h->c_interp, log(y), d->h->c_accel[this_core()]));
+    int hmpdf_status = 0;
+
+    SAFEGSL(gsl_spline_eval_e(d->h->c_interp, log(y),
+                              d->h->c_accel[this_core()], out))
+    *out = exp(*out);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-double Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out, double *R, double *c)
+int
+Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
+      double *M, double *R, double *c)
 // returns the converted mass via function call and the new radius and concentration via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
+    int hmpdf_status = 0;
+
     double rhos, rs;
-    rhos = NFW_fundamental(d, z_index, M_index, &rs);
-    *c = c_of_y(d, density_threshold(d, z_index, mdef_out)/rhos);
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs))
+    double dt;
+    SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt))
+    SAFEHMPDF(c_of_y(d, dt/rhos, c))
     *R = rs * *c;
-    return MofR(d, z_index, *R, mdef_out);
+    SAFEHMPDF(MofR(d, z_index, *R, mdef_out, M))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double _fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
+static double
+_fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
 {//{{{
     return d->h->Tinker10_params[n*2]
            *pow(1.0+z, d->h->Tinker10_params[n*2 + 1]);
 }//}}}
 
-static
-double fnu_Tinker10(hmpdf_obj *d, double nu, double z)
+static double
+fnu_Tinker10(hmpdf_obj *d, double nu, double z)
 {//{{{
     z = (z<3.0) ? z : 3.0;
     double beta  = _fnu_Tinker10_primitive(d, 0, z);
@@ -174,8 +247,8 @@ double fnu_Tinker10(hmpdf_obj *d, double nu, double z)
     return nu * alpha*(1.0+pow(beta*nu, -2.0*phi))*pow(nu, 2.0*eta)*exp(-0.5*gamma*gsl_pow_2(nu));
 }//}}}
 
-static
-double bnu_Tinker10(double nu)
+static double
+bnu_Tinker10(double nu)
 {//{{{
     double y = 2.0 + M_LN2/M_LN10; // y = log_10(200)
     double A = 1.0 + 0.24 * y * exp(-gsl_pow_4(4.0/y));
@@ -187,8 +260,8 @@ double bnu_Tinker10(double nu)
     return 1.0 - A*pow(nu, a)/(pow(nu, a) + pow(1.686, a)) + B*pow(nu, b) + C*pow(nu, c);
 }//}}}
 
-static
-double _dndlogM(hmpdf_obj *d, int z_index, int M_index, double *bias)
+static double
+_dndlogM(hmpdf_obj *d, int z_index, int M_index, double *bias)
 {//{{{
     double sigma_squared = d->pwr->ssq[M_index][0];
     double sigma_squared_prime = d->pwr->ssq[M_index][1];
@@ -201,17 +274,19 @@ double _dndlogM(hmpdf_obj *d, int z_index, int M_index, double *bias)
     return hmf;
 }//}}}
 
-static
-void create_dndlogM(hmpdf_obj *d)
+static int
+create_dndlogM(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tcreate_dndlogM\n");
     fflush(stdout);
-    d->h->hmf = (double **)malloc(d->n->Nz * sizeof(double *));
-    d->h->bias = (double **)malloc(d->n->Nz * sizeof(double *));
+    SAFEALLOC(, d->h->hmf,  malloc(d->n->Nz * sizeof(double *)))
+    SAFEALLOC(, d->h->bias, malloc(d->n->Nz * sizeof(double *)))
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        d->h->hmf[z_index] = (double *)malloc(d->n->NM * sizeof(double));
-        d->h->bias[z_index] = (double *)malloc(d->n->NM * sizeof(double));
+        SAFEALLOC(, d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)))
+        SAFEALLOC(, d->h->bias[z_index], malloc(d->n->NM * sizeof(double)))
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             d->h->hmf[z_index][M_index] =
@@ -219,15 +294,26 @@ void create_dndlogM(hmpdf_obj *d)
                          d->h->bias[z_index]+M_index);
         }
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void init_halo_model(hmpdf_obj *d)
+int
+init_halo_model(hmpdf_obj *d)
 {//{{{
-    if (d->h->inited_halo) { return; }
+    int hmpdf_status = 0;
+
+    if (d->h->inited_halo) { return hmpdf_status; }
+
     fprintf(stdout, "In halo_model.h -> init_halo_model :\n");
     fflush(stdout);
-    create_c_of_y(d);
-    create_dndlogM(d);
+
+    SAFEHMPDF(create_c_of_y(d))
+    SAFEHMPDF(create_dndlogM(d))
     d->h->inited_halo = 1;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 

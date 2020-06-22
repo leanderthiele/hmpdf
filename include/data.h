@@ -36,7 +36,7 @@ struct hmpdf_obj_s
 };//}}}
 
 hmpdf_obj *hmpdf_new(void);
-void reset_data(hmpdf_obj *d);
-void hmpdf_delete(hmpdf_obj *d);
+int reset_data(hmpdf_obj *d);
+int hmpdf_delete(hmpdf_obj *d);
 
 #endif

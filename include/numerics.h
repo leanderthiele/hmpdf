@@ -54,14 +54,10 @@ typedef struct//{{{
 }//}}}
 numerics_t;
 
-void null_numerics(hmpdf_obj *d);
-void reset_numerics(hmpdf_obj *d);
+int null_numerics(hmpdf_obj *d);
+int reset_numerics(hmpdf_obj *d);
 double integr_real(int N, double dx, int stride, double *f);
 complex integr_comp(int N, double dx, int stride, complex *f);
-void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
-                       double a, double b, double alpha, double beta,
-                       double *nodes, double *weights,
-                       int neutralize_weights);
-void init_numerics(hmpdf_obj *d);
+int init_numerics(hmpdf_obj *d);
 
 #endif

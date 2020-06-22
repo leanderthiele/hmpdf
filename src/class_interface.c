@@ -4,29 +4,37 @@
 
 #include <class.h>
 
+#include "utils.h"
 #include "data.h"
 #include "class_interface.h"
 
 #include "hmpdf.h"
 
-static
-void alloc_class(hmpdf_obj *d)
+static int
+alloc_class(hmpdf_obj *d)
 {//{{{
-    d->cls->pr = malloc(sizeof(struct precision));
-    d->cls->ba = malloc(sizeof(struct background));
-    d->cls->th = malloc(sizeof(struct thermo));
-    d->cls->pt = malloc(sizeof(struct perturbs));
-    d->cls->tr = malloc(sizeof(struct transfers));
-    d->cls->pm = malloc(sizeof(struct primordial));
-    d->cls->sp = malloc(sizeof(struct spectra));
-    d->cls->nl = malloc(sizeof(struct nonlinear));
-    d->cls->le = malloc(sizeof(struct lensing));
-    d->cls->op = malloc(sizeof(struct output));
+    int hmpdf_status = 0;
+
+    SAFEALLOC(, d->cls->pr, malloc(sizeof(struct precision)))
+    SAFEALLOC(, d->cls->ba, malloc(sizeof(struct background)))
+    SAFEALLOC(, d->cls->th, malloc(sizeof(struct thermo)))
+    SAFEALLOC(, d->cls->pt, malloc(sizeof(struct perturbs)))
+    SAFEALLOC(, d->cls->tr, malloc(sizeof(struct transfers)))
+    SAFEALLOC(, d->cls->pm, malloc(sizeof(struct primordial)))
+    SAFEALLOC(, d->cls->sp, malloc(sizeof(struct spectra)))
+    SAFEALLOC(, d->cls->nl, malloc(sizeof(struct nonlinear)))
+    SAFEALLOC(, d->cls->le, malloc(sizeof(struct lensing)))
+    SAFEALLOC(, d->cls->op, malloc(sizeof(struct output)))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void run_class(hmpdf_obj *d)
+static int
+run_class(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\trun_class\n");
     fflush(stdout);
 
@@ -52,19 +60,25 @@ void run_class(hmpdf_obj *d)
     fprintf(stdout, "\t\tnonlinear\n");
     fflush(stdout);
     SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void init_class_interface(hmpdf_obj *d)
+int
+init_class_interface(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "In class_interface.h -> init_class.\n");
     fflush(stdout);
-    char **argv = (char **)malloc(3 * sizeof(char *));
+    SAFEALLOC(char **, argv, malloc(3 * sizeof(char *)))
     argv[1] = d->cls->class_ini;
     argv[2] = d->cls->class_pre;
 
     int argc = (strcmp(argv[2], "none")) ? 3 : 2;
 
-    alloc_class(d);
+    SAFEHMPDF(alloc_class(d))
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
@@ -83,13 +97,19 @@ void init_class_interface(hmpdf_obj *d)
                                        nl, le, op, errmsg),
               errmsg)
 
-    run_class(d);
+    SAFEHMPDF(run_class(d))
 
     free(argv);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void null_class_interface(hmpdf_obj *d)
+int
+null_class_interface(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->cls->pr = NULL;
     d->cls->ba = NULL;
     d->cls->th = NULL;
@@ -100,18 +120,62 @@ void null_class_interface(hmpdf_obj *d)
     d->cls->le = NULL;
     d->cls->op = NULL;
     d->cls->tr = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_class_interface(hmpdf_obj *d)
+int
+reset_class_interface(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
+    struct nonlinear *nl;
+    struct perturbs *pt;
+    struct primordial *pm;
+    struct thermo *th;
+    struct background *ba;
+
     if (d->cls->op != NULL) { free(d->cls->op); }
     if (d->cls->le != NULL) { free(d->cls->le); }
     if (d->cls->sp != NULL) { free(d->cls->sp); }
     if (d->cls->tr != NULL) { free(d->cls->tr); }
-    if (d->cls->nl != NULL) { nonlinear_free(d->cls->nl); free(d->cls->nl); }
-    if (d->cls->pt != NULL) { perturb_free(d->cls->pt); free(d->cls->pt); }
-    if (d->cls->pm != NULL) { primordial_free(d->cls->pm); free(d->cls->pm); }
-    if (d->cls->th != NULL) { thermodynamics_free(d->cls->th); free(d->cls->th); }
-    if (d->cls->ba != NULL) { background_free(d->cls->ba); free(d->cls->ba); }
+    if (d->cls->nl != NULL)
+    { 
+        nl = (struct nonlinear *)d->cls->nl;
+        SAFECLASS(nonlinear_free(nl),
+                  nl->error_message)
+        free(d->cls->nl);
+    }
+    if (d->cls->pt != NULL)
+    {
+        pt = (struct perturbs *)d->cls->pt;
+        SAFECLASS(perturb_free(pt),
+                  pt->error_message)
+        free(d->cls->pt);
+    }
+    if (d->cls->pm != NULL)
+    {
+        pm = (struct primordial *)d->cls->pm;
+        SAFECLASS(primordial_free(pm),
+                  pm->error_message)
+        free(d->cls->pm);
+    }
+    if (d->cls->th != NULL)
+    {
+        th = (struct thermo *)d->cls->th;
+        SAFECLASS(thermodynamics_free(th),
+                  th->error_message)
+        free(d->cls->th);
+    }
+    if (d->cls->ba != NULL)
+    {
+        ba = (struct background *)d->cls->ba;
+        SAFECLASS(background_free(ba),
+                  ba->error_message)
+        free(d->cls->ba); }
     if (d->cls->pr != NULL) { free(d->cls->pr); }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}

@@ -5,6 +5,7 @@
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_dht.h>
 #include <gsl/gsl_sf_bessel.h>
+#include <gsl/gsl_sf_result.h>
 
 #include "utils.h"
 #include "configs.h"
@@ -18,8 +19,11 @@
 
 #include "hmpdf.h"
 
-void null_powerspectrum(hmpdf_obj *d)
+int
+null_powerspectrum(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->ps->created_Cell = 0;
     d->ps->ell = NULL;
     d->ps->Cell_1h = NULL;
@@ -30,10 +34,16 @@ void null_powerspectrum(hmpdf_obj *d)
     d->ps->Cphi_1h = NULL;
     d->ps->Cphi_2h = NULL;
     d->ps->Cphi_tot = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_powerspectrum(hmpdf_obj *d)
+int
+reset_powerspectrum(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
     if (d->ps->Cell_2h != NULL) { free(d->ps->Cell_2h); }
@@ -42,10 +52,16 @@ void reset_powerspectrum(hmpdf_obj *d)
     if (d->ps->Cphi_1h != NULL) { free(d->ps->Cphi_1h); }
     if (d->ps->Cphi_2h != NULL) { free(d->ps->Cphi_2h); }
     if (d->ps->Cphi_tot != NULL) { free(d->ps->Cphi_tot); }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-int find_Nell(hmpdf_obj *d)
+int
+find_Nell(hmpdf_obj *d, int *out)
 {//{{{
+    int hmpdf_status = 0;
+
     int N = 0;
     if (d->f->pixelside > 0.0)
     // pixel sidelength is defined, which gives us a natural choice of minimum angle
@@ -55,8 +71,11 @@ int find_Nell(hmpdf_obj *d)
         // otherwise increase N
         while (1)
         {
-            double phimin = 2.0 * d->n->phimax * gsl_sf_bessel_zero_J0(1)
-                            / gsl_sf_bessel_zero_J0(N);
+            gsl_sf_result result1, resultN;
+            SAFEGSL(gsl_sf_bessel_zero_J0_e(1, &result1))
+            SAFEGSL(gsl_sf_bessel_zero_J0_e(N, &resultN))
+            double phimin = 2.0 * d->n->phimax * result1.val
+                            / resultN.val;
             if (phimin < d->f->pixelside)
             {
                 break;
@@ -70,23 +89,30 @@ int find_Nell(hmpdf_obj *d)
         }
     }
     N = GSL_MAX(N, PS_NELL);
-    return N;
+    *out = N;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void ps_Mint(hmpdf_obj *d, int z_index, double *oneh, double *twoh)
+int
+ps_Mint(hmpdf_obj *d, int z_index, double *oneh, double *twoh)
 // oneh, twoh are d->ps->Nell long
 // this function nulls oneh, twoh first
 // function includes squaring of the two-halo term,
 //     but not application of z-dependent filters
 {//{{{
+    int hmpdf_status = 0;
+
     zero_real(d->ps->Nell, oneh);
     zero_real(d->ps->Nell, twoh);
-    double *temp = (double *)malloc(d->ps->Nell * sizeof(double));
+    SAFEALLOC(double *, temp, malloc(d->ps->Nell * sizeof(double)))
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
         // evaluate the conjugate profile interpolator
-        s_of_ell(d, z_index, M_index, d->ps->Nell, d->ps->ell, temp);
+        SAFEHMPDF(s_of_ell(d, z_index, M_index,
+                           d->ps->Nell, d->ps->ell, temp))
         
         // read dndlogM and bias
         double n = d->h->hmf[z_index][M_index];
@@ -108,24 +134,32 @@ void ps_Mint(hmpdf_obj *d, int z_index, double *oneh, double *twoh)
     }
 
     free(temp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void ps_zint(hmpdf_obj *d, double *oneh, double *twoh)
+int
+ps_zint(hmpdf_obj *d, double *oneh, double *twoh)
 // oneh, twoh are d->ps->Nell long
 // this function nulls oneh, twoh first
 {//{{{
+    int hmpdf_status = 0;
+
     zero_real(d->ps->Nell, oneh);
     zero_real(d->ps->Nell, twoh);
-    double *oneh_z = (double *)malloc(d->ps->Nell * sizeof(double));
-    double *twoh_z = (double *)malloc(d->ps->Nell * sizeof(double));
+    SAFEALLOC(double *, oneh_z, malloc(d->ps->Nell * sizeof(double)))
+    SAFEALLOC(double *, twoh_z, malloc(d->ps->Nell * sizeof(double)))
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        ps_Mint(d, z_index, oneh_z, twoh_z);
+        SAFEHMPDF(ps_Mint(d, z_index, oneh_z, twoh_z))
 
         // apply z-dependent filters
-        apply_filters(d, d->ps->Nell, d->ps->ell, twoh_z, twoh_z, 1, filter_ps, &z_index);
-        apply_filters(d, d->ps->Nell, d->ps->ell, oneh_z, oneh_z, 1, filter_ps, &z_index);
+        SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
+                                twoh_z, twoh_z, 1, filter_ps, &z_index))
+        SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
+                                oneh_z, oneh_z, 1, filter_ps, &z_index))
 
         for (int ii=0; ii<d->ps->Nell; ii++)
         {
@@ -136,60 +170,77 @@ void ps_zint(hmpdf_obj *d, double *oneh, double *twoh)
 
             oneh[ii] += gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index]
                         * oneh_z[ii] * d->n->zweights[z_index];
+            double Pk;
+            SAFEHMPDF(Pk_linear(d, k, &Pk))
             twoh[ii] += gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index]
-                        * d->c->Dsq[z_index] * Pk_linear(d, k)
+                        * d->c->Dsq[z_index] * Pk
                         * twoh_z[ii] * d->n->zweights[z_index];
         }
     }
 
     free(oneh_z);
     free(twoh_z);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void create_Cell(hmpdf_obj *d)
+int
+create_Cell(hmpdf_obj *d)
 {//{{{
-    if (d->ps->created_Cell) { return; }
+    int hmpdf_status = 0;
+
+    if (d->ps->created_Cell) { return hmpdf_status; }
+
     fprintf(stdout, "\tcreate_Cell\n");
     fflush(stdout);
+    
     d->ps->Nell = PS_NELL;
-    d->ps->ell = (double *)malloc(d->ps->Nell * sizeof(double));
+    SAFEALLOC(, d->ps->ell, malloc(d->ps->Nell * sizeof(double)))
     logspace(d->ps->Nell, PS_ELLMIN, PS_ELLMAX, d->ps->ell);
-    d->ps->Cell_1h = (double *)malloc(d->ps->Nell * sizeof(double));
-    d->ps->Cell_2h = (double *)malloc(d->ps->Nell * sizeof(double));
-    d->ps->Cell_tot = (double *)malloc(d->ps->Nell * sizeof(double));
+    SAFEALLOC(, d->ps->Cell_1h,  malloc(d->ps->Nell * sizeof(double)))
+    SAFEALLOC(, d->ps->Cell_2h,  malloc(d->ps->Nell * sizeof(double)))
+    SAFEALLOC(, d->ps->Cell_tot, malloc(d->ps->Nell * sizeof(double)))
     // compute 1- and 2-halo terms
-    ps_zint(d, d->ps->Cell_1h, d->ps->Cell_2h);
+    SAFEHMPDF(ps_zint(d, d->ps->Cell_1h, d->ps->Cell_2h))
     // sum the 1- and 2-halo term
     for (int ii=0; ii<d->ps->Nell; ii++)
     {
         d->ps->Cell_tot[ii] = d->ps->Cell_1h[ii] + d->ps->Cell_2h[ii];
     }
     // filter (z-independent)
-    apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_1h,
-                  d->ps->Cell_1h, 1, filter_ps, NULL);
-    apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_2h,
-                  d->ps->Cell_2h, 1, filter_ps, NULL);
-    apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_tot,
-                  d->ps->Cell_tot, 1, filter_ps, NULL);
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_1h,
+                            d->ps->Cell_1h, 1, filter_ps, NULL))
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_2h,
+                            d->ps->Cell_2h, 1, filter_ps, NULL))
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_tot,
+                            d->ps->Cell_tot, 1, filter_ps, NULL))
 
     d->ps->created_Cell = 1;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void create_Cphi(hmpdf_obj *d)
+static int
+create_Cphi(hmpdf_obj *d)
 {//{{{
-    if (d->ps->created_Cphi) { return; }
+    int hmpdf_status = 0;
+
+    if (d->ps->created_Cphi) { return hmpdf_status; }
+
     fprintf(stdout, "\tcreate_Cphi\n");
     fflush(stdout);
-    d->ps->Nell_corr = find_Nell(d);
+    
+    SAFEHMPDF(find_Nell(d, &(d->ps->Nell_corr)))
     gsl_dht *t = gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->phimax);
     
-    d->ps->phi = (double *)malloc(d->ps->Nell_corr * sizeof(double));
-    double *temp_ell = (double *)malloc(d->ps->Nell_corr * sizeof(double));
-    double *temp_Cell = (double *)malloc(d->ps->Nell_corr * sizeof(double));
-    d->ps->Cphi_1h = (double *)malloc(d->ps->Nell_corr * sizeof(double));
-    d->ps->Cphi_2h = (double *)malloc(d->ps->Nell_corr * sizeof(double));
-    d->ps->Cphi_tot = (double *)malloc(d->ps->Nell_corr * sizeof(double));
+    SAFEALLOC(, d->ps->phi, malloc(d->ps->Nell_corr * sizeof(double)))
+    SAFEALLOC(double *, temp_ell,  malloc(d->ps->Nell_corr * sizeof(double)))
+    SAFEALLOC(double *, temp_Cell, malloc(d->ps->Nell_corr * sizeof(double)))
+    SAFEALLOC(, d->ps->Cphi_1h,  malloc(d->ps->Nell_corr * sizeof(double)))
+    SAFEALLOC(, d->ps->Cphi_2h,  malloc(d->ps->Nell_corr * sizeof(double)))
+    SAFEALLOC(, d->ps->Cphi_tot, malloc(d->ps->Nell_corr * sizeof(double)))
     
     for (int ii=0; ii<d->ps->Nell_corr; ii++)
     {
@@ -201,14 +252,17 @@ void create_Cphi(hmpdf_obj *d)
                                    / gsl_dht_x_sample(t, 0));
 
     // 1halo term
-    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_onehalo);
-    gsl_dht_apply(t, temp_Cell, d->ps->Cphi_1h);
+    SAFEHMPDF(hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell,
+                             temp_Cell, hmpdf_onehalo))
+    SAFEGSL(gsl_dht_apply(t, temp_Cell, d->ps->Cphi_1h))
     // 2halo term
-    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_twohalo);
-    gsl_dht_apply(t, temp_Cell, d->ps->Cphi_2h);
+    SAFEHMPDF(hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell,
+                             temp_Cell, hmpdf_twohalo))
+    SAFEGSL(gsl_dht_apply(t, temp_Cell, d->ps->Cphi_2h))
     // total
-    hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell, temp_Cell, hmpdf_total);
-    gsl_dht_apply(t, temp_Cell, d->ps->Cphi_tot);
+    SAFEHMPDF(hmpdf_get_Cell(d, d->ps->Nell_corr, temp_ell,
+                             temp_Cell, hmpdf_total))
+    SAFEGSL(gsl_dht_apply(t, temp_Cell, d->ps->Cphi_tot))
     // normalizetion
     for (int ii=0; ii<d->ps->Nell_corr; ii++)
     {
@@ -222,71 +276,115 @@ void create_Cphi(hmpdf_obj *d)
     gsl_dht_free(t);
 
     d->ps->created_Cphi = 1;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void prepare_Cell(hmpdf_obj *d)
+static int
+prepare_Cell(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "In powerspectrum.h -> prepare_Cell.\n");
     fflush(stdout);
-    create_conj_profiles(d);
-    create_Cell(d);
+    
+    SAFEHMPDF(create_conj_profiles(d))
+    SAFEHMPDF(create_Cell(d))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void prepare_Cphi(hmpdf_obj *d)
+static int
+prepare_Cphi(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "In powerspectrum.h -> prepare_Cphi :\n");
     fflush(stdout);
-    create_conj_profiles(d);
-    create_Cell(d);
-    create_Cphi(d);
+    
+    SAFEHMPDF(create_conj_profiles(d))
+    SAFEHMPDF(create_Cell(d))
+    SAFEHMPDF(create_Cphi(d))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void hmpdf_get_Cell(hmpdf_obj *d, int Nell, double *ell, double *Cell, hmpdf_Cell_mode_e mode)
+int
+hmpdf_get_Cell(hmpdf_obj *d, int Nell, double *ell, double *Cell, hmpdf_Cell_mode_e mode)
 {//{{{
-    prepare_Cell(d);
+    int hmpdf_status = 0;
+
+    SAFEHMPDF(prepare_Cell(d))
 
     double *C;
     switch (mode)
     {
-        case hmpdf_onehalo : C = d->ps->Cell_1h; break;
-        case hmpdf_twohalo : C = d->ps->Cell_2h; break;
-        case hmpdf_total   : C = d->ps->Cell_tot; break;
-        default      : fprintf(stderr, "Invalid Cell_mode in get_Cell.\n"); return;
-                       fflush(stderr);
+        case hmpdf_onehalo : C = d->ps->Cell_1h;
+                             break;
+        case hmpdf_twohalo : C = d->ps->Cell_2h;
+                             break;
+        case hmpdf_total   : C = d->ps->Cell_tot;
+                             break;
+        default            : C = NULL;
+                             fprintf(stderr, "Error: Invalid Cell_mode in get_Cell.\n");
+                             fflush(stderr);
+                             ERRLOC
+                             hmpdf_status |= 1;
+                             return hmpdf_status;
     }
-    interp1d *interp = new_interp1d(d->ps->Nell, d->ps->ell, C, C[0], 0.0, CELL_INTERP_TYPE, NULL);
+    interp1d *interp;
+    SAFEHMPDF(new_interp1d(d->ps->Nell, d->ps->ell, C,
+                           C[0], 0.0, CELL_INTERP_TYPE, NULL, &interp))
 
     for (int ii=0; ii<Nell; ii++)
     {
-        Cell[ii] = interp1d_eval(interp, ell[ii]);
+        SAFEHMPDF(interp1d_eval(interp, ell[ii], Cell+ii))
     }
 
     delete_interp1d(interp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double *phi, double *Cphi, hmpdf_Cell_mode_e mode)
+int
+hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double *phi, double *Cphi, hmpdf_Cell_mode_e mode)
 {//{{{
-    prepare_Cphi(d);
+    int hmpdf_status = 0;
+
+    SAFEHMPDF(prepare_Cphi(d))
 
     double *C;
     switch (mode)
     {
-        case hmpdf_onehalo : C = d->ps->Cphi_1h; break;
-        case hmpdf_twohalo : C = d->ps->Cphi_2h; break;
-        case hmpdf_total   : C = d->ps->Cphi_tot; break;
-        default      : fprintf(stderr, "Invalid Cphi_mode in get_Cphi.\n"); return;
-                       fflush(stderr);
+        case hmpdf_onehalo : C = d->ps->Cphi_1h;
+                             break;
+        case hmpdf_twohalo : C = d->ps->Cphi_2h;
+                             break;
+        case hmpdf_total   : C = d->ps->Cphi_tot;
+                             break;
+        default            : C = NULL;
+                             fprintf(stderr, "Error: Invalid Cphi_mode in get_Cphi.\n");
+                             fflush(stderr);
+                             ERRLOC
+                             hmpdf_status |= 1;
+                             return hmpdf_status;
     }
-    interp1d *interp = new_interp1d(d->ps->Nell_corr, d->ps->phi,
-                                    C, C[0], 0.0, CPHI_INTERP_TYPE, NULL);
+    interp1d *interp;
+    SAFEHMPDF(new_interp1d(d->ps->Nell_corr, d->ps->phi,
+                           C, C[0], 0.0, CPHI_INTERP_TYPE, NULL, &interp))
 
     for (int ii=0; ii<Nphi; ii++)
     {
-        Cphi[ii] = interp1d_eval(interp, phi[ii]);
+        SAFEHMPDF(interp1d_eval(interp, phi[ii], Cphi+ii))
     }
     
     delete_interp1d(interp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 

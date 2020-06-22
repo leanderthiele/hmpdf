@@ -13,18 +13,33 @@
 
 #include "hmpdf.h"
 
-void null_noise(hmpdf_obj *d)
+int
+null_noise(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->ns->toepl = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_noise(hmpdf_obj *d)
+int
+reset_noise(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void create_noisy_grids(hmpdf_obj *d)
+int
+create_noisy_grids(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tcreate_noisy_grids\n");
     fflush(stdout);
 
@@ -32,23 +47,29 @@ void create_noisy_grids(hmpdf_obj *d)
     d->ns->len_kernel = d->n->Nsignal;
     // construct the new signal grid
     d->n->Nsignal_noisy = d->n->Nsignal+2*d->ns->len_kernel;
-    d->n->signalgrid_noisy = (double *)malloc(d->n->Nsignal_noisy
-                                              * sizeof(double));
+    SAFEALLOC(, d->n->signalgrid_noisy, malloc(d->n->Nsignal_noisy
+                                               * sizeof(double)))
     double extra_signal = (double)(d->ns->len_kernel)/(double)(d->n->Nsignal-1)
                           *(d->n->signalmax - d->n->signalmin);
     double smin = d->n->signalmin - extra_signal;
     double smax = d->n->signalmax + extra_signal;
     linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void create_toepl(hmpdf_obj *d)
+int
+create_toepl(hmpdf_obj *d)
 // creates Toeplitz matrix nrows=Nsignal, ncols=Nsignal_noisy
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tcreate_toepl\n");
     fflush(stdout);
 
-    d->ns->toepl = (double *)malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                    * sizeof(double));
+    SAFEALLOC(, d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
+                                     * sizeof(double)))
     zero_real(d->n->Nsignal*d->n->Nsignal_noisy, d->ns->toepl);
     double sigma = d->ns->noise
                    / (d->n->signalgrid[1] - d->n->signalgrid[0]);
@@ -64,17 +85,25 @@ void create_toepl(hmpdf_obj *d)
         memcpy(d->ns->toepl + ii*(d->n->Nsignal_noisy+1), d->ns->toepl,
                (2*d->ns->len_kernel+1) * sizeof(double));
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void noise_vect(hmpdf_obj *d, double *in, double *out)
+int
+noise_vect(hmpdf_obj *d, double *in, double *out)
 // assumes len(in) = Nsignal, len(out) = Nsignal_noisy
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->ns->toepl == NULL)
     {
+        ERRLOC
         fprintf(stderr, "Error : Toeplitz matrix not computed. "
                         "Invalid call to noise_vect.\n");
         fflush(stderr);
-        return;
+        hmpdf_status |= 1;
+        return hmpdf_status;
     }
 
     cblas_dgemv(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
@@ -82,22 +111,30 @@ void noise_vect(hmpdf_obj *d, double *in, double *out)
                 1.0/*alpha*/, d->ns->toepl/*matrix A*/, d->n->Nsignal_noisy/*lda*/,
                 in/*input vector X*/, 1/*stride of X*/, 0.0/*beta*/,
                 out/*output vector Y*/, 1/*stride of Y*/);
+    
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void noise_matr(hmpdf_obj *d, double *in, double *out)
+int
+noise_matr(hmpdf_obj *d, double *in, double *out)
 // assumes [in] = Nsignal*Nsignal, [out] = Nsignal_noisy*Nsignal_noisy
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->ns->toepl == NULL)
     {
+        ERRLOC
         fprintf(stderr, "Error : Toeplitz matrix not computed. "
                         "Invalid call to noise_matr.\n");
         fflush(stderr);
-        return;
+        hmpdf_status |= 1;
+        return hmpdf_status;
     }
 
     // no aliasing allowed, so we need intermediate storage
-    double *temp = (double *)malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                    * sizeof(double));
+    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal_noisy
+                                     * sizeof(double)))
 
     // multiply from the left with Toeplitz matrix
     cblas_dgemm(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
@@ -117,16 +154,25 @@ void noise_matr(hmpdf_obj *d, double *in, double *out)
                 0.0, out, d->n->Nsignal_noisy);
 
     free(temp);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void init_noise(hmpdf_obj *d)
+int
+init_noise(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->ns->noise > 0.0)
     {
         fprintf(stdout, "In noise.h -> init_noise.\n");
         fflush(stdout);
 
-        create_noisy_grids(d);
-        create_toepl(d);
+        SAFEHMPDF(create_noisy_grids(d))
+        SAFEHMPDF(create_toepl(d))
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}

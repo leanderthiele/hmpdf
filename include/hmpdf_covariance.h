@@ -16,11 +16,11 @@
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.
  */
-void hmpdf_get_cov(hmpdf_obj *d,
-                   int Nbins,
-                   double *binedges,
-                   double *out,
-                   int noisy);
+int hmpdf_get_cov(hmpdf_obj *d,
+                  int Nbins,
+                  double *binedges,
+                  double *out,
+                  int noisy);
 
 /*! Returns diagnostic outputs for the covariance matrix computation.
  *  The main use of this function is to identify numerical instability at small
@@ -48,10 +48,10 @@ void hmpdf_get_cov(hmpdf_obj *d,
  *          \endcode
  *          after use.
  */
-void hmpdf_get_cov_diagnostics(hmpdf_obj *d,
-                               int *Nphi,
-                               double **phi,
-                               double **phiweights,
-                               double **corr_diagn);
+int hmpdf_get_cov_diagnostics(hmpdf_obj *d,
+                              int *Nphi,
+                              double **phi,
+                              double **phiweights,
+                              double **corr_diagn);
 
 #endif

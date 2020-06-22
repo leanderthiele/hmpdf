@@ -35,9 +35,9 @@
  *             Thus, you need to pass all configuration options in a single call
  *             to hmpdf_init().
  */
-void hmpdf_init(hmpdf_obj *d,
-                char *class_ini,
-                hmpdf_signaltype_e stype,
-                ...);
+int hmpdf_init(hmpdf_obj *d,
+               char *class_ini,
+               hmpdf_signaltype_e stype,
+               ...);
 
 #endif

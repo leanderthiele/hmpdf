@@ -11,8 +11,11 @@
 #include "class_interface.h"
 #include "cosmology.h"
 
-void null_cosmology(hmpdf_obj *d)
+int
+null_cosmology(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->c->inited_cosmo = 0;
     d->c->hubble = NULL;
     d->c->comoving = NULL;
@@ -22,10 +25,16 @@ void null_cosmology(hmpdf_obj *d)
     d->c->rho_m = NULL;
     d->c->rho_c = NULL;
     d->c->Om = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_cosmology(hmpdf_obj *d)
+int
+reset_cosmology(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }
     if (d->c->angular_diameter != NULL) { free(d->c->angular_diameter); }
@@ -34,29 +43,39 @@ void reset_cosmology(hmpdf_obj *d)
     if (d->c->rho_m != NULL) { free(d->c->rho_m); }
     if (d->c->rho_c != NULL) { free(d->c->rho_c); }
     if (d->c->Om != NULL) { free(d->c->Om); }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void alloc_cosmo(hmpdf_obj *d)
+static int
+alloc_cosmo(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\talloc_cosmo\n");
     fflush(stdout);
-    d->c->hubble = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->comoving = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->angular_diameter = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->Dsq = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->Om = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->rho_m = (double *)malloc(d->n->Nz * sizeof(double));
-    d->c->rho_c = (double *)malloc(d->n->Nz * sizeof(double));
+    SAFEALLOC(, d->c->hubble, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->comoving, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->angular_diameter, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->Dsq, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->Om, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->rho_m, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->c->rho_c, malloc(d->n->Nz * sizeof(double)))
     if (d->p->stype == hmpdf_kappa)
     {
-        d->c->Scrit = (double *)malloc(d->n->Nz * sizeof(double));
+        SAFEALLOC(, d->c->Scrit, malloc(d->n->Nz * sizeof(double)))
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void fill_background(hmpdf_obj *d)
+static int
+fill_background(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tfill_background\n");
     fflush(stdout);
     double tau; // conformal time in Mpc
@@ -64,7 +83,7 @@ void fill_background(hmpdf_obj *d)
 
     struct background *ba = (struct background *)d->cls->ba;
 
-    double *pvecback = (double *)malloc(ba->bg_size * sizeof(double));
+    SAFEALLOC(double *, pvecback, malloc(ba->bg_size * sizeof(double)))
     // get z=0 numbers
     d->c->h = ba->h;
     d->c->rho_c_0 = 3.0*gsl_pow_2(SPEEDOFLIGHT)/8.0/M_PI/GNEWTON
@@ -77,10 +96,12 @@ void fill_background(hmpdf_obj *d)
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         // get conformal time at given redshift
-        background_tau_of_z(ba, d->n->zgrid[z_index], &tau);
+        SAFECLASS(background_tau_of_z(ba, d->n->zgrid[z_index], &tau),
+                  ba->error_message)
         // write interpolated background quantities into pvecback
-        background_at_tau(ba, tau, ba->long_info,
-                          ba->inter_normal, &index, pvecback);
+        SAFECLASS(background_at_tau(ba, tau, ba->long_info,
+                                    ba->inter_normal, &index, pvecback),
+                  ba->error_message)
 
         d->c->hubble[z_index] = pvecback[ba->index_bg_H]; // 1/Mpc
         d->c->comoving[z_index] = pvecback[ba->index_bg_conf_distance]; // Mpc
@@ -95,9 +116,11 @@ void fill_background(hmpdf_obj *d)
     if (d->p->stype == hmpdf_kappa) // need to compute critical surface density
     {
         // find distances to source position
-        background_tau_of_z(ba, d->n->zsource, &tau);
-        background_at_tau(ba, tau, ba->long_info,
-                          ba->inter_normal, &index, pvecback);
+        SAFECLASS(background_tau_of_z(ba, d->n->zsource, &tau),
+                  ba->error_message)
+        SAFECLASS(background_at_tau(ba, tau, ba->long_info,
+                                    ba->inter_normal, &index, pvecback),
+                  ba->error_message)
         double chi_s = pvecback[ba->index_bg_conf_distance];
         double dA_s = pvecback[ba->index_bg_ang_distance];
         // fill the Scrit grid
@@ -111,13 +134,22 @@ void fill_background(hmpdf_obj *d)
     }
 
     free(pvecback);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void init_cosmology(hmpdf_obj *d)
+int
+init_cosmology(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "In cosmology.h -> init_cosmo.\n");
     fflush(stdout);
-    alloc_cosmo(d);
-    fill_background(d);
+    SAFEHMPDF(alloc_cosmo(d))
+    SAFEHMPDF(fill_background(d))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 

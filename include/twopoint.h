@@ -42,12 +42,12 @@ typedef struct//{{{
 }//}}}
 twopoint_t;
 
-twopoint_workspace *new_tp_ws(int N);
+int new_tp_ws(int N, twopoint_workspace **out);
 
-void null_twopoint(hmpdf_obj *d);
-void reset_twopoint(hmpdf_obj *d);
-void create_phi_indep(hmpdf_obj *d);
-void create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws);
-void hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out, int noisy);
+int null_twopoint(hmpdf_obj *d);
+int reset_twopoint(hmpdf_obj *d);
+int create_phi_indep(hmpdf_obj *d);
+int create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws);
+int hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double *binedges, double *out, int noisy);
 
 #endif

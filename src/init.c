@@ -17,22 +17,46 @@
 
 #include "hmpdf.h"
 
+#include <gsl/gsl_errno.h>
+
 typedef enum
 {//{{{
-    str_type,
-    int_type,
-    dbl_type,
-    dptr_type,
-    mdef_type,
-    integr_type,
+    int_type, // int
+    dbl_type, // double
+    mdef_type, // hmpdf_mdef_e
+    integr_type, // hmpdf_integr_mode_e
+    end_comparable_dtypes,
+    str_type, // char *
+    dptr_type, // double *
     vptr_type, // void *
-    lf_type, // ell filter
-    kf_type, // k filter
+    lf_type, // hmpdf_ell_filter_f
+    kf_type, // hmpdf_k_filter_f
 }//}}}
 dtype;
 
+// perform action depending on data type
+//DT_DEP_ACTION{{{
+#define DT_DEP_ACTION(dt, expr)                                \
+    switch (dt)                                                \
+    {                                                          \
+        case (str_type) : expr(char *); break;                 \
+        case (int_type) : expr(int); break;                    \
+        case (dbl_type) : expr(double); break;                 \
+        case (dptr_type) : expr(double *); break;              \
+        case (mdef_type) : expr(hmpdf_mdef_e); break;          \
+        case (integr_type) : expr(hmpdf_integr_mode_e); break; \
+        case (vptr_type) : expr(void *); break;                \
+        case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
+        case (kf_type) : expr(hmpdf_k_filter_f); break;        \
+        default : fprintf(stderr, "Error : Unknown dtype.\n"); \
+                  fflush(stderr);                              \
+                  break;                                       \
+    }                                                          \
+//}}}
+
 typedef struct
 {//{{{
+    char *name;
     void *target;
     dtype dt;
     void *def;
@@ -44,8 +68,9 @@ param;
 
 // convenience function to save typing
 static void
-init_p(param *p, void *target, dtype dt, void *def, void *lo, void *hi)
+init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *hi)
 {//{{{
+    p->name = name;
     p->target = target;
     p->dt = dt;
     p->def = def;
@@ -55,39 +80,48 @@ init_p(param *p, void *target, dtype dt, void *def, void *lo, void *hi)
 }//}}}
 
 // convenience macros to save even more typing
-#define INIT_P(indx, targ, dt, df)                      \
-        init_p(p+indx, &(targ), dt, &(df), NULL, NULL); \
-        ++ctr;
-#define INIT_P_B(indx, targ, dt, df)                               \
-        init_p(p+indx, &(targ), dt, &(df[0]), &(df[1]), &(df[2])); \
-        ++ctr;
+//INIT_P*{{{
+#define INIT_P(indx, targ, dt, df)                             \
+        init_p(p+indx, #indx, &(targ), dt, &(df), NULL, NULL); \
+        ++ctr;                                                 \
+
+#define INIT_P_B(indx, targ, dt, df)                                      \
+        init_p(p+indx, #indx, &(targ), dt, &(df[0]), &(df[1]), &(df[2])); \
+        ++ctr;                                                            \
+
 #define INIT_P2(indx, targ, dt, dfk, dft)                    \
-        init_p(p+indx, &(targ), dt,                          \
+        init_p(p+indx, #indx, &(targ), dt,                   \
                (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft), \
-               NULL, NULL);\
-        ++ctr;
+               NULL, NULL);                                  \
+        ++ctr;                                               \
+
 #define INIT_P2_BK(indx, targ, dt, dfk, dft)                    \
-        init_p(p+indx, &(targ), dt,                             \
+        init_p(p+indx, #indx, &(targ), dt,                      \
                (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft), \
                (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : NULL,   \
                (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : NULL);  \
-        ++ctr;
+        ++ctr;                                                  \
+
 #define INIT_P2_BT(indx, targ, dt, dfk, dft)                     \
-        init_p(p+indx, &(targ), dt,                              \
+        init_p(p+indx, #indx, &(targ), dt,                       \
                (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft[0]),  \
                (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[1]),  \
                (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[2])); \
-        ++ctr;
+        ++ctr;                                                   \
+
 #define INIT_P2_BKT(indx, targ, dt, dfk, dft)                       \
-        init_p(p+indx, &(targ), dt,                                 \
+        init_p(p+indx, #indx, &(targ), dt,                          \
                (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft[0]),  \
                (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : &(dft[1]),  \
                (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : &(dft[2])); \
-        ++ctr;
+        ++ctr;                                                      \
+//}}}
 
-static void
+static int 
 init_params(hmpdf_obj *d, param *p)
 {//{{{
+    int hmpdf_status = 0;
+
     int ctr = 0;
     INIT_P_B(hmpdf_N_threads,
              d->Ncores, int_type, def.Ncores)
@@ -166,10 +200,15 @@ init_params(hmpdf_obj *d, param *p)
 
     if (ctr != hmpdf_end_configs)
     {
-        fprintf(stderr, "Error: in init_params not all params filled, "
+        fprintf(stderr, "In init_params not all params filled, "
                         "ctr = %d.\n", ctr);
         fflush(stderr);
+        ERRLOC;
+        hmpdf_status |= 1;
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
 #undef INIT_P
@@ -179,65 +218,65 @@ init_params(hmpdf_obj *d, param *p)
 #undef INIT_P2_BT
 #undef INIT_P2_BKT
 
-// some more convenience macros
-#define ASSIGN_SET(dt)                                 \
-        *((dt*)(p->target)) = va_arg(*valist, dt);     \
-        if (p->lo != NULL)                             \
-        {                                              \
-            if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
-            {                                          \
-                *invalid_param = 1;                    \
-            }                                          \
-        }                                              \
-        if (p->hi != NULL)                             \
-        {                                              \
-            if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
-            {                                          \
-                *invalid_param = 1;                    \
-            }                                          \
-        }                                              \
-        break;
-void assign_set(param *p, va_list *valist, int *invalid_param)
+// assign parameter to value passed by user,
+//     check for validity if bounds are present
+//ASSIGN_SET{{{
+#define ASSIGN_SET(dt)                                     \
+        *((dt*)(p->target)) = va_arg(*valist, dt);         \
+        if (comparable)                                    \
+        {                                                  \
+            if (p->lo != NULL)                             \
+            {                                              \
+                if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
+                {                                          \
+                    *invalid_param = 1;                    \
+                }                                          \
+            }                                              \
+            if (p->hi != NULL)                             \
+            {                                              \
+                if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
+                {                                          \
+                    *invalid_param = 1;                    \
+                }                                          \
+            }                                              \
+        }                                                  \
+//}}}
+
+static int 
+assign_set(param *p, va_list *valist, int *invalid_param)
 {//{{{
-    switch (p->dt)
-    {
-            case (str_type)    : ASSIGN_SET(char *)
-            case (int_type)    : ASSIGN_SET(int)
-            case (dbl_type)    : ASSIGN_SET(double)
-            case (dptr_type)   : ASSIGN_SET(double *)
-            case (mdef_type)   : ASSIGN_SET(hmpdf_mdef_e)
-            case (integr_type) : ASSIGN_SET(hmpdf_integr_mode_e)
-            case (lf_type)     : ASSIGN_SET(hmpdf_ell_filter_f)
-            case (kf_type)     : ASSIGN_SET(hmpdf_k_filter_f)
-            case (vptr_type)   : ASSIGN_SET(void *)
-            default            : fprintf(stderr, "Not implemented : dtype.\n");
-                                 break;
-    }
+    int hmpdf_status = 0;
+
+    int comparable = (p->dt < end_comparable_dtypes) ? 1 : 0;
+    DT_DEP_ACTION(p->dt, ASSIGN_SET);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
+
 #undef ASSIGN_SET
 
-#define ASSIGN_DEF(dt)                         \
+// assign parameter to default value
+//ASSIGN_DEF{{{
+#define ASSIGN_DEF(dt)                          \
         *((dt*)(p->target)) = *((dt*)(p->def)); \
-        break;
-void assign_def(param *p)
+//}}}
+
+static int
+assign_def(param *p)
 {//{{{
-    switch (p->dt)
-    {
-            case (str_type)      : ASSIGN_DEF(char *)
-            case (int_type)      : ASSIGN_DEF(int)
-            case (dbl_type)      : ASSIGN_DEF(double)
-            case (dptr_type)     : ASSIGN_DEF(double *)
-            case (mdef_type)     : ASSIGN_DEF(hmpdf_mdef_e)
-            case (integr_type)   : ASSIGN_DEF(hmpdf_integr_mode_e)
-            case (lf_type)       : ASSIGN_DEF(hmpdf_ell_filter_f)
-            case (kf_type)       : ASSIGN_DEF(hmpdf_k_filter_f)
-            case (vptr_type)     : ASSIGN_DEF(void *)
-            default              : fprintf(stderr, "Not implemented : dtype.\n");
-                                   break;
-    }
+    int hmpdf_status = 0;
+
+    DT_DEP_ACTION(p->dt, ASSIGN_DEF);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
+
 #undef ASSIGN_DEF
 
+// print depending on data type
+//FMT{{{
 #define FMT(dt)                \
     (dt==str_type) ? "%s"      \
     : (dt==int_type) ? "%d"    \
@@ -248,38 +287,95 @@ void assign_def(param *p)
     : (dt==vptr_type) ? "%p"   \
     : (dt==lf_type) ? "%p"     \
     : (dt==kf_type) ? "%p"     \
-    : "%d"
-#define PRINTVAL(dt1)                   \
+    : "%d"                     \
+
+#define PRINTVAL(dt1)                    \
     fprintf(f, FMT(dt), *((dt1*)(val))); \
-    break;
-void printval(FILE *f, void *val, dtype dt)
-{
-    switch (dt)
-    {
-        case (str_type)    : PRINTVAL(char *)
-        case (int_type)    : PRINTVAL(int)
-        case (dbl_type)    : PRINTVAL(double)
-        case (dptr_type)   : PRINTVAL(double *)
-        case (mdef_type)   : PRINTVAL(hmpdf_mdef_e)
-        case (integr_type) : PRINTVAL(hmpdf_integr_mode_e)
-        case (lf_type)     : PRINTVAL(hmpdf_ell_filter_f)
-        case (kf_type)     : PRINTVAL(hmpdf_k_filter_f)
-        case (vptr_type)   : PRINTVAL(void *)
-        default            : fprintf(stderr, "Not implemented : dtype.\n");
-                             break;
-    }
-}
+//}}}
+
+static int
+printval(FILE *f, void *val, dtype dt)
+{//{{{
+    int hmpdf_status = 0;
+
+    DT_DEP_ACTION(dt, PRINTVAL);
+
+    CHECKERR
+    return hmpdf_status;
+}//}}}
+
 #undef FMT
 #undef PRINTVAL
+#undef DT_DEP_ACTION
 
-void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
+static int
+invalid_param_error(param *p)
 {//{{{
+    int hmpdf_status = 0;
+
+    fprintf(stderr, "Error: option passed for %s "
+                    "is out of recommended bounds:\n"
+                    "you passed ", p->name);
+    SAFEHMPDF(printval(stderr, p->target, p->dt))
+    fprintf(stderr, " which is outside the bounds ( ");
+    SAFEHMPDF(printval(stderr, p->lo, p->dt))
+    fprintf(stderr, " , ");
+    SAFEHMPDF(printval(stderr, p->hi, p->dt))
+    fprintf(stderr, " )\n");
+    fprintf(stderr, "But will continue execution, " 
+                    "in case you really wanted this.\n");
+    fflush(stderr);
+    ERRLOC
+
+    CHECKERR
+    return hmpdf_status;
+}//}}}
+
+static int
+unit_conversions(hmpdf_obj *d)
+{//{{{
+    int hmpdf_status = 0;
+
+    d->n->phimax *= M_PI/180.0/60.0;
+    d->f->pixelside *= M_PI/180.0/60.0;
+    d->f->tophat_radius *= M_PI/180.0/60.0;
+    d->f->gaussian_sigma *= M_PI/180.0/60.0/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+
+    CHECKERR
+    return hmpdf_status;
+}//}}}
+
+static int
+compute_necessary_for_all(hmpdf_obj *d)
+{//{{{
+    int hmpdf_status = 0;
+
+    SAFEHMPDF(init_numerics(d))
+    SAFEHMPDF(init_class_interface(d))
+    SAFEHMPDF(init_cosmology(d))
+    SAFEHMPDF(init_power(d))
+    SAFEHMPDF(init_halo_model(d))
+    SAFEHMPDF(init_filters(d))
+    SAFEHMPDF(init_profiles(d))
+    SAFEHMPDF(init_noise(d))
+
+    CHECKERR
+    return hmpdf_status;
+}//}}}
+
+int
+hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
+{//{{{
+    gsl_set_error_handler_off();
+
+    int hmpdf_status = 0;
+
     fprintf(stdout, "In init.h -> init.\n");
     fflush(stdout);
     // this frees all the computed quantities,
     // since we assume that each call of init changes some
     // parameter (cosmological or numerical)
-    reset_data(d);
+    SAFEHMPDF(reset_data(d))
 
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
@@ -292,8 +388,8 @@ void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
         d->n->zsource = va_arg(valist, double);
     }
 
-    param *p = (param *)malloc((int)(hmpdf_end_configs) * sizeof(param));
-    init_params(d, p);
+    SAFEALLOC(param *, p, malloc((int)(hmpdf_end_configs) * sizeof(param)))
+    SAFEHMPDF(init_params(d, p))
 
     int invalid_param = 0;
     for (;;)
@@ -303,20 +399,12 @@ void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
         {
             break;
         }
-        assign_set(p+(int)c, &valist, &invalid_param);
+        SAFEHMPDF(assign_set(p+(int)c, &valist, &invalid_param))
         if (invalid_param)
         {
-            fprintf(stderr, "Warning: option passed for %d "
-                            "is out of recommended bounds:\n"
-                            "you passed ", (int)c);
-            printval(stderr, p[c].target, p[c].dt);
-            fprintf(stderr, " which is outside the bounds ( ");
-            printval(stderr, p[c].lo, p[c].dt);
-            fprintf(stderr, " , ");
-            printval(stderr, p[c].hi, p[c].dt);
-            fprintf(stderr, " )\n");
-            fflush(stderr);
+            invalid_param_error(p+(int)c);
             invalid_param = 0;
+            hmpdf_status = 1;
         }
         p[c].set = 1;
     }
@@ -329,7 +417,7 @@ void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
         {
             continue;
         }
-        assign_def(p+ii);
+        SAFEHMPDF(assign_def(p+ii))
     }
 
     free(p);
@@ -346,19 +434,12 @@ void hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     #endif
 
     // do necessary conversions
-    d->n->phimax *= M_PI/180.0/60.0;
-    d->f->pixelside *= M_PI/180.0/60.0;
-    d->f->tophat_radius *= M_PI/180.0/60.0;
-    d->f->gaussian_sigma *= M_PI/180.0/60.0/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+    SAFEHMPDF(unit_conversions(d))
 
     // compute things that we need for all output products
-    init_numerics(d);
-    init_class_interface(d);
-    init_cosmology(d);
-    init_power(d);
-    init_halo_model(d);
-    init_filters(d);
-    init_profiles(d);
-    init_noise(d);
+    SAFEHMPDF(compute_necessary_for_all(d))
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 

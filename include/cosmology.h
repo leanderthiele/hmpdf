@@ -24,8 +24,8 @@ typedef struct//{{{
 }//}}}
 cosmology_t;
 
-void null_cosmology(hmpdf_obj *d);
-void reset_cosmology(hmpdf_obj *d);
-void init_cosmology(hmpdf_obj *d);
+int null_cosmology(hmpdf_obj *d);
+int reset_cosmology(hmpdf_obj *d);
+int init_cosmology(hmpdf_obj *d);
 
 #endif

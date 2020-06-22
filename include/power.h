@@ -11,10 +11,6 @@ typedef struct//{{{
 {
     int inited_power;
 
-    double *k_arr;
-    double *Pk_arr;
-    interp1d *Pk_interp;
-
     double **ssq;
     double autocorr;
 
@@ -25,11 +21,11 @@ typedef struct//{{{
 }//}}}
 power_t;
 
-void null_power(hmpdf_obj *d);
-void reset_power(hmpdf_obj *d);
-void create_corr(hmpdf_obj *d);
-double Pk_linear(hmpdf_obj *d, double k/*if LOGK is defined, this is log(k)*/);
-double corr(hmpdf_obj *d, int z_index, double phi);
-void init_power(hmpdf_obj *d);
+int null_power(hmpdf_obj *d);
+int reset_power(hmpdf_obj *d);
+int create_corr(hmpdf_obj *d);
+int Pk_linear(hmpdf_obj *d, double k/*if LOGK is defined, this is log(k)*/, double *out);
+int corr(hmpdf_obj *d, int z_index, double phi, double *out);
+int init_power(hmpdf_obj *d);
 
 #endif

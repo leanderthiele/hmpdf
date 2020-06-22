@@ -20,10 +20,11 @@ typedef struct//{{{
 }//}}}
 halo_model_t;
 
-void null_halo_model(hmpdf_obj *d);
-void reset_halo_model(hmpdf_obj *d);
-double NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rs);
-double Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out, double *R, double *c);
-void init_halo_model(hmpdf_obj *d);
+int null_halo_model(hmpdf_obj *d);
+int reset_halo_model(hmpdf_obj *d);
+int NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs);
+int Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
+          double *M, double *R, double *c);
+int init_halo_model(hmpdf_obj *d);
 
 #endif

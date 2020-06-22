@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <complex.h>
 
-#include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_integration.h>
 
 #include "configs.h"
@@ -12,8 +11,11 @@
 #include "data.h"
 #include "numerics.h"
 
-void null_numerics(hmpdf_obj *d)
+int
+null_numerics(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     d->n->inited_numerics = 0;
     d->n->zgrid = NULL;
     d->n->zweights = NULL;
@@ -24,10 +26,16 @@ void null_numerics(hmpdf_obj *d)
     d->n->lambdagrid = NULL;
     d->n->phigrid = NULL;
     d->n->phiweights = NULL;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void reset_numerics(hmpdf_obj *d)
+int
+reset_numerics(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
     if (d->n->Mgrid != NULL) { free(d->n->Mgrid); }
@@ -37,35 +45,49 @@ void reset_numerics(hmpdf_obj *d)
     if (d->n->lambdagrid != NULL) { free(d->n->lambdagrid); }
     if (d->n->phigrid != NULL) { free(d->n->phigrid); }
     if (d->n->phiweights != NULL) { free(d->n->phiweights); }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-double weight_fct(hmpdf_integr_mode_e m,
-                  double a, double b, double alpha, double beta,
-                  double x)
+static int
+weight_fct(hmpdf_integr_mode_e m,
+           double a, double b, double alpha, double beta,
+           double x, double *out)
 {//{{{
+    int hmpdf_status = 0;
+
     switch (m)
     {
-        case hmpdf_legendre    : return 1.0;
-        case hmpdf_chebyshev   : return 1.0 / sqrt((b-x)*(x-a));
-        case hmpdf_gegenbauer  : return pow((b-x)*(x-a), alpha);
-        case hmpdf_jacobi      : return pow(b-x, alpha) * pow(x-a, beta);
-        case hmpdf_laguerre    : return pow(x-a, alpha) * exp(-b*(x-a));
-        case hmpdf_hermite     : return pow(fabs(x-a), alpha) * exp(-b*gsl_pow_2(x-a));
-        case hmpdf_exponential : return pow(fabs(x-0.5*(a+b)), alpha);
-        case hmpdf_rational    : return pow(x-a, alpha) * pow(x+b, beta);
-        case hmpdf_chebyshev2  : return sqrt((b-x)*(x-a));
-        default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
-                           fflush(stderr);
-                           return 0.0;
+        case hmpdf_legendre    : *out = 1.0; break;
+        case hmpdf_chebyshev   : *out = 1.0 / sqrt((b-x)*(x-a)); break;
+        case hmpdf_gegenbauer  : *out = pow((b-x)*(x-a), alpha); break;
+        case hmpdf_jacobi      : *out = pow(b-x, alpha) * pow(x-a, beta); break;
+        case hmpdf_laguerre    : *out = pow(x-a, alpha) * exp(-b*(x-a)); break;
+        case hmpdf_hermite     : *out = pow(fabs(x-a), alpha) * exp(-b*gsl_pow_2(x-a)); break;
+        case hmpdf_exponential : *out = pow(fabs(x-0.5*(a+b)), alpha); break;
+        case hmpdf_rational    : *out = pow(x-a, alpha) * pow(x+b, beta); break;
+        case hmpdf_chebyshev2  : *out = sqrt((b-x)*(x-a)); break;
+        default                : *out = 0.0; // to avoid maybe-unitialized
+                                 fprintf(stderr, "Error: Unknown gsl_integration_fixed_type.\n");
+                                 fflush(stderr);
+                                 ERRLOC
+                                 hmpdf_status |= 1;
+                                 break;
     }
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
-                       double a, double b, double alpha, double beta,
-                       double *nodes, double *weights,
-                       int neutralize_weights)
+static int
+gauss_fixed_point(hmpdf_integr_mode_e m, int N,
+                  double a, double b, double alpha, double beta,
+                  double *nodes, double *weights,
+                  int neutralize_weights)
 {//{{{
+    int hmpdf_status = 0;
+
     const gsl_integration_fixed_type *T;
     switch (m)
     {
@@ -78,12 +100,15 @@ void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         case hmpdf_exponential : T = gsl_integration_fixed_exponential; break;
         case hmpdf_rational    : T = gsl_integration_fixed_rational; break;
         case hmpdf_chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
-        default          : fprintf(stderr, "Unknown gsl_integration_fixed_type.\n");
-                           fflush(stderr);
-                           return;
+        default                : T = NULL;
+                                 fprintf(stderr, "Error: Unknown gsl_integration_fixed_type.\n");
+                                 fflush(stderr);
+                                 ERRLOC;
+                                 hmpdf_status = 1;
+                                 return hmpdf_status;
     }
-    gsl_integration_fixed_workspace *ws
-        = gsl_integration_fixed_alloc(T, N, a, b, alpha, beta);
+    SAFEALLOC(gsl_integration_fixed_workspace *, ws,
+              gsl_integration_fixed_alloc(T, N, a, b, alpha, beta))
     double *_nodes = gsl_integration_fixed_nodes(ws);
     double *_weights = gsl_integration_fixed_weights(ws);
     for (int ii=0; ii<N; ii++)
@@ -91,8 +116,9 @@ void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         nodes[ii] = _nodes[ii];
         if (neutralize_weights)
         {
-            weights[ii] = _weights[ii]
-                          / weight_fct(m, a, b, alpha, beta, nodes[ii]);
+            double temp;
+            SAFEHMPDF(weight_fct(m, a, b, alpha, beta, nodes[ii], &temp))
+            weights[ii] = _weights[ii] / temp;
         }
         else
         {
@@ -100,41 +126,52 @@ void gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         }
     }
     gsl_integration_fixed_free(ws);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
-static
-void create_grids(hmpdf_obj *d)
+static int
+create_grids(hmpdf_obj *d)
 {//{{{
+    int hmpdf_status = 0;
+
     fprintf(stdout, "\tcreate_grids\n");
     fflush(stdout);
-    d->n->zgrid = (double *)malloc(d->n->Nz * sizeof(double));
-    d->n->zweights = (double *)malloc(d->n->Nz * sizeof(double));
-    gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
-                      d->n->zmin, d->n->zmax,
-                      d->n->zintegr_alpha, d->n->zintegr_beta,
-                      d->n->zgrid, d->n->zweights,
-                      1/*neutralize weights*/);
+    SAFEALLOC(, d->n->zgrid,    malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(, d->n->zweights, malloc(d->n->Nz * sizeof(double)))
+    SAFEHMPDF(gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
+                                d->n->zmin, d->n->zmax,
+                                d->n->zintegr_alpha,
+                                d->n->zintegr_beta,
+                                d->n->zgrid, d->n->zweights,
+                                1/*neutralize weights*/))
 
-    d->n->Mgrid = (double *)malloc(d->n->NM * sizeof(double));
-    d->n->Mweights = (double *)malloc(d->n->NM * sizeof(double));
-    gauss_fixed_point(d->n->Mintegr_type, d->n->NM,
-                      log(d->n->Mmin), log(d->n->Mmax),
-                      d->n->Mintegr_alpha, d->n->Mintegr_beta,
-                      d->n->Mgrid, d->n->Mweights,
-                      1/*neutralize weights*/);
+    SAFEALLOC(, d->n->Mgrid,    malloc(d->n->NM * sizeof(double)))
+    SAFEALLOC(, d->n->Mweights, malloc(d->n->NM * sizeof(double)))
+    SAFEHMPDF(gauss_fixed_point(d->n->Mintegr_type, d->n->NM,
+                                log(d->n->Mmin), log(d->n->Mmax),
+                                d->n->Mintegr_alpha,
+                                d->n->Mintegr_beta,
+                                d->n->Mgrid, d->n->Mweights,
+                                1/*neutralize weights*/))
+
     for (int ii=0; ii<d->n->NM; ii++)
     {
         d->n->Mgrid[ii] = exp(d->n->Mgrid[ii]);
     }
 
-    d->n->signalgrid = (double *)malloc(d->n->Nsignal * sizeof(double));
+    SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
     linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
              d->n->signalgrid);
 
-    d->n->lambdagrid = (double *)malloc((d->n->Nsignal/2+1) * sizeof(double));
+    SAFEALLOC(, d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)))
     linspace(d->n->Nsignal/2+1,
              0.0, M_PI/(d->n->signalgrid[1]-d->n->signalgrid[0]),
              d->n->lambdagrid);
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 
 static
@@ -257,14 +294,20 @@ complex integr_comp(int N, double dx, int stride, complex *f)
     }
 }//}}}
 
-void init_numerics(hmpdf_obj *d)
+int
+init_numerics(hmpdf_obj *d)
 {//{{{
-    if (d->n->inited_numerics) { return; }
+    int hmpdf_status = 0;
+
+    if (d->n->inited_numerics) { return hmpdf_status; }
     fprintf(stdout, "In numerics.h -> init_numerics :\n");
     fflush(stdout);
 
-    create_grids(d);
+    SAFEHMPDF(create_grids(d))
 
     d->n->inited_numerics = 1;
+
+    CHECKERR
+    return hmpdf_status;
 }//}}}
 

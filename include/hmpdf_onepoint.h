@@ -18,12 +18,12 @@
  *  \remark if the one-point PDF has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.
  */
-void hmpdf_get_op(hmpdf_obj *d,
-                  int Nbins,
-                  double *binedges,
-                  double *out,
-                  int incl_2h,
-                  int noisy);
+int hmpdf_get_op(hmpdf_obj *d,
+                 int Nbins,
+                 double *binedges,
+                 double *out,
+                 int incl_2h,
+                 int noisy);
 
 
 #endif

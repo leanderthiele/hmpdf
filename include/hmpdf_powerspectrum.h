@@ -19,11 +19,11 @@ typedef enum
  *  \param mode     one of #hmpdf_Cell_mode_e
  *  \return void
  */
-void hmpdf_get_Cell(hmpdf_obj *d,
-                    int Nell,
-                    double *ell,
-                    double *Cell,
-                    hmpdf_Cell_mode_e mode);
+int hmpdf_get_Cell(hmpdf_obj *d,
+                   int Nell,
+                   double *ell,
+                   double *Cell,
+                   hmpdf_Cell_mode_e mode);
 
 /*! Returns the angular correlation function.
  *
@@ -34,11 +34,11 @@ void hmpdf_get_Cell(hmpdf_obj *d,
  *  \param mode     one of #hmpdf_Cell_mode_e
  *  \return void
  */
-void hmpdf_get_Cphi(hmpdf_obj *d,
-                    int Nphi,
-                    double *phi,
-                    double *Cphi,
-                    hmpdf_Cell_mode_e mode);
+int hmpdf_get_Cphi(hmpdf_obj *d,
+                   int Nphi,
+                   double *phi,
+                   double *Cphi,
+                   hmpdf_Cell_mode_e mode);
 
 
 #endif

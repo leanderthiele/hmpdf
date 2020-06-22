@@ -15,6 +15,6 @@ hmpdf_obj *hmpdf_new(void);
 
 /*! Frees all memory associated with the hmpdf_obj.
  */
-void hmpdf_delete(hmpdf_obj *d);
+int hmpdf_delete(hmpdf_obj *d);
 
 #endif

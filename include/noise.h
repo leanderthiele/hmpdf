@@ -12,11 +12,11 @@ typedef struct
 }//}}}
 noise_t;
 
-void null_noise(hmpdf_obj *d);
-void reset_noise(hmpdf_obj *d);
-void init_noise(hmpdf_obj *d);
+int null_noise(hmpdf_obj *d);
+int reset_noise(hmpdf_obj *d);
+int init_noise(hmpdf_obj *d);
 
-void noise_vect(hmpdf_obj *d, double *in, double *out);
-void noise_matr(hmpdf_obj *d, double *in, double *out);
+int noise_vect(hmpdf_obj *d, double *in, double *out);
+int noise_matr(hmpdf_obj *d, double *in, double *out);
 
 #endif

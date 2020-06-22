@@ -14,8 +14,9 @@ typedef enum//{{{
 }//}}}
 filter_mode;
 
-typedef double (*filter_fct)(void * /*hmpdf_obj*/, double /*ell*/,
-                             filter_mode /*pdf or ps*/, int * /*z_index*/);
+typedef int (*filter_fct)(void * /*hmpdf_obj*/, double /*ell*/,
+                          filter_mode /*pdf or ps*/, int * /*z_index*/,
+                          double * /*out*/);
 
 typedef struct//{{{
 {
@@ -41,11 +42,11 @@ typedef struct//{{{
 }//}}}
 filters_t;
 
-void null_filters(hmpdf_obj *d);
-void reset_filters(hmpdf_obj *d);
-void apply_filters(hmpdf_obj *d, int N, double *ell,
-                   double *in, double *out, int stride,
-                   filter_mode mode, int *z_index);
-void init_filters(hmpdf_obj *d);
+int null_filters(hmpdf_obj *d);
+int reset_filters(hmpdf_obj *d);
+int apply_filters(hmpdf_obj *d, int N, double *ell,
+                  double *in, double *out, int stride,
+                  filter_mode mode, int *z_index);
+int init_filters(hmpdf_obj *d);
 
 #endif

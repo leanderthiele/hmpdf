@@ -22,9 +22,9 @@ typedef struct//{{{
 }//}}}
 powerspectrum_t;
 
-void null_powerspectrum(hmpdf_obj *d);
-void reset_powerspectrum(hmpdf_obj *d);
-void hmpdf_get_Cell(hmpdf_obj *d, int Nell, double *ell, double *Cell, hmpdf_Cell_mode_e mode);
-void hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double *phi, double *Cphi, hmpdf_Cell_mode_e mode);
+int null_powerspectrum(hmpdf_obj *d);
+int reset_powerspectrum(hmpdf_obj *d);
+int hmpdf_get_Cell(hmpdf_obj *d, int Nell, double *ell, double *Cell, hmpdf_Cell_mode_e mode);
+int hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double *phi, double *Cphi, hmpdf_Cell_mode_e mode);
 
 #endif
