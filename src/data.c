@@ -8,8 +8,6 @@ null_data(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tnull_data\n")
-
     SAFEHMPDF(null_numerics(d))
     SAFEHMPDF(null_class_interface(d))
     SAFEHMPDF(null_cosmology(d))
@@ -60,8 +58,6 @@ int
 reset_data(hmpdf_obj *d)
 {//{{{
     STARTFCT
-
-    HMPDFPRINT(1, "reset_data\n")
 
     SAFEHMPDF(reset_numerics(d))
     SAFEHMPDF(reset_cosmology(d))

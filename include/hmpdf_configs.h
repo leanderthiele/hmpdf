@@ -295,7 +295,7 @@ typedef enum
                                 *   <a href="https://arxiv.org/abs/1001.3162">Tinker+2010</a>
                                 *   halo mass function.
                                 *   \par
-                                *   Type: double[12]. Default: see src/configs.c.
+                                *   Type: double[10]. Default: see src/configs.c.
                                 */
     hmpdf_Battaglia12_tsz_params, /*!< Fit parameters in the
                                    *   <a href="https://arxiv.org/abs/1109.3711">Battaglia+2012</a>

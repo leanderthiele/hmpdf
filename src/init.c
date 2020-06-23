@@ -362,8 +362,6 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     gsl_set_error_handler_off();
 
-    HMPDFPRINT(1, "hmpdf_init\n")
-
     // this frees all the computed quantities,
     // since we assume that each call of init changes some
     // parameter (cosmological or numerical)

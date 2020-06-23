@@ -40,6 +40,7 @@
  *
  *  \section use Usage
  *
+ *  The C interface can be found in hmpdf.h.
  *  All exposed objects' names start with hmpdf_ to help you keep your name space clean.
  *
  *  Workflow is as follows:
@@ -52,6 +53,9 @@
  *      4. go to (3.) if you require any other outputs;
  *         go to (2.) if you want to re-run the code with different options.
  *      5. free the memory associated with the #hmpdf_obj with hmpdf_delete().
+ *
+ *  There is also a Python wrapper (hmpdf.py), with analogous workflow and
+ *  simpler syntax.
  *
  *
  *  \section opt Options
@@ -110,12 +114,21 @@
  *  with all settings at default would look like this:
  *  \snippet example.c example_kappa_onepoint
  *
+ *  The same thing using the python wrapper is really easy:
+ *  \snippet example.py example_kappa_onepoint
+ *
  *  Including the effect of an ell-space filter would look like this:
  *  \snippet example.c example_ell_filter_use
  *  Here, we defined the function example_ell_filter conforming to the
  *  typedef #hmpdf_ell_filter_f:
  *  \snippet example.c example_ell_filter
  *
+ *  We can also do this in python:
+ *  \snippet example.py example_ell_filter_use
+ *  Here, we defined the function example_ell_filter as
+ *  \snippet example.py example_ell_filter
+ *  Note that the last argument (the same goes for a k filter) must be
+ *  a 1d numpy array.
  */
 
 #include "hmpdf_data.h"
