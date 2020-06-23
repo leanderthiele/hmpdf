@@ -20,6 +20,8 @@
  *      + thermal Sunyaev-Zel'dovich effect (Compton-y)
  *      + weak lensing convergence
  *
+ *  It code is interfaced both through C header files
+ *  as well as through a convenient python wrapper.
  *
  *  \section build Building
  *
@@ -37,6 +39,12 @@
  *      + add FFTW3/GSL locations to LINKER if those are non-standard
  *      + remove the OpenMP flag if you do not wish parallel execution
  *
+ *  If you intend to use the python wrapper, you need to adapt the variable PATHTOHMPDF
+ *  in hmpdf.py.
+ *
+ *  It may also be convenient to put libhmpdf.so into one of the default locations
+ *  searched by the linker
+ *  (in which case you can simply delete the PATHTOHMPDF line).
  *
  *  \section use Usage
  *
@@ -90,6 +98,8 @@
  *                         \par
  *                         scales as #hmpdf_N_signal^2 x #hmpdf_N_phi.
  *
+ *  .
+ *
  *  Other functions are fast in comparison to hmpdf_init().
  *  hmpdf_init() and hmpdf_get_cov() are parallelized in critical parts,
  *  while hmpdf_get_tp() does not get faster if #hmpdf_N_threads is increased.
@@ -106,8 +116,8 @@
  *
  *  \section examples Examples
  *
- *  Some examples are collected in examples/example.c.
- *  After adding a main function, you can compile it with
+ *  Some examples are collected in examples/example.c and examples/example.py.
+ *  You can compile the C code with
  *  \snippet example.c compile
  *
  *  A simple calculation of the weak lensing convergence one-point PDF
@@ -125,10 +135,6 @@
  *
  *  We can also do this in python:
  *  \snippet example.py example_ell_filter_use
- *  Here, we defined the function example_ell_filter as
- *  \snippet example.py example_ell_filter
- *  Note that the last argument (the same goes for a k filter) must be
- *  a 1d numpy array.
  */
 
 #include "hmpdf_data.h"

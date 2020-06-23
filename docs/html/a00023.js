@@ -11,7 +11,17 @@ var a00023 =
       [ "hmpdf_kappa", "a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a", null ],
       [ "hmpdf_tsz", "a00023.html#a217886565815a6572ecbb844dcebe7d7aa097749963cade7cee4edc8c9821bed8", null ]
     ] ],
-    [ "hmpdf_integr_mode_e", "a00023.html#ab382fb574854db2adb3d858dcfd41a3b", null ],
+    [ "hmpdf_integr_mode_e", "a00023.html#ab382fb574854db2adb3d858dcfd41a3b", [
+      [ "hmpdf_legendre", "a00023.html#ab382fb574854db2adb3d858dcfd41a3ba3eec9b7e81b0c20eb3346eb8cab64048", null ],
+      [ "hmpdf_chebyshev", "a00023.html#ab382fb574854db2adb3d858dcfd41a3bab80509567cf4b1b7d34101c985ea8569", null ],
+      [ "hmpdf_gegenbauer", "a00023.html#ab382fb574854db2adb3d858dcfd41a3baf408cf06c5a82b4ad04eb0dfc9a52778", null ],
+      [ "hmpdf_jacobi", "a00023.html#ab382fb574854db2adb3d858dcfd41a3ba46217ae2f94649c0a38197b1d1dbaa07", null ],
+      [ "hmpdf_laguerre", "a00023.html#ab382fb574854db2adb3d858dcfd41a3bac22339d7c1882effcb1f4ea9cda4e171", null ],
+      [ "hmpdf_hermite", "a00023.html#ab382fb574854db2adb3d858dcfd41a3ba6833685f08cc079da1afd991ffebe1c0", null ],
+      [ "hmpdf_exponential", "a00023.html#ab382fb574854db2adb3d858dcfd41a3baecbfbc1233f9caa763cdef62d74b8d9f", null ],
+      [ "hmpdf_rational", "a00023.html#ab382fb574854db2adb3d858dcfd41a3bad530642669321e6739dab293555adb87", null ],
+      [ "hmpdf_chebyshev2", "a00023.html#ab382fb574854db2adb3d858dcfd41a3ba7ba67e3dcee1487dc41c3f1e64c542bb", null ]
+    ] ],
     [ "hmpdf_configs_e", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789", [
       [ "hmpdf_N_threads", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428", null ],
       [ "hmpdf_verbosity", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be", null ],

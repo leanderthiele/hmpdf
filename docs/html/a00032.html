@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.18"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: hmpdf_init.h File Reference</title>
+<title>hmpdf: hmpdf_data.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,89 +93,92 @@ $(document).ready(function(){initNavTree('a00032.html',''); initResizable(); });
 
 <div class="header">
   <div class="summary">
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">hmpdf_init.h File Reference</div>  </div>
+<div class="title">hmpdf_data.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a439998de2d821dfe3a21a91fb2687eac"><td class="memItemLeft" align="right" valign="top">typedef struct hmpdf_obj_s&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a></td></tr>
+<tr class="separator:a439998de2d821dfe3a21a91fb2687eac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a50e240808803a05cbcc912177ebb7087"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init</a> (<a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, char *class_ini, <a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7">hmpdf_signaltype_e</a> stype,...)</td></tr>
-<tr class="separator:a50e240808803a05cbcc912177ebb7087"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab087598ef780813528136bcde80deed2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a> (void)</td></tr>
+<tr class="separator:ab087598ef780813528136bcde80deed2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ab51e3102e0a3e08341135f5fec99f8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a> (<a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d)</td></tr>
+<tr class="separator:a3ab51e3102e0a3e08341135f5fec99f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a50e240808803a05cbcc912177ebb7087"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50e240808803a05cbcc912177ebb7087">&#9670;&nbsp;</a></span>hmpdf_init()</h2>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a id="a439998de2d821dfe3a21a91fb2687eac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a439998de2d821dfe3a21a91fb2687eac">&#9670;&nbsp;</a></span>hmpdf_obj</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int hmpdf_init </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
-          <td class="paramname"><em>d</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">char *&#160;</td>
-          <td class="paramname"><em>class_ini</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7">hmpdf_signaltype_e</a>&#160;</td>
-          <td class="paramname"><em>stype</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>...</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
+          <td class="memname">typedef struct hmpdf_obj_s <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Initializes the <a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> and computes data that is needed for all outputs.</p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>The data structure that all globally exposed functions receive a pointer to as their first argument. The user should not attempt to interact with this structure directly. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ab087598ef780813528136bcde80deed2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab087598ef780813528136bcde80deed2">&#9670;&nbsp;</a></span>hmpdf_new()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a>* hmpdf_new </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Allocates a new hmpdf_obj. </p><dl class="section return"><dt>Returns</dt><dd>d pointer to a new <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a>, NULL if memory allocation failed </dd></dl>
+
+</div>
+</div>
+<a id="a3ab51e3102e0a3e08341135f5fec99f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ab51e3102e0a3e08341135f5fec99f8">&#9670;&nbsp;</a></span>hmpdf_delete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int hmpdf_delete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramname"><em>d</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Frees all memory associated with the hmpdf_obj. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">d</td><td>created with <a class="el" href="a00029.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a> </td></tr>
-    <tr><td class="paramname">class_ini</td><td>path to a CLASS .ini file </td></tr>
-    <tr><td class="paramname">stype</td><td>signal type (either <a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a> or <a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7aa097749963cade7cee4edc8c9821bed8">hmpdf_tsz</a>) </td></tr>
-    <tr><td class="paramname">...</td><td>variable argument list for optional arguments </td></tr>
+    <tr><td class="paramname">d</td><td><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> created with <a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a> </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
-<dl class="section attention"><dt>Attention</dt><dd>if stype=<a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>, the first entry in ... must be the source redshift (double) </dd>
-<dd>
-the last argument in ... must be <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a>, regardless of whether ... is empty otherwise. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>this function performs some basic sanity checks on the user inputs. If inputs fall out of recommended bounds, an error message will be printed. However, execution will continue (for the unlikely case the input was what you intended it to be).</dd></dl>
-<p>The syntax to pass additional non-default settings through ... is as follows: A setting is passed as a pair &lt;name&gt;, &lt;val&gt;, where &lt;name&gt; is one of <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a>, and &lt;val&gt; must have the type given in the documentation for that specific &lt;name&gt;.</p>
-<p>For example, to perform a weak lensing calculation with source redshift 1 and all configurations at default except for the number of threads and the pixel sidelength, you would call </p><div class="fragment"><div class="line"><a class="code" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init</a>(d, <span class="stringliteral">&quot;explanatory.ini&quot;</span>, kappa, 1.0,</div>
-<div class="line">           <a class="code" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a>, 4,    <span class="comment">// use 4 threads</span></div>
-<div class="line">           <a class="code" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a>, 0.4, <span class="comment">// use 0.4 arcmin pixels</span></div>
-<div class="line">           <a class="code" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a>);</div>
-</div><!-- fragment --><dl class="section attention"><dt>Attention</dt><dd>perhaps counter-intuitively, successive <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> calls are not cumulative (i.e. d retains no internal state between them). Thus, you need to pass all configuration options in a single call to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>error code </dd></dl>
 
 </div>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
-<div class="ttc" id="aa00023_html_a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d"><div class="ttname"><a href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></div><div class="ttdeci">@ hmpdf_pixel_side</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:174</div></div>
-<div class="ttc" id="aa00032_html_a50e240808803a05cbcc912177ebb7087"><div class="ttname"><a href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init</a></div><div class="ttdeci">int hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype,...)</div></div>
-<div class="ttc" id="aa00023_html_a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"><div class="ttname"><a href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></div><div class="ttdeci">@ hmpdf_end_configs</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:311</div></div>
-<div class="ttc" id="aa00023_html_a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428"><div class="ttname"><a href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></div><div class="ttdeci">@ hmpdf_N_threads</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:90</div></div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00032.html">hmpdf_init.h</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00032.html">hmpdf_data.h</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.18 </li>

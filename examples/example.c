@@ -1,7 +1,5 @@
 /*! [compile] */
-/* gcc -I<PATH TO CLASS>/include -I../include -o example example.c
- *     -L<PATH TO CLASS> -L../lib -lhmpdf -lclass -lgsl -lgslcblas -lm -lfftw3 -fopenmp
- */
+/* gcc -I../include -o example example.c -L.. -lhmpdf */
 /*! [compile] */
 #include "hmpdf.h"
 

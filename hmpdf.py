@@ -1,6 +1,7 @@
 ## \file
 from ctypes import *
 from os.path import join
+import sys
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 
@@ -34,7 +35,7 @@ class _F(object) : # function pointer
 #{{{
     def __init__(self, nargs) :
         args = [c_double, ] * nargs
-        args.append(ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1))
+#        args.append(ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1))
         self.fctptr = CFUNCTYPE(c_double, *args)
     def __call__(self, f) :
         return self.fctptr(f)
@@ -57,8 +58,8 @@ class _Configs(object) :
                'N_signal', c_int, 'signal_min', c_double, 'signal_max', c_double,
                'N_theta', c_int, 'rout_scale', c_double, 'rout_rdef', _E(_mdefs),
                'pixel_side', c_double, 'tophat_radius', c_double, 'gaussian_fwhm', c_double,
-               'custom_ell_filter', _F(1), 'custom_ell_filter_params', _D(None),
-               'custom_k_filter', _F(2), 'custom_k_filter_params', _D(None),
+               'custom_ell_filter', _F(1), 'custom_ell_filter_params', None,
+               'custom_k_filter', _F(2), 'custom_k_filter_params', None,
                'N_phi', c_int, 'phi_max', c_double, 'pixelexact_max', c_int,
                'phi_jitter', c_double, 'phi_pwr', c_double,
                'monotonize', c_int,
@@ -75,8 +76,8 @@ class _Configs(object) :
         if key not in _Configs.configs :
             raise KeyError('Invalid configuration option %s.'%key)
         if _Configs.configs[_Configs.configs.index(key)+1] is None :
-            raise NotImplementedError('Configuration option %s not \
-                                       supported in the python wrapper'%key)
+            raise NotImplementedError('Configuration option %s not '\
+                                      'supported in the python wrapper'%key)
         pos = _Configs.configs.index(key)
         self.l.append(c_int(pos/2))
         self.t.append(_Configs.configs[pos+1])
@@ -92,19 +93,23 @@ class _Configs(object) :
 #  The general interface is very similar to the C one,
 #  so please read the documentation for this.
 #  The differences are:
-#       + all names have the hmpdf_ prefix removed
+#       + all names have the hmpdf_ prefix removed,
+#         enums are replaced by strings
 #       + the function signatures are a bit different
 #       + the argument list to init() is not ended with #hmpdf_end_configs
 #       + you have the option to let the object do the error handling
-#       + the function signatures for the options #hmpdf_custom_ell_filter
-#         and #hmpdf_custom_k_filter are restricted, see the \ref examples.
+#       + passing custom ell- and k-space filters works differently,
+#         see the \ref examples. The options #hmpdf_custom_ell_filter_params
+#         and #hmpdf_custom_k_filter_params are not supported.
 #
 #  Best used in a context manager.
 class HMPDF(object) :
 #{{{
     # interaction with the DLL
     #{{{
-    __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
+    __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so')
+                      if 'PATHTOHMPDF' in globals()
+                      else 'libhmpdf.so')
     __new = __libhmpdf.hmpdf_new
     __new.restype = POINTER(c_int)
     __delete = __libhmpdf.hmpdf_delete
@@ -164,6 +169,8 @@ class HMPDF(object) :
     def __init__(self) :
     #{{{
         self.d = HMPDF.__new()
+        if not self.d :
+            raise MemoryError('Could not allocate hmpdf_obj.')
     #}}}
     
     ## Initializes the object [calls hmpdf_init()].

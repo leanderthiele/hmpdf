@@ -36,15 +36,15 @@ typedef enum
  */
 typedef enum
 {
-    hmpdf_legendre,
-    hmpdf_chebyshev,
-    hmpdf_gegenbauer,
-    hmpdf_jacobi,
-    hmpdf_laguerre,
-    hmpdf_hermite,
-    hmpdf_exponential,
-    hmpdf_rational,
-    hmpdf_chebyshev2,
+    hmpdf_legendre, /*!< .*/
+    hmpdf_chebyshev, /*!< .*/
+    hmpdf_gegenbauer, /*!< .*/
+    hmpdf_jacobi, /*!< .*/
+    hmpdf_laguerre, /*!< .*/
+    hmpdf_hermite, /*!< .*/
+    hmpdf_exponential, /*!< .*/
+    hmpdf_rational, /*!< .*/
+    hmpdf_chebyshev2, /*!< .*/
 } hmpdf_integr_mode_e;
 
 /*! Options to hmpdf_init().
@@ -203,6 +203,7 @@ typedef enum
     hmpdf_custom_ell_filter_params, /*!< pass parameters to the ell-space filter (as its last argument).
                                      *   \par
                                      *   Type: void *. Default: None.
+                                     *   \attention not supported in the python wrapper.
                                      */
     hmpdf_custom_k_filter, /*!< pass a user-defined k-space filter, with possible redshift-dependence
                             *   (for example, to emulate small-scale simulation resolution issues).
@@ -214,6 +215,7 @@ typedef enum
     hmpdf_custom_k_filter_params, /*!< pass parameters to the k-space filter (as its last argument).
                                    *   \par
                                    *   Type: void *. Default: None.
+                                   *   \attention not supported in the python wrapper.
                                    */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
@@ -290,18 +292,21 @@ typedef enum
                                 *   concentration model.
                                 *   \par
                                 *   Type: double[9]. Default: see src/configs.c.
+                                *   \remark in the python wrapper, pass a 1d numpy array
                                 */
     hmpdf_Tinker10_hmf_params, /*!< Fit parameters in the
                                 *   <a href="https://arxiv.org/abs/1001.3162">Tinker+2010</a>
                                 *   halo mass function.
                                 *   \par
                                 *   Type: double[10]. Default: see src/configs.c.
+                                *   \remark in the python wrapper, pass a 1d numpy array
                                 */
     hmpdf_Battaglia12_tsz_params, /*!< Fit parameters in the
                                    *   <a href="https://arxiv.org/abs/1109.3711">Battaglia+2012</a>
                                    *   pressure profile model.
                                    *   \par
                                    *   Type: double[15]. Default: see src/configs.c.
+                                   *   \remark in the python wrapper, pass a 1d numpy array
                                    */
     hmpdf_noise, /*!< Option to add pixel-wise Gaussian noise of this standard deviation.
                   *   \par
