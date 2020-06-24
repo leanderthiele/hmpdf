@@ -1,11 +1,11 @@
-PATHTOCLASS = /usr/local/share/class_public
+PATHTOCLASS = /home/lthiele/class_public
 
 
 CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
-CFLAGS = -std=gnu99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
+CFLAGS = -std=gnu99 -fPIC -Wall -Wno-variadic-macros -Wno-format -DHAVE_INLINE
 OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 

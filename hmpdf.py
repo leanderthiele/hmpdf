@@ -6,7 +6,26 @@ import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 
 ## \cond
-PATHTOHMPDF = '/home/leander/Perimeter/Onepoint/C_implementation'
+PATHTOHMPDF = '/home/lthiele/hmpdf'
+
+class _C(object) : # char pointer
+#{{{
+    def __init__(self) :
+        pass
+    def __call__(self, name) :
+        if sys.version_info >= (3, 0) :
+            if isinstance(name, str) :
+                return c_char_p(name.encode('utf-8'))
+            elif isinstance(name, bytes) :
+                return c_char_p(name)
+            else :
+                raise TypeError('Not a string.')
+        else :
+            if isinstance(name, str) :
+                return c_char_p(name)
+            else :
+                raise TypeError('Not a string.')
+#}}}
 
 class _E(object) : # enumeration class
 #{{{
@@ -52,7 +71,7 @@ _corr_types = ['onehalo', 'twohalo', 'total']
 
 class _Configs(object) :
 #{{{
-    configs = ['N_threads', c_int, 'verbosity', c_int, 'class_pre', c_char_p,
+    configs = ['N_threads', c_int, 'verbosity', c_int, 'class_pre', _C(),
                'N_z', c_int, 'z_min', c_double, 'z_max', c_double,
                'N_M', c_int, 'M_min', c_double, 'M_max', c_double,
                'N_signal', c_int, 'signal_min', c_double, 'signal_max', c_double,
@@ -79,11 +98,11 @@ class _Configs(object) :
             raise NotImplementedError('Configuration option %s not '\
                                       'supported in the python wrapper'%key)
         pos = _Configs.configs.index(key)
-        self.l.append(c_int(pos/2))
+        self.l.append(c_int(pos//2))
         self.t.append(_Configs.configs[pos+1])
         self.l.append(self.t[-1](value))
     def __call__(self) :
-        self.l.append(c_int(len(_Configs.configs)/2)) # corresponds to end_configs
+        self.l.append(c_int(len(_Configs.configs)//2)) # corresponds to end_configs
         return self.l
 #}}}
 ## \endcond
@@ -208,7 +227,7 @@ class HMPDF(object) :
         arglist = self.c()
         if stype == 'kappa' :
             arglist.insert(0, c_double(args[0]))
-        err = HMPDF.__init(self.d, c_char_p(class_ini),
+        err = HMPDF.__init(self.d, _C()(class_ini),
                            _E(_stypes)(stype), *arglist)
         return self.__ret(err, 'init()')
     #}}}
