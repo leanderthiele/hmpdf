@@ -27,6 +27,26 @@ class _C(object) : # char pointer
                 raise TypeError('Not a string.')
 #}}}
 
+class _C(object) : # char pointer
+#{{{
+    def __init__(self) :
+        pass
+    def __call__(self, name) :
+        if sys.version_info >= (3, 0) :
+            if isinstance(name, str) :
+                return c_char_p(name.encode('utf-8'))
+            elif isinstance(name, bytes) :
+                return c_char_p(name)
+            else :
+                raise TypeError('Not a string.')
+        else :
+            if isinstance(name, str) :
+                return c_char_p(name)
+            else :
+                raise TypeError('Not a string.')
+#}}}
+
+
 class _E(object) : # enumeration class
 #{{{
     def __init__(self, names) :
