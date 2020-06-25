@@ -285,6 +285,7 @@ class HMPDF(object) :
     #  \param binedges      a 1d numpy array
     #  \param **kwargs      to pass optional arguments:
     #                           + noisy: default False
+    #  \return the binned covariance matrix (2d numpy array)
     def get_cov(self, binedges, **kwargs) :
     #{{{
         noisy = kwargs['noisy'] if 'noisy' in kwargs else False
@@ -300,6 +301,7 @@ class HMPDF(object) :
     #  \param ell           a 1d numpy array
     #  \param **kwargs      to pass optional arguments
     #                           + mode: default total
+    #  \return the power spectrum at ell (1d numpy array)
     def get_Cell(self, ell, **kwargs) :
     #{{{
         mode = kwargs['mode'] if 'mode' in kwargs else 'total'
@@ -314,6 +316,7 @@ class HMPDF(object) :
     #  \param phi           a 1d numpy array
     #  \param **kwargs      to pass optional arguments
     #                           + mode: default total
+    #  \return the correlation function at phi (1d numpy array)
     def get_Cphi(self, phi, **kwargs) :
     #{{{
         mode = kwargs['mode'] if 'mode' in kwargs else 'total'
