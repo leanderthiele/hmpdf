@@ -21,9 +21,9 @@
  *                                               what you intended it to be).
  *
  *  The syntax to pass additional non-default settings through ... is as follows:
- *  A setting is passed as a pair <name>, <val>, where <name> is one of
- *  #hmpdf_configs_e, and <val> must have the type given in the documentation
- *  for that specific <name>.
+ *  A setting is passed as a pair \<name\>, \<value\>, where \<name\> is one of
+ *  #hmpdf_configs_e, and \<value\> must have the type given in the documentation
+ *  for that specific \<name\>.
  *  
  *  For example, to perform a weak lensing calculation with source redshift 1
  *  and all configurations at default except for the number of threads and the

@@ -51,6 +51,12 @@ run_class(hmpdf_obj *d)
     
     HMPDFPRINT(3, "\t\tperturbs\n")
     SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
+
+    // check if user passed a correct CLASS .ini file
+    if (pt->has_pk_matter != _TRUE_)
+    {
+        HMPDFERR("You have to set output=mPk in the CLASS .ini file.")
+    }
     
     HMPDFPRINT(3, "\t\tprimordial\n")
     SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)

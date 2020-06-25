@@ -106,13 +106,12 @@ $(document).ready(function(){initNavTree('a00052.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae64f0875afe3067b97ba370b354b9213"><td class="memItemLeft" align="right" valign="top"><a id="ae64f0875afe3067b97ba370b354b9213"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#ae64f0875afe3067b97ba370b354b9213">__init__</a> (self)</td></tr>
-<tr class="memdesc:ae64f0875afe3067b97ba370b354b9213"><td class="mdescLeft">&#160;</td><td class="mdescRight">calls <a class="el" href="a00029.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>. <br /></td></tr>
-<tr class="separator:ae64f0875afe3067b97ba370b354b9213"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a368155a9f5dbf3bc7fd94808ef1d09e2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a368155a9f5dbf3bc7fd94808ef1d09e2">init</a> (self, class_ini, stype, *args, **kwargs)</td></tr>
-<tr class="memdesc:a368155a9f5dbf3bc7fd94808ef1d09e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the object [calls <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>].  <a href="a00052.html#a368155a9f5dbf3bc7fd94808ef1d09e2">More...</a><br /></td></tr>
-<tr class="separator:a368155a9f5dbf3bc7fd94808ef1d09e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bd822b85a3fecf7be2eda6bd8fc85ac"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a6bd822b85a3fecf7be2eda6bd8fc85ac">__init__</a> (self, catch_errors=True)</td></tr>
+<tr class="memdesc:a6bd822b85a3fecf7be2eda6bd8fc85ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">calls <a class="el" href="a00029.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>.  <a href="a00052.html#a6bd822b85a3fecf7be2eda6bd8fc85ac">More...</a><br /></td></tr>
+<tr class="separator:a6bd822b85a3fecf7be2eda6bd8fc85ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb5e935d4db82659c8f35a4024c34e94"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#adb5e935d4db82659c8f35a4024c34e94">init</a> (self, class_ini, stype, zsource=None, **kwargs)</td></tr>
+<tr class="memdesc:adb5e935d4db82659c8f35a4024c34e94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the object [calls <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>].  <a href="a00052.html#adb5e935d4db82659c8f35a4024c34e94">More...</a><br /></td></tr>
+<tr class="separator:adb5e935d4db82659c8f35a4024c34e94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a404692262c90487a8013dbdd128cdd7f"><td class="memItemLeft" align="right" valign="top"><a id="a404692262c90487a8013dbdd128cdd7f"></a>
 def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html#a404692262c90487a8013dbdd128cdd7f">__enter__</a> (self)</td></tr>
 <tr class="memdesc:a404692262c90487a8013dbdd128cdd7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns object <br /></td></tr>
@@ -140,16 +139,53 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Python wrapper around <a class="el" href="a00020.html">hmpdf.h</a>. </p>
 <p>The general interface is very similar to the C one, so please read the documentation for this. The differences are:</p><ul>
-<li>all names have the hmpdf_ prefix removed</li>
+<li>all names have the hmpdf_ prefix removed, enums are replaced by strings</li>
 <li>the function signatures are a bit different</li>
-<li>the argument list to <a class="el" href="a00052.html#a368155a9f5dbf3bc7fd94808ef1d09e2" title="Initializes the object [calls hmpdf_init()].">init()</a> is not ended with <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></li>
+<li>the argument list to <a class="el" href="a00052.html#adb5e935d4db82659c8f35a4024c34e94" title="Initializes the object [calls hmpdf_init()].">init()</a> is not ended with <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></li>
 <li>you have the option to let the object do the error handling</li>
-<li>the function signatures for the options <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a> are restricted, see the <a class="el" href="index.html#examples">Examples</a>.</li>
+<li>passing custom ell- and k-space filters works differently, see the <a class="el" href="index.html#examples">Examples</a>. The options <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a> and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a> are not supported.</li>
 </ul>
 <p>Best used in a context manager. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a368155a9f5dbf3bc7fd94808ef1d09e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a368155a9f5dbf3bc7fd94808ef1d09e2">&#9670;&nbsp;</a></span>init()</h2>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a6bd822b85a3fecf7be2eda6bd8fc85ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6bd822b85a3fecf7be2eda6bd8fc85ac">&#9670;&nbsp;</a></span>__init__()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def __init__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>catch_errors</em> = <code>True</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>calls <a class="el" href="a00029.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">catch_errors</td><td>If set to false, the python code does not perform error checking and outputs the error code as the first entry in any output tuple. Default is True, i.e. the python code will raise errors upon encountering a non-zero error code. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="adb5e935d4db82659c8f35a4024c34e94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb5e935d4db82659c8f35a4024c34e94">&#9670;&nbsp;</a></span>init()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -175,8 +211,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">*&#160;</td>
-          <td class="paramname"><em>args</em>, </td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>zsource</em> = <code>None</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -197,13 +233,11 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
   <table class="params">
     <tr><td class="paramname">class_ini</td><td>string, the CLASS .ini file </td></tr>
     <tr><td class="paramname">stype</td><td>string, the signal type (either "kappa" or "tsz") </td></tr>
-    <tr><td class="paramname">*args</td><td>used if stype="kappa" to pass the source redshift </td></tr>
+    <tr><td class="paramname">zsource</td><td>the source redshift. Use only if stype="kappa" </td></tr>
     <tr><td class="paramname">**kwargs</td><td>optional settings, see the documentation of <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a>. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>there is one additional setting, "catch_errors". If set to false, the python code does not perform error checking and outputs the error code as the first entry in any output tuple. Default is True, i.e. the python code will raise errors upon encountering a non-zero error code. </dd></dl>
-<dl class="section return"><dt>Returns</dt><dd>the error code if catch_errors=True, else None </dd></dl>
 
 </div>
 </div>

@@ -579,12 +579,12 @@ hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiwei
     SAFEHMPDF(prepare_cov(d))
 
     *Nphi = d->n->Nphi;
-    SAFEALLOC(, *phi, malloc(d->n->Nphi * sizeof(double)))
+    SAFEALLOC(, *phi,        malloc(d->n->Nphi * sizeof(double)))
     SAFEALLOC(, *phiweights, malloc(d->n->Nphi * sizeof(double)))
     SAFEALLOC(, *corr_diagn, malloc(d->n->Nphi * sizeof(double)))
 
-    memcpy(*phi, d->n->phigrid, d->n->Nphi * sizeof(double));
-    memcpy(*phiweights, d->n->phiweights, d->n->Nphi * sizeof(double));
+    memcpy(*phi,        d->n->phigrid,      d->n->Nphi * sizeof(double));
+    memcpy(*phiweights, d->n->phiweights,   d->n->Nphi * sizeof(double));
     memcpy(*corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
 
     ENDFCT

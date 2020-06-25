@@ -23,7 +23,7 @@ def example_ell_filter_use() :
 ## [example_ell_filter_use]
 
 def main() :
-    example_ell_filter_use()
+    example_kappa_onepoint()
 
 if __name__ == '__main__' :
     main()

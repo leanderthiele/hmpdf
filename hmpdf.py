@@ -42,12 +42,12 @@ class _D(object) : # double pointer from numpy array
         self.l = l
     def __call__(self, arr) :
         if not len(arr.shape) == 1 :
-            raise TypeError('Expected numpy array to be 1-dimensional, \
-                             but has dimension %d'%len(arr.shape))
+            raise TypeError('Expected numpy array to be 1-dimensional, '\
+                            'but has dimension %d'%len(arr.shape))
         if self.l is not None :
             if not arr.shape[0] == self.l :
-                raise TypeError('Expected numpy array to have length %d, \
-                                 but has length %d'%(self.l, arr.shape[1]))
+                raise TypeError('Expected numpy array to have length %d, '\
+                                'but has length %d'%(self.l, arr.shape[1]))
         return c_void_p(np.ascontiguousarray(arr).ctypes.data)
 #}}}
 
@@ -186,8 +186,15 @@ class HMPDF(object) :
     #}}}
     
     ## calls hmpdf_new().
-    def __init__(self) :
+    #
+    #  \param catch_errors      If set to false, the python code does not perform error
+    #                           checking and outputs the error code as the first entry
+    #                           in any output tuple.
+    #                           Default is True, i.e. the python code will raise errors
+    #                           upon encountering a non-zero error code.
+    def __init__(self, catch_errors=True) :
     #{{{
+        self.catch_errors = catch_errors
         self.d = HMPDF.__new()
         if not self.d :
             raise MemoryError('Could not allocate hmpdf_obj.')
@@ -197,37 +204,25 @@ class HMPDF(object) :
     #
     #  \param class_ini     string, the CLASS .ini file
     #  \param stype         string, the signal type (either "kappa" or "tsz")
-    #  \param *args         used if stype="kappa" to pass the source redshift
+    #  \param zsource       the source redshift. Use only if stype="kappa"
     #  \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
-    #                       \note there is one additional setting, "catch_errors".
-    #                             If set to false, the python code does not perform error
-    #                             checking and outputs the error code as the first entry
-    #                             in any output tuple.
-    #                             Default is True, i.e. the python code will raise errors
-    #                             upon encountering a non-zero error code.
-    #  \return the error code if catch_errors=True, else None
-    def init(self, class_ini, stype, *args, **kwargs) :
+    def init(self, class_ini, stype, zsource=None, **kwargs) :
     #{{{
         if stype == 'kappa' :
-            if len(args) != 1 :
-                raise SyntaxError('*args not of appropriate length for stype=kappa, '\
-                                  'you need to pass source redshift.')
+            if zsource is None :
+                raise SyntaxError('you need to pass source redshift for stype=kappa.')
         elif stype == 'tsz' :
-            if len(args) != 0 :
-                raise SyntaxError('*args is not empty, which it should be for stype=tsz')
+            if zsource is not None :
+                raise SyntaxError('zsource should not be passed for stype=tsz.')
         else :  
             raise NotImplementedError('Unknown stype.')
-        self.catch_errors = True
-        self.c = _Configs()
+        self.__c = _Configs()
         # add kwargs to configs
         for k,v in kwargs.items() :
-            if k == 'catch_errors' :
-                self.catch_errors = v
-            else :
-                self.c.append(k,v)
-        arglist = self.c()
+            self.__c.append(k,v)
+        arglist = self.__c()
         if stype == 'kappa' :
-            arglist.insert(0, c_double(args[0]))
+            arglist.insert(0, c_double(zsource))
         err = HMPDF.__init(self.d, _C()(class_ini),
                            _E(_stypes)(stype), *arglist)
         return self.__ret(err, 'init()')
