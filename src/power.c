@@ -266,8 +266,8 @@ create_corr(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_corr_interp\n")
     
-    double rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
-    gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, rmax);
+    d->pwr->corr_rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
+    gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, d->pwr->corr_rmax);
     SAFEALLOC(double *, Pk,   malloc(CORRINTERP_N     * sizeof(double)))
     SAFEALLOC(double *, r,    malloc((CORRINTERP_N+1) * sizeof(double)))
     SAFEALLOC(double *, zeta, malloc((CORRINTERP_N+1) * sizeof(double)))
@@ -321,6 +321,12 @@ corr(hmpdf_obj *d, int z_index, double phi, double *out)
     STARTFCT
 
     double r = d->c->comoving[z_index] * phi;
+    if (r > d->pwr->corr_rmax)
+    {
+        HMPDFERR("phi value out of interpolation range.\n"
+                 "\tIt is suggested you increase hmpdf_phimax\n"
+                 "\tor check the units.")
+    }
     SAFEGSL(gsl_spline_eval_e(d->pwr->corr_interp, r,
                               d->pwr->corr_accel[this_core()],
                               out))
