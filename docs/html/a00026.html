@@ -101,9 +101,9 @@ $(document).ready(function(){initNavTree('a00026.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a46c10272d00ba6fde5b5d4b0836d846e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov</a> (<a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double cov[Nbins *Nbins], int noisy)</td></tr>
+<tr class="memitem:a46c10272d00ba6fde5b5d4b0836d846e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov</a> (<a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double cov[Nbins *Nbins], int noisy)</td></tr>
 <tr class="separator:a46c10272d00ba6fde5b5d4b0836d846e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac6a1a1025cee09dede78b935767325c8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00026.html#ac6a1a1025cee09dede78b935767325c8">hmpdf_get_cov_diagnostics</a> (<a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)</td></tr>
+<tr class="memitem:ac6a1a1025cee09dede78b935767325c8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00026.html#ac6a1a1025cee09dede78b935767325c8">hmpdf_get_cov_diagnostics</a> (<a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)</td></tr>
 <tr class="separator:ac6a1a1025cee09dede78b935767325c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -116,7 +116,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">int hmpdf_get_cov </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
@@ -153,7 +153,7 @@ Functions</h2></td></tr>
 <p>Returns the covariance matrix of the one-point PDF.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">Nbins</td><td>number of bins the covariance matrix will be binned into </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cov</td><td>the binned covariance matrix will be written into the first Nbins*Nbins elements of this output array </td></tr>
@@ -162,7 +162,7 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>If the covariance matrix has already been computed and since then no <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> has been called on d, the pre-computed result is used and only the binning is performed. </dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>If the covariance matrix has already been computed and since then no <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> has been called on d, the pre-computed result is used and only the binning is performed. </dd></dl>
 
 </div>
 </div>
@@ -175,7 +175,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">int hmpdf_get_cov_diagnostics </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
@@ -212,7 +212,7 @@ Functions</h2></td></tr>
 <p>Returns diagnostic outputs for the covariance matrix computation. The main use of this function is to identify numerical instability at small pixel separations.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">Nphi</td><td>the number of pixel separations will be written into the return value </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">phi</td><td>pointer will be set to an array of length Nphi, containing the pixel separations used internally (in radians) </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">phiweights</td><td>pointer will be set to an array of length Nphi, containing the weights assigned to each pixel separation in the summation. This can occasionally be used to tune the <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e">hmpdf_pixelexact_max</a> option. </td></tr>

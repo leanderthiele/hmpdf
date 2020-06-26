@@ -198,10 +198,10 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Function pointer typedef for user-defined ell-space filter. Passed to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Function pointer typedef for user-defined ell-space filter. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ell</td><td>angular wavenumber </td></tr>
-    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>. </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -220,11 +220,11 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Function pointer typedef for user-defined k-space filter. Passed to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Function pointer typedef for user-defined k-space filter. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">k</td><td>comoving wavenumber in 1/Mpc </td></tr>
     <tr><td class="paramname">z</td><td>redshift </td></tr>
-    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>. </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -317,8 +317,8 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Options to <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>.</p>
-<p>The variable argument list in <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> can be used to pass non-default options. [syntax is explained in the documentation for <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>].</p>
+<p>Options to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>.</p>
+<p>The variable argument list in <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> can be used to pass non-default options. [syntax is explained in the documentation for <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>].</p>
 <p>There is a large number of options, many of which the typical user will not need to use. Here is a brief synopsis:</p>
 <p>Always used: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></p>
 <p>Frequently used options:</p><ul>
@@ -386,7 +386,7 @@ Should be at least 2x larger than maximum signal value you are interested in. </
 For weak lensing, you should change this option depending on source redshift. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec"></a>hmpdf_N_theta&#160;</td><td class="fielddoc"><p>number of points on which the signal profiles are sampled. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 500. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>reasonable precision can be reached with as few as 100 sample points. Runtime of <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> is in many cases quite dominated by this setting. </dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>reasonable precision can be reached with as few as 100 sample points. Runtime of <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> is in many cases quite dominated by this setting. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6619253df0ad6696969b63a22a3cd4c1"></a>hmpdf_rout_scale&#160;</td><td class="fielddoc"><p>radial cut-off. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 2. </dd></dl>
 </td></tr>
@@ -463,7 +463,7 @@ this has to be set to 1 for two-point PDF and covariance matrix calculations (ot
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4"></a>hmpdf_noise&#160;</td><td class="fielddoc"><p>Option to add pixel-wise Gaussian noise of this standard deviation. </p><dl class="section user"><dt></dt><dd>Type: double. Default: None. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>negative values have no effect (and will not trigger a warning). </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><dl class="section attention"><dt>Attention</dt><dd>Required last argument in <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><dl class="section attention"><dt>Attention</dt><dd>Required last argument in <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>. </dd></dl>
 </td></tr>
 </table>
 
