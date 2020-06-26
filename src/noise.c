@@ -7,7 +7,7 @@
 #include <gsl/gsl_cblas.h>
 
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "numerics.h"
 #include "noise.h"
 

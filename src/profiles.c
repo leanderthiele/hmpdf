@@ -17,11 +17,13 @@
 
 #include "configs.h"
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "cosmology.h"
 #include "halo_model.h"
 #include "filter.h"
 #include "profiles.h"
+
+#include "hmpdf.h"
 
 int
 null_profiles(hmpdf_obj *d)

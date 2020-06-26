@@ -5,7 +5,7 @@
 #include <class.h>
 
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "class_interface.h"
 
 #include "hmpdf.h"

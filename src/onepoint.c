@@ -9,11 +9,13 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "profiles.h"
 #include "noise.h"
 #include "numerics.h"
 #include "onepoint.h"
+
+#include "hmpdf.h"
 
 int
 null_onepoint(hmpdf_obj *d)
@@ -367,7 +369,7 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ?  ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
                      : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
-                     Nbins, _binedges, out, OPINTERP_TYPE))
+                     Nbins, _binedges, op, OPINTERP_TYPE))
 
     ENDFCT
 }//}}}

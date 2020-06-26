@@ -137,7 +137,7 @@
  *  \snippet example.py example_ell_filter_use
  */
 
-#include "hmpdf_data.h"
+#include "hmpdf_object.h"
 #include "hmpdf_configs.h"
 #include "hmpdf_init.h"
 #include "hmpdf_onepoint.h"

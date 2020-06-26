@@ -9,7 +9,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "power.h"
 #include "profiles.h"
 #include "onepoint.h"
@@ -559,7 +559,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
-                     TPINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE))
+                     TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
 
     ENDFCT
 }//}}}

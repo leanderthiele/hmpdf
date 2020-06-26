@@ -8,8 +8,10 @@
 
 #include "configs.h"
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "numerics.h"
+
+#include "hmpdf.h"
 
 int
 null_numerics(hmpdf_obj *d)

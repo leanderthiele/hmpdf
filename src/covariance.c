@@ -11,7 +11,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "power.h"
 #include "profiles.h"
 #include "noise.h"
@@ -556,16 +556,16 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->cov->Cov_noisy : d->cov->Cov,
-                     COVINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE))
+                     COVINTEGR_N, Nbins, _binedges, cov, TPINTERP_TYPE))
 
     // compute the shot noise term
     SAFEALLOC(double *, temp, malloc(Nbins * sizeof(double)))
     SAFEHMPDF(hmpdf_get_op(d, Nbins, binedges, temp, 1, noisy))
-    SAFEHMPDF(add_shotnoise_diag(Nbins, out, temp))
+    SAFEHMPDF(add_shotnoise_diag(Nbins, cov, temp))
     free(temp);
 
     // normalize properly
-    SAFEHMPDF(rescale_to_fsky1(d, Nbins, out))
+    SAFEHMPDF(rescale_to_fsky1(d, Nbins, cov))
 
     ENDFCT
 }//}}}

@@ -8,7 +8,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "halo_model.h"
 
 int

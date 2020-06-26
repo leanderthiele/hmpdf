@@ -1,6 +1,6 @@
-/*! @file hmpdf_data.h */
-#ifndef HMPDF_DATA_H
-#define HMPDF_DATA_H
+/*! @file */
+#ifndef HMPDF_OBJECT_H
+#define HMPDF_OBJECT_H
 
 /*! The data structure that all globally exposed functions receive
  *  a pointer to as their first argument.

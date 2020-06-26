@@ -9,7 +9,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "numerics.h"
 #include "cosmology.h"
 #include "power.h"

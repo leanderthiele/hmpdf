@@ -1,7 +1,7 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include "data.h"
+#include "object.h"
 
 #include "hmpdf.h"
 

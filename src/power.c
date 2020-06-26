@@ -8,10 +8,12 @@
 
 #include "configs.h"
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "cosmology.h"
 #include "numerics.h"
 #include "power.h"
+
+#include "hmpdf.h"
 
 int
 null_power(hmpdf_obj *d)
