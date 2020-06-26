@@ -223,6 +223,10 @@ Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>the values in the phi-array are not ordered </dd>
 <dd>
+you can pass NULL for any of the arguments (apart from the first of course), if you are not interested in that specific output </dd>
+<dd>
+if the covariance matrix has not already been computed [<a class="el" href="a00026.html#a09c16a96b3a10beecc52a2d8c7578fac">hmpdf_get_cov()</a> has not been called before], this function will do it </dd>
+<dd>
 while the code does perform the memory allocation for phi, phiweights, and corr_diagn (so that the user does not have to figure out Nphi beforehand), the user is responsible for freeing these arrays, i.e. to call <div class="fragment"><div class="line">free(*phi); free(*phiweights); free(*corr_diagn);</div>
 </div><!-- fragment --> after use. </dd></dl>
 

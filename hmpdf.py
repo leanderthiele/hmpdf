@@ -167,6 +167,15 @@ class HMPDF(object) :
                            ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
                            ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
                            c_int, ]
+    __get_Nphi = __libhmpdf._get_Nphi
+    __get_Nphi.restype = c_int
+    __get_Nphi.argtypes = [c_void_p, POINTER(c_int), ]
+    __get_cov_diagnostics = __libhmpdf.hmpdf_get_cov_diagnostics1
+    __get_cov_diagnostics.restype = c_int
+    __get_cov_diagnostics.argtypes = [c_void_p,
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1), ]
     __errmsg = '%s completed with non-zero exit code'
     #}}}
     def __ret(self, err, callname, *args) :
@@ -324,5 +333,23 @@ class HMPDF(object) :
         err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
                                _E(_corr_types)(mode))
         return self.__ret(err, 'get_Cphi()', out)
+    #}}}
+
+    ## Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
+    #
+    #  \return (phi, phiweights, corr_diagn)
+    def get_cov_diagnostics(self) :
+    #{{{
+        Nphi = c_int(0)
+        err = HMPDF.__get_Nphi(self.d, byref(Nphi))
+        if err :
+            return self.__ret(err, 'get_cov_diagnostics()',
+                              None, None, None)
+        phi = np.empty(Nphi)
+        phiweights = np.empty(Nphi)
+        corr_diagn = np.empty(Nphi)
+        err = HMPDF.__get_cov_diagnostics(self.d, phi, phiweights, corr_diagn)
+        return self.__ret(err, 'get_cov_diagnostics',
+                          phi, phiweights, corr_diagn)
     #}}}
 #}}}

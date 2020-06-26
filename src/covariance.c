@@ -571,6 +571,38 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double out[Nbin
 }//}}}
 
 int
+_get_Nphi(hmpdf_obj *d, int *Nphi)
+{//{{{
+    STARTFCT
+    *Nphi = d->n->Nphi;
+    ENDFCT
+}//}}}
+
+int
+_get_phi(hmpdf_obj *d, double *phi)
+{//{{{
+    STARTFCT
+    memcpy(phi, d->n->phigrid, d->n->Nphi * sizeof(double));
+    ENDFCT
+}//}}}
+
+int
+_get_phiweights(hmpdf_obj *d, double *phiweights)
+{//{{{
+    STARTFCT
+    memcpy(phiweights, d->n->phiweights, d->n->Nphi * sizeof(double));
+    ENDFCT
+}//}}}
+
+int
+_get_corr_diagn(hmpdf_obj *d, double *corr_diagn)
+{//{{{
+    STARTFCT
+    memcpy(corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
+    ENDFCT
+}//}}}
+
+int
 hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)
 {//{{{
     STARTFCT
@@ -578,14 +610,48 @@ hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiwei
     // perform the computation
     SAFEHMPDF(prepare_cov(d))
 
-    *Nphi = d->n->Nphi;
-    SAFEALLOC(, *phi,        malloc(d->n->Nphi * sizeof(double)))
-    SAFEALLOC(, *phiweights, malloc(d->n->Nphi * sizeof(double)))
-    SAFEALLOC(, *corr_diagn, malloc(d->n->Nphi * sizeof(double)))
+    if (Nphi != NULL)
+    {
+        SAFEHMPDF(_get_Nphi(d, Nphi))
+    }
+    if (phi != NULL)
+    {
+        SAFEALLOC(, *phi, malloc(d->n->Nphi * sizeof(double)))
+        SAFEHMPDF(_get_phi(d, *phi))
+    }
+    if (phiweights != NULL)
+    {
+        SAFEALLOC(, *phiweights, malloc(d->n->Nphi * sizeof(double)))
+        SAFEHMPDF(_get_phiweights(d, *phiweights))
+    }
+    if (corr_diagn != NULL)
+    {
+        SAFEALLOC(, *corr_diagn, malloc(d->n->Nphi * sizeof(double)))
+        SAFEHMPDF(_get_corr_diagn(d, *corr_diagn))
+    }
 
-    memcpy(*phi,        d->n->phigrid,      d->n->Nphi * sizeof(double));
-    memcpy(*phiweights, d->n->phiweights,   d->n->Nphi * sizeof(double));
-    memcpy(*corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
+    ENDFCT
+}//}}}
 
+int
+hmpdf_get_cov_diagnostics1(hmpdf_obj *d, double *phi, double *phiweights, double *corr_diagn)
+{//{{{
+    STARTFCT
+
+    SAFEHMPDF(prepare_cov(d))
+
+    if (phi != NULL)
+    {
+        SAFEHMPDF(_get_phi(d, phi))
+    }
+    if (phiweights != NULL)
+    {
+        SAFEHMPDF(_get_phiweights(d, phiweights))
+    }
+    if (corr_diagn != NULL)
+    {
+        SAFEHMPDF(_get_corr_diagn(d, corr_diagn))
+    }
+    
     ENDFCT
 }//}}}

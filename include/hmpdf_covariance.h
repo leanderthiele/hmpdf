@@ -40,6 +40,11 @@ int hmpdf_get_cov(hmpdf_obj *d,
  *  \return error code
  *
  *  \remark the values in the phi-array are not ordered
+ *  \remark you can pass NULL for any of the arguments (apart from the first of course),
+ *          if you are not interested in that specific output
+ *  \remark if the covariance matrix has not already been computed
+ *          [hmpdf_get_cov() has not been called before],
+ *          this function will do it
  *  \remark while the code does perform the memory allocation for phi, phiweights, and corr_diagn
  *          (so that the user does not have to figure out Nphi beforehand),
  *          the user is responsible for freeing these arrays, i.e. to call
