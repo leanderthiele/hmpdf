@@ -1,13 +1,13 @@
 var indexSectionsWithContent =
 {
-  0: "_ghi",
+  0: "_ghio",
   1: "h",
   2: "h",
   3: "_ghi",
   4: "h",
   5: "h",
   6: "h",
-  7: "h"
+  7: "o"
 };
 
 var indexSectionNames =

@@ -5,7 +5,7 @@
 #ifndef HMPDF_H
 #define HMPDF_H
 
-/*! \mainpage hmpdf Documentation
+/*! \mainpage Overview
  *
  *  \section intro Introduction
  *  
