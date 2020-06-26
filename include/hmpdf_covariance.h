@@ -4,13 +4,13 @@
 
 /*! Returns the covariance matrix of the one-point PDF.
  *
- *  \param d        hmpdf_init() must have been called on d
- *  \param Nbins    number of bins the covariance matrix will be binned into
- *  \param binedges monotonically increasing array of length Nbins+1
- *  \param out      the binned covariance matrix will be written into the first Nbins*Nbins elements of 
- *                  this output array
- *  \param noisy    if set to non-zero, the covariance matrix will include Gaussian noise
- *                  of standard deviation #hmpdf_noise
+ *  \param[in,out] d    hmpdf_init() must have been called on d
+ *  \param[in] Nbins    number of bins the covariance matrix will be binned into
+ *  \param[in] binedges monotonically increasing array of length Nbins+1
+ *  \param[out] cov     the binned covariance matrix will be written into the first Nbins*Nbins elements of 
+ *                      this output array
+ *  \param[in] noisy    if set to non-zero, the covariance matrix will include Gaussian noise
+ *                      of standard deviation #hmpdf_noise
  *  \return error code
  *
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()
@@ -19,24 +19,24 @@
 int hmpdf_get_cov(hmpdf_obj *d,
                   int Nbins,
                   double binedges[Nbins+1],
-                  double out[Nbins*Nbins],
+                  double cov[Nbins*Nbins],
                   int noisy);
 
 /*! Returns diagnostic outputs for the covariance matrix computation.
  *  The main use of this function is to identify numerical instability at small
  *  pixel separations.
  *
- *  \param d            hmpdf_init() must have been called on d
- *  \param Nphi         the number of pixel separations will be written into the return value
- *  \param phi          pointer will be set to an array of length Nphi,
- *                      containing the pixel separations used internally (in radians)
- *  \param phiweights   pointer will be set to an array of length Nphi,
- *                      containing the weights assigned to each pixel separation
- *                      in the summation.
- *                      This can occasionally be used to tune the #hmpdf_pixelexact_max option.
- *  \param corr_diagn   pointer will be set to an array of length Nphi,
- *                      containing the correlation function at the pixel separation sample points.
- *                      Noisy behaviour at small phi is a sign of numerical instability.
+ *  \param[in,out] d        hmpdf_init() must have been called on d
+ *  \param[out] Nphi        the number of pixel separations will be written into the return value
+ *  \param[out] phi         pointer will be set to an array of length Nphi,
+ *                          containing the pixel separations used internally (in radians)
+ *  \param[out] phiweights  pointer will be set to an array of length Nphi,
+ *                          containing the weights assigned to each pixel separation
+ *                          in the summation.
+ *                          This can occasionally be used to tune the #hmpdf_pixelexact_max option.
+ *  \param[out] corr_diagn  pointer will be set to an array of length Nphi,
+ *                          containing the correlation function at the pixel separation sample points.
+ *                          Noisy behaviour at small phi is a sign of numerical instability.
  *  \return error code
  *
  *  \remark the values in the phi-array are not ordered

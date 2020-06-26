@@ -16,7 +16,7 @@ typedef struct hmpdf_obj_s hmpdf_obj;
 hmpdf_obj *hmpdf_new(void);
 
 /*! Frees all memory associated with the hmpdf_obj.
- *  \param d        #hmpdf_obj created with hmpdf_new()
+ *  \param[in] d        #hmpdf_obj created with hmpdf_new()
  *  \return error code
  */
 int hmpdf_delete(hmpdf_obj *d);

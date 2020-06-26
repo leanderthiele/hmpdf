@@ -4,10 +4,10 @@
 
 /*! Initializes the #hmpdf_obj and computes data that is needed for all outputs.
  *
- *  \param d            created with hmpdf_new()
- *  \param class_ini    path to a CLASS .ini file
- *  \param stype        signal type (either #hmpdf_kappa or #hmpdf_tsz)
- *  \param ...          variable argument list for optional arguments
+ *  \param[in,out] d        created with hmpdf_new()
+ *  \param[in] class_ini    path to a CLASS .ini file
+ *  \param[in] stype        signal type (either #hmpdf_kappa or #hmpdf_tsz)
+ *  \param[in] ...          variable argument list for optional arguments
  *  \return error code
  *  
  *  \attention if stype=#hmpdf_kappa, the first entry in ... must be the source

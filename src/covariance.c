@@ -523,7 +523,7 @@ prepare_cov(hmpdf_obj *d)
 }//}}}
 
 int
-hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double out[Nbins*Nbins], int noisy)
+hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbins*Nbins], int noisy)
 {//{{{
     STARTFCT
 

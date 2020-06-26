@@ -21,6 +21,6 @@ onepoint_t;
 int null_onepoint(hmpdf_obj *d);
 int reset_onepoint(hmpdf_obj *d);
 int create_op(hmpdf_obj *d);
-int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double out[Nbins], int incl_2h, int noisy);
+int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy);
 
 #endif

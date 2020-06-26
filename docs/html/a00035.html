@@ -101,12 +101,12 @@ $(document).ready(function(){initNavTree('a00035.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a62ae09250843195f69fa9430d343f509"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#a62ae09250843195f69fa9430d343f509">hmpdf_get_op</a> (<a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double out[Nbins], int incl_2h, int noisy)</td></tr>
-<tr class="separator:a62ae09250843195f69fa9430d343f509"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48d704eb071f26ec88a6864175fee4e5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op</a> (<a class="el" href="a00029.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)</td></tr>
+<tr class="separator:a48d704eb071f26ec88a6864175fee4e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a62ae09250843195f69fa9430d343f509"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a62ae09250843195f69fa9430d343f509">&#9670;&nbsp;</a></span>hmpdf_get_op()</h2>
+<a id="a48d704eb071f26ec88a6864175fee4e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48d704eb071f26ec88a6864175fee4e5">&#9670;&nbsp;</a></span>hmpdf_get_op()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -133,7 +133,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>out</em>[Nbins], </td>
+          <td class="paramname"><em>op</em>[Nbins], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -157,12 +157,12 @@ Functions</h2></td></tr>
 <p>Returns the one-point PDF.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">d</td><td><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
-    <tr><td class="paramname">Nbins</td><td>number of bins the one-point PDF will be binned into </td></tr>
-    <tr><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
-    <tr><td class="paramname">out</td><td>the binned one-point PDF will be written into the first Nbins elements of this output array </td></tr>
-    <tr><td class="paramname">incl_2h</td><td>if set to non-zero, the two-halo term (i.e. halo clustering) will be included in the output PDF </td></tr>
-    <tr><td class="paramname">noisy</td><td>if set to non-zero, the one-point PDF will be convolved with a Gaussian of standard deviation <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Nbins</td><td>number of bins the one-point PDF will be binned into </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">op</td><td>the binned one-point PDF will be written into the first Nbins elements of this output array </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">incl_2h</td><td>if set to non-zero, the two-halo term (i.e. halo clustering) will be included in the output PDF </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">noisy</td><td>if set to non-zero, the one-point PDF will be convolved with a Gaussian of standard deviation <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a> </td></tr>
   </table>
   </dd>
 </dl>

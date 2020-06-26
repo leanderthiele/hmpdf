@@ -523,7 +523,7 @@ prepare_tp(hmpdf_obj *d, double phi)
 }//}}}
 
 int
-hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double out[Nbins*Nbins], int noisy)
+hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins*Nbins], int noisy)
 {//{{{
     STARTFCT
 
