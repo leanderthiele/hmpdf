@@ -29,7 +29,7 @@
  *  and all configurations at default except for the number of threads and the
  *  pixel sidelength, you would call
  *  \code
- *  hmpdf_init(d, "explanatory.ini", kappa, 1.0,
+ *  hmpdf_init(d, "example.ini", hmpdf_kappa, 1.0,
  *             hmpdf_N_threads, 4,    // use 4 threads
  *             hmpdf_pixel_side, 0.4, // use 0.4 arcmin pixels
  *             hmpdf_end_configs);
