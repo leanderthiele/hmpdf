@@ -15,6 +15,8 @@
  *
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.
+ *  \remark If #hmpdf_verbosity is set to a positive value, status updates with estimated remaining
+ *          time will be given during execution.
  */
 int hmpdf_get_cov(hmpdf_obj *d,
                   int Nbins,
