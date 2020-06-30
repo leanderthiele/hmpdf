@@ -9,13 +9,13 @@
  */
 typedef struct hmpdf_obj_s hmpdf_obj;
 
-/*! Allocates a new hmpdf_obj.
+/*! Allocates a new #hmpdf_obj.
  *  \return d       pointer to a new #hmpdf_obj,
  *                  NULL if memory allocation failed
  */
 hmpdf_obj *hmpdf_new(void);
 
-/*! Frees all memory associated with the hmpdf_obj.
+/*! Frees all memory associated with the #hmpdf_obj.
  *  \param[in] d        #hmpdf_obj created with hmpdf_new()
  *  \return error code
  */
