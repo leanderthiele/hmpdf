@@ -33,6 +33,9 @@ typedef enum
  *  <a href="https://www.gnu.org/software/gsl/doc/html/integration.html#fixed-point-quadratures">
  *  GSL documentation</a>
  *  for details.
+ *
+ *  \attention Some of these integration modes are for infinite intervals and do not make sense
+ *             for our application.
  */
 typedef enum
 {
