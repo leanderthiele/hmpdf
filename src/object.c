@@ -82,7 +82,7 @@ hmpdf_delete(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "delete_data\n")
+    HMPDFPRINT(1, "hmpdf_delete\n")
 
     SAFEHMPDF(reset_data(d))
 
