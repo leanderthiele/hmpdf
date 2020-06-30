@@ -208,7 +208,29 @@ class HMPDF(object) :
         if not self.d :
             raise MemoryError('Could not allocate hmpdf_obj.')
     #}}}
-    
+
+    ## calls hmpdf_delete()
+    #
+    #  \param  none
+    def __del__(self) :
+    #{{{
+        err = HMPDF.__delete(self.d)
+        if err :
+            raise RuntimeError('delete failed.')
+    #}}}
+
+    ## returns object
+    def __enter__(self) :
+    #{{{
+        return self
+    #}}}
+
+    ## calls hmpdf_delete()
+    def __exit__(self, exc_type, exc_value, exc_traceback) :
+    #{{{
+        del self
+    #}}}
+
     ## Initializes the object [calls hmpdf_init()].
     #
     #  \param class_ini     string, the CLASS .ini file
@@ -235,25 +257,6 @@ class HMPDF(object) :
         err = HMPDF.__init(self.d, _C()(class_ini),
                            _E(_stypes)(stype), *arglist)
         return self.__ret(err, 'init()')
-    #}}}
-
-    ## calls hmpdf_delete()
-    def _delete(self) :
-    #{{{
-        err = HMPDF.__delete(self.d)
-        return self.__ret(err, 'delete()')
-    #}}}
-
-    ## returns object
-    def __enter__(self) :
-    #{{{
-        return self
-    #}}}
-
-    ## calls hmpdf_delete()
-    def __exit__(self, exc_type, exc_value, exc_traceback) :
-    #{{{
-        self._delete()
     #}}}
 
     ## Get the one-point PDF [calls hmpdf_get_op()]
