@@ -4,6 +4,9 @@
 #include <math.h>
 #include <complex.h>
 #include <fftw3.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <gsl/gsl_math.h>
 
@@ -54,8 +57,12 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 
     SAFEALLOC(double *, temp, malloc(d->n->Nsignal * sizeof(double)))
 
-    for (int M_index=d->p->breakpoints[z_index]; M_index<d->n->NM; M_index++)
+    for (int M_index=0; M_index<d->n->NM; M_index++)
     {
+        if (d->p->is_not_monotonic[z_index][M_index])
+        {
+            continue;
+        }
         SAFEHMPDF(dtsq_of_s(d, z_index, M_index, temp))
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
@@ -74,41 +81,22 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 }//}}}
 
 static int
-not_inv_integral(hmpdf_obj *d, int z_index, int M_index, int lambda_index, complex *out)
-// TODO do this w/ Gauss fixed point (linear weight function)
-// FIXME calling s_of_t for each lambda is super slow!!!
+not_inv_integral(hmpdf_obj *d, double *s, int lambda_index, complex *out)
+// TODO can potentially speed this up a bit
 {//{{{
     STARTFCT
 
     SAFEALLOC(complex *, integr, malloc(d->p->prtilde_Ntheta * sizeof(complex)))
-    SAFEALLOC(double *, temp, malloc(d->p->prtilde_Ntheta * sizeof(double)))
-    // evaluate the interpolated signal profile
-    SAFEHMPDF(s_of_t(d, z_index, M_index, d->p->prtilde_Ntheta,
-                     d->p->prtilde_thetagrid, temp))
     // fill the integrand
     for (int ii=0; ii<d->p->prtilde_Ntheta; ii++)
     {
         integr[ii] = d->p->prtilde_thetagrid[ii]
-                     * cexp(- _Complex_I * temp[ii] * d->n->lambdagrid[lambda_index]);
+                     * cexp(- _Complex_I * s[ii] * d->n->lambdagrid[lambda_index]);
     }
-    // TODO TESTING
-    /*
-    if ((z_index+1)%10==0 && (M_index+1)%10==0 && (lambda_index+1)%200==0
-        && z_index>25 && M_index>35)
-    {
-        printf("z=%d/%d\tM=%d/%d\tlambda=%d/%d\n", z_index+1, d->n->Nz,
-                                                   M_index+1, d->n->NM,
-                                                   lambda_index+1, d->n->Nsignal/2+1);
-        gnuplot *gp = plot_comp(NULL, d->p->prtilde_Ntheta, d->p->prtilde_thetagrid, integr, 0);
-        plot_comp(gp, d->p->prtilde_Ntheta, d->p->prtilde_thetagrid, integr, 1);
-        show(gp);
-    }
-    */
     // perform the integration
-    *out = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1), 1, integr);
+    *out = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1),
+                       1, integr);
     free(integr);
-    free(temp);
-    *out *= 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
 
     ENDFCT
 }//}}}
@@ -118,10 +106,24 @@ lambda_loop(hmpdf_obj *d, int z_index, int M_index, complex *out)
 {//{{{
     STARTFCT
 
+    SAFEALLOC(double *, s, malloc(d->p->prtilde_Ntheta * sizeof(double)))
+    // evaluate the interpolated signal profile
+    SAFEHMPDF(s_of_t(d, z_index, M_index, d->p->prtilde_Ntheta,
+                     d->p->prtilde_thetagrid, s))
+
+    // loop over lambda values
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(d->Ncores)
+    #endif
     for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
-        SAFEHMPDF(not_inv_integral(d, z_index, M_index, ii, out+ii))
+        if (hmpdf_status) { continue; }
+        SAFEHMPDF_NORETURN(not_inv_integral(d, s, ii, out+ii))
+        if (hmpdf_status) { continue; }
+        out[ii] *= 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
     }
+
+    free(s);
 
     ENDFCT
 }//}}}
@@ -134,9 +136,12 @@ op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
     STARTFCT
 
     SAFEALLOC(complex *, temp, malloc((d->n->Nsignal/2+1) * sizeof(complex)))
-    // FIXME parallelize
-    for (int M_index=0; M_index<d->p->breakpoints[z_index]; M_index++)
+    for (int M_index=0; M_index<d->n->NM; M_index++)
     {
+        if (!(d->p->is_not_monotonic[z_index][M_index]))
+        {
+            continue;
+        }
         SAFEHMPDF(lambda_loop(d, z_index, M_index, temp))
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
@@ -181,14 +186,14 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        if (d->p->breakpoints[z_index] < d->n->NM-1)
+        if (d->p->is_not_monotonic[z_index][d->n->NM] < d->n->NM)
         // there are samples for which we can do the FFT integral
         {
             SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
             fftw_execute(plan_u);
             fftw_execute(plan_c);
         }
-        if (d->p->breakpoints[z_index] > 0)
+        if (d->p->is_not_monotonic[z_index][d->n->NM])
         // there are samples for which we need to do the slow integral
         {
             SAFEHMPDF(op_Mint_notinvertible(d, z_index, au_comp, ac_comp))
@@ -327,7 +332,7 @@ prepare_op(hmpdf_obj *d)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_breakpoints_or_monotonize(d))
+    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_op(d))
     if (d->ns->noise > 0.0)
     // include gaussian noise

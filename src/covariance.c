@@ -3,6 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_rng.h>
@@ -497,7 +500,7 @@ prepare_cov(hmpdf_obj *d)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_breakpoints_or_monotonize(d))
+    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_op(d))
 
     SAFEHMPDF(create_corr(d))

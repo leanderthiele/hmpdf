@@ -36,8 +36,8 @@ null_profiles(hmpdf_obj *d)
     d->p->decr_tsqgrid = NULL;
     d->p->prtilde_thetagrid = NULL;
     d->p->reci_tgrid = NULL;
-    d->p->created_breakpoints = 0;
-    d->p->breakpoints = NULL;
+    d->p->created_monotonicity = 0;
+    d->p->is_not_monotonic = NULL;
     d->p->dht_ws = NULL;
     d->p->profiles = NULL;
     d->p->created_conj_profiles = 0;
@@ -97,7 +97,14 @@ reset_profiles(hmpdf_obj *d)
         }
         free(d->p->conj_profiles);
     }
-    if (d->p->breakpoints != NULL) { free(d->p->breakpoints); }
+    if (d->p->is_not_monotonic != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            free(d->p->is_not_monotonic[z_index]);
+        }
+        free(d->p->is_not_monotonic);
+    }
     if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
 
     ENDFCT
@@ -457,45 +464,6 @@ create_filtered_profiles(hmpdf_obj *d)
 }//}}}
 
 static int
-find_breakpoint(int N, int *x)
-// computes the first index from which we can apply the FFTs up to Mmax
-{//{{{
-    int out = 0;
-    for (int ii=0; ii<N; ii++)
-    {
-        if (x[ii]) // not monotonic
-        {
-            out = ii + 1;
-        }
-    }
-    return out;
-}//}}}
-
-static int
-adjust_breakpoint(hmpdf_obj *d, int *bp)
-{//{{{
-    STARTFCT
-
-    if (GSL_IS_ODD(*bp))
-    // we want to do simpson integrations with odd number of sample points
-    {
-        *bp += 1;
-    }
-    if (*bp < INTEGR_MINSAMPLES-1)
-    // do more slow integrals
-    {
-        *bp = INTEGR_MINSAMPLES-1;
-    }
-    if (d->n->NM - *bp < INTEGR_MINSAMPLES-1)
-    // remove the small FFT integral
-    {
-        *bp = d->n->NM-1;
-    }
-
-    ENDFCT
-}//}}}
-
-static int
 monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 // problems is an int[Nproblems], holding the indices where y was decreasing,
 // in increasing order
@@ -577,13 +545,13 @@ monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
 }//}}}
 
 int
-create_breakpoints_or_monotonize(hmpdf_obj *d)
+create_monotonicity(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_breakpoints) { return hmpdf_status; }
+    if (d->p->created_monotonicity) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_breakpoints_or_monotonize\n")
+    HMPDFPRINT(2, "\tcreate_monotonicity\n")
 
     if (d->n->monotonize)
     {
@@ -591,22 +559,27 @@ create_breakpoints_or_monotonize(hmpdf_obj *d)
     }
     else
     {
-        HMPDFPRINT(3, "\t\tcreating breakpoints (no monotonizing requested)\n")
+        HMPDFPRINT(3, "\t\tnot monotonizing\n")
     }
-    SAFEALLOC(, d->p->breakpoints, malloc(d->n->Nz * sizeof(int)))
+
+    SAFEALLOC(, d->p->is_not_monotonic, malloc(d->n->Nz * sizeof(int)))
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        int _not_monotonic[d->n->NM];
+        SAFEALLOC(, d->p->is_not_monotonic[z_index],
+                  malloc((d->n->NM+1) * sizeof(int)))
+        d->p->is_not_monotonic[z_index][d->n->NM] = 0;
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             int _problems[d->p->Ntheta+1];
-            _not_monotonic[M_index] = not_monotonic(d->p->Ntheta+1,
-                                                    d->p->profiles[z_index][M_index]+1,
-                                                    _problems);
+            d->p->is_not_monotonic[z_index][M_index]
+                = not_monotonic(d->p->Ntheta+1,
+                                d->p->profiles[z_index][M_index]+1,
+                                _problems);
             
-            if (d->n->monotonize && _not_monotonic[M_index])
+            if (d->n->monotonize && d->p->is_not_monotonic[z_index][M_index])
             {
-                SAFEHMPDF(monotonize(d->p->Ntheta+1, _not_monotonic[M_index],
+                SAFEHMPDF(monotonize(d->p->Ntheta+1,
+                                     d->p->is_not_monotonic[z_index][M_index],
                                      _problems, d->p->decr_tgrid,
                                      d->p->profiles[z_index][M_index]+1))
                 // check if it worked correctly
@@ -617,19 +590,18 @@ create_breakpoints_or_monotonize(hmpdf_obj *d)
                                             d->p->profiles[z_index][M_index]+1,
                                             NULL))
                 }
-                _not_monotonic[M_index] = 0;
+                d->p->is_not_monotonic[z_index][M_index] = 0;
+            }
+
+            if (d->p->is_not_monotonic[z_index][M_index])
+            {
+                d->p->is_not_monotonic[z_index][d->n->NM] += 1;
             }
         }
-
-        d->p->breakpoints[z_index] = find_breakpoint(d->n->NM, _not_monotonic);
-        if (d->p->breakpoints[z_index] > 0)
-        // we potentially need to make adjustments to breakpoint
-        {
-            SAFEHMPDF(adjust_breakpoint(d, d->p->breakpoints+z_index))
-        }
+        
     }
 
-    d->p->created_breakpoints = 1;
+    d->p->created_monotonicity = 1;
 
     ENDFCT
 }//}}}

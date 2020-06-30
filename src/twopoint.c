@@ -487,7 +487,7 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_breakpoints_or_monotonize(d))
+    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_phi_indep(d))
     SAFEHMPDF(create_op(d))
 
