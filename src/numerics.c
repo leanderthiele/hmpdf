@@ -37,6 +37,8 @@ reset_numerics(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_numerics\n")
+
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
     if (d->n->Mgrid != NULL) { free(d->n->Mgrid); }

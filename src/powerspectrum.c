@@ -43,6 +43,8 @@ reset_powerspectrum(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_powerspectrum\n")
+
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }
     if (d->ps->Cell_2h != NULL) { free(d->ps->Cell_2h); }

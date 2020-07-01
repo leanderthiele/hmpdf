@@ -340,7 +340,7 @@ unit_conversions(hmpdf_obj *d)
 
 static int
 sanity_checks(hmpdf_obj *d)
-{
+{//{{{
     STARTFCT
 
     if ((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa))
@@ -354,7 +354,7 @@ sanity_checks(hmpdf_obj *d)
     }
 
     ENDFCT
-}
+}//}}}
 
 static int
 compute_necessary_for_all(hmpdf_obj *d)
@@ -379,11 +379,6 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     STARTFCT
 
     gsl_set_error_handler_off();
-
-    // this frees all the computed quantities,
-    // since we assume that each call of init changes some
-    // parameter (cosmological or numerical)
-    SAFEHMPDF(reset_data(d))
 
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
@@ -446,6 +441,11 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     // perform basic sanity checks
     SAFEHMPDF(sanity_checks(d))
+
+    // this frees all the computed quantities,
+    // since we assume that each call of init changes some
+    // parameter (cosmological or numerical)
+    SAFEHMPDF(reset_data(d))
 
     // compute things that we need for all output products
     SAFEHMPDF(compute_necessary_for_all(d))

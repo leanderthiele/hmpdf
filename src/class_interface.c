@@ -72,7 +72,7 @@ init_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "init_class\n")
+    HMPDFPRINT(2, "\tinit_class_interface\n")
 
     SAFEALLOC(char **, argv, malloc(3 * sizeof(char *)))
     argv[1] = d->cls->class_ini;
@@ -129,6 +129,8 @@ int
 reset_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_class_interface\n")
 
     struct nonlinear *nl;
     struct perturbs *pt;

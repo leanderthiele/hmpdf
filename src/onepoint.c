@@ -40,6 +40,8 @@ reset_onepoint(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_onepoint\n")
+
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
     if (d->op->PDFu_noisy != NULL) { free(d->op->PDFu_noisy); }

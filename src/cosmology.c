@@ -34,6 +34,8 @@ reset_cosmology(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_cosmology\n")
+
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }
     if (d->c->angular_diameter != NULL) { free(d->c->angular_diameter); }

@@ -35,6 +35,8 @@ reset_filters(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_filters\n")
+
     if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
     if (d->f->quadraticpixel_interp != NULL)

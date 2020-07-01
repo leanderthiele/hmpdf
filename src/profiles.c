@@ -53,6 +53,8 @@ int
 reset_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
+    
+    HMPDFPRINT(2, "\treset_profiles\n")
 
     if (d->p->decr_tgrid != NULL) { free(d->p->decr_tgrid); }
     if (d->p->incr_tgrid != NULL) { free(d->p->incr_tgrid); }
@@ -101,7 +103,10 @@ reset_profiles(hmpdf_obj *d)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)
         {
-            free(d->p->is_not_monotonic[z_index]);
+            if (d->p->is_not_monotonic[z_index] != NULL)
+            {
+                free(d->p->is_not_monotonic[z_index]);
+            }
         }
         free(d->p->is_not_monotonic);
     }
@@ -562,7 +567,7 @@ create_monotonicity(hmpdf_obj *d)
         HMPDFPRINT(3, "\t\tnot monotonizing\n")
     }
 
-    SAFEALLOC(, d->p->is_not_monotonic, malloc(d->n->Nz * sizeof(int)))
+    SAFEALLOC(, d->p->is_not_monotonic, malloc(d->n->Nz * sizeof(int *)))
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         SAFEALLOC(, d->p->is_not_monotonic[z_index],

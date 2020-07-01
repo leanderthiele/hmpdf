@@ -28,6 +28,8 @@ reset_noise(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_noise\n")
+
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
 
     ENDFCT

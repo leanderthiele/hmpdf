@@ -46,6 +46,8 @@ reset_covariance(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_covariance\n")
+
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
     if (d->cov->Cov_noisy != NULL) { free(d->cov->Cov_noisy); }
     if (d->cov->corr_diagn != NULL) { free(d->cov->corr_diagn); }

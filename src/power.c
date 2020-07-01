@@ -34,6 +34,8 @@ reset_power(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_power\n")
+
     if (d->pwr->ssq != NULL)
     {
         for (int M_index=0; M_index<d->n->NM; M_index++)

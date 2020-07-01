@@ -30,6 +30,8 @@ reset_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_halo_model\n")
+
     if (d->h->hmf != NULL)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)

@@ -39,6 +39,8 @@ reset_twopoint(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    HMPDFPRINT(2, "\treset_twopoint\n")
+
     if (d->tp->dtsq != NULL)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)
