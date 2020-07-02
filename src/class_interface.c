@@ -5,7 +5,7 @@
 #include <class.h>
 
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "class_interface.h"
 
 #include "hmpdf.h"
@@ -51,6 +51,12 @@ run_class(hmpdf_obj *d)
     
     HMPDFPRINT(3, "\t\tperturbs\n")
     SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
+
+    // check if user passed a correct CLASS .ini file
+    if (pt->has_pk_matter != _TRUE_)
+    {
+        HMPDFERR("You have to set output=mPk in the CLASS .ini file.")
+    }
     
     HMPDFPRINT(3, "\t\tprimordial\n")
     SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)
@@ -66,7 +72,7 @@ init_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "init_class\n")
+    HMPDFPRINT(2, "\tinit_class_interface\n")
 
     SAFEALLOC(char **, argv, malloc(3 * sizeof(char *)))
     argv[1] = d->cls->class_ini;
@@ -123,6 +129,8 @@ int
 reset_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_class_interface\n")
 
     struct nonlinear *nl;
     struct perturbs *pt;

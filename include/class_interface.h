@@ -1,7 +1,7 @@
 #ifndef CLASS_INTERFACE_H
 #define CLASS_INTERFACE_H
 
-#include "data.h"
+#include "object.h"
 
 #include "hmpdf.h"
 

@@ -8,7 +8,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "halo_model.h"
 
 int
@@ -29,6 +29,8 @@ int
 reset_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_halo_model\n")
 
     if (d->h->hmf != NULL)
     {

@@ -20,6 +20,7 @@ int example_kappa_onepoint(void)
     /* initialize with default settings */
     if (hmpdf_init(d, "example.ini", hmpdf_kappa,
                    1.0/* source redshift */,
+                   hmpdf_verbosity, 5,
                    hmpdf_end_configs/* always include! */))
         return -1;
 
@@ -76,5 +77,5 @@ int example_ell_filter_use(void)
 
 int main(void)
 {
-    return example_ell_filter_use();
+    return example_kappa_onepoint();
 }

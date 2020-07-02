@@ -33,6 +33,9 @@ typedef enum
  *  <a href="https://www.gnu.org/software/gsl/doc/html/integration.html#fixed-point-quadratures">
  *  GSL documentation</a>
  *  for details.
+ *
+ *  \attention Some of these integration modes are for infinite intervals and do not make sense
+ *             for our application.
  */
 typedef enum
 {
@@ -175,21 +178,21 @@ typedef enum
                        *   \par
                        *   Type: double. Default: None.
                        *   \remark required setting for covariance matrix calculation.
-                       *   \remark negative values have no effect (and will not trigger a warning).
+                       *   \remark negative values have no effect (but will not trigger a warning).
                        *   \warning PDFs computed with more than 5 arcmin in this setting should be treated
                        *            with caution.
                        */
     hmpdf_tophat_radius, /*!< includes the effect of smoothing the map with a tophat of given radius (in arcmin).
                           *   \par
                           *   Type: double. Default: None.
-                          *   \remark negative values have no effect (and will not trigger a warning).
+                          *   \remark negative values have no effect (but will not trigger a warning).
                           *   \warning PDFs computed with more than 5 arcmin in this setting should be treated
                           *            with caution.
                           */
     hmpdf_gaussian_fwhm, /*!< includes the effect of smoothing the map with a Gaussian of given FWHM (in arcmin).
                           *   \par
                           *   Type: double. Default: None.
-                          *   \remark negative values have no effect (and will not trigger a warning).
+                          *   \remark negative values have no effect (but will not trigger a warning).
                           *   \warning PDFs computed with more than 5 arcmin in this setting should be treated
                           *            with caution.
                           */
@@ -311,7 +314,7 @@ typedef enum
     hmpdf_noise, /*!< Option to add pixel-wise Gaussian noise of this standard deviation.
                   *   \par
                   *   Type: double. Default: None.
-                  *   \remark negative values have no effect (and will not trigger a warning).
+                  *   \remark negative values have no effect (but will not trigger a warning).
                   */
     hmpdf_end_configs, /*!< \attention Required last argument in hmpdf_init(). */
     // keep this last

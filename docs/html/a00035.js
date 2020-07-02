@@ -1,4 +1,4 @@
 var a00035 =
 [
-    [ "hmpdf_init", "a00035.html#a50e240808803a05cbcc912177ebb7087", null ]
+    [ "hmpdf_get_op", "a00035.html#a48d704eb071f26ec88a6864175fee4e5", null ]
 ];

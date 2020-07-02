@@ -7,7 +7,7 @@
 #include <gsl/gsl_math.h>
 
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "class_interface.h"
 #include "cosmology.h"
 
@@ -33,6 +33,8 @@ int
 reset_cosmology(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_cosmology\n")
 
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }

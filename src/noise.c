@@ -7,7 +7,7 @@
 #include <gsl/gsl_cblas.h>
 
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "numerics.h"
 #include "noise.h"
 
@@ -27,6 +27,8 @@ int
 reset_noise(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_noise\n")
 
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
 

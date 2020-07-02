@@ -61,12 +61,12 @@ class _D(object) : # double pointer from numpy array
         self.l = l
     def __call__(self, arr) :
         if not len(arr.shape) == 1 :
-            raise TypeError('Expected numpy array to be 1-dimensional, \
-                             but has dimension %d'%len(arr.shape))
+            raise TypeError('Expected numpy array to be 1-dimensional, '\
+                            'but has dimension %d'%len(arr.shape))
         if self.l is not None :
             if not arr.shape[0] == self.l :
-                raise TypeError('Expected numpy array to have length %d, \
-                                 but has length %d'%(self.l, arr.shape[1]))
+                raise TypeError('Expected numpy array to have length %d, '\
+                                'but has length %d'%(self.l, arr.shape[1]))
         return c_void_p(np.ascontiguousarray(arr).ctypes.data)
 #}}}
 
@@ -186,6 +186,15 @@ class HMPDF(object) :
                            ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
                            ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
                            c_int, ]
+    __get_Nphi = __libhmpdf._get_Nphi
+    __get_Nphi.restype = c_int
+    __get_Nphi.argtypes = [c_void_p, POINTER(c_int), ]
+    __get_cov_diagnostics = __libhmpdf.hmpdf_get_cov_diagnostics1
+    __get_cov_diagnostics.restype = c_int
+    __get_cov_diagnostics.argtypes = [c_void_p,
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(c_double, flags='C_CONTIGUOUS', ndim=1), ]
     __errmsg = '%s completed with non-zero exit code'
     #}}}
     def __ret(self, err, callname, *args) :
@@ -205,58 +214,28 @@ class HMPDF(object) :
     #}}}
     
     ## calls hmpdf_new().
-    def __init__(self) :
+    #
+    #  \param catch_errors      If set to false, the python code does not perform error
+    #                           checking and outputs the error code as the first entry
+    #                           in any output tuple.
+    #                           Default is True, i.e. the python code will raise errors
+    #                           upon encountering a non-zero error code.
+    def __init__(self, catch_errors=True) :
     #{{{
+        self.catch_errors = catch_errors
         self.d = HMPDF.__new()
         if not self.d :
             raise MemoryError('Could not allocate hmpdf_obj.')
     #}}}
-    
-    ## Initializes the object [calls hmpdf_init()].
-    #
-    #  \param class_ini     string, the CLASS .ini file
-    #  \param stype         string, the signal type (either "kappa" or "tsz")
-    #  \param *args         used if stype="kappa" to pass the source redshift
-    #  \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
-    #                       \note there is one additional setting, "catch_errors".
-    #                             If set to false, the python code does not perform error
-    #                             checking and outputs the error code as the first entry
-    #                             in any output tuple.
-    #                             Default is True, i.e. the python code will raise errors
-    #                             upon encountering a non-zero error code.
-    #  \return the error code if catch_errors=True, else None
-    def init(self, class_ini, stype, *args, **kwargs) :
-    #{{{
-        if stype == 'kappa' :
-            if len(args) != 1 :
-                raise SyntaxError('*args not of appropriate length for stype=kappa, '\
-                                  'you need to pass source redshift.')
-        elif stype == 'tsz' :
-            if len(args) != 0 :
-                raise SyntaxError('*args is not empty, which it should be for stype=tsz')
-        else :  
-            raise NotImplementedError('Unknown stype.')
-        self.catch_errors = True
-        self.c = _Configs()
-        # add kwargs to configs
-        for k,v in kwargs.items() :
-            if k == 'catch_errors' :
-                self.catch_errors = v
-            else :
-                self.c.append(k,v)
-        arglist = self.c()
-        if stype == 'kappa' :
-            arglist.insert(0, c_double(args[0]))
-        err = HMPDF.__init(self.d, _C()(class_ini),
-                           _E(_stypes)(stype), *arglist)
-        return self.__ret(err, 'init()')
-    #}}}
 
     ## calls hmpdf_delete()
-    def _delete(self) :
+    #
+    #  \param  none
+    def __del__(self) :
     #{{{
         err = HMPDF.__delete(self.d)
-        return self.__ret(err, 'delete()')
+        if err :
+            raise RuntimeError('delete failed.')
     #}}}
 
     ## returns object
@@ -268,7 +247,35 @@ class HMPDF(object) :
     ## calls hmpdf_delete()
     def __exit__(self, exc_type, exc_value, exc_traceback) :
     #{{{
-        self._delete()
+        del self
+    #}}}
+
+    ## Initializes the object [calls hmpdf_init()].
+    #
+    #  \param class_ini     string, the CLASS .ini file
+    #  \param stype         string, the signal type (either "kappa" or "tsz")
+    #  \param zsource       the source redshift. Use only if stype="kappa"
+    #  \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
+    def init(self, class_ini, stype, zsource=None, **kwargs) :
+    #{{{
+        if stype == 'kappa' :
+            if zsource is None :
+                raise SyntaxError('you need to pass source redshift for stype=kappa.')
+        elif stype == 'tsz' :
+            if zsource is not None :
+                raise SyntaxError('zsource should not be passed for stype=tsz.')
+        else :  
+            raise NotImplementedError('Unknown stype.')
+        self.__c = _Configs()
+        # add kwargs to configs
+        for k,v in kwargs.items() :
+            self.__c.append(k,v)
+        arglist = self.__c()
+        if stype == 'kappa' :
+            arglist.insert(0, c_double(zsource))
+        err = HMPDF.__init(self.d, _C()(class_ini),
+                           _E(_stypes)(stype), *arglist)
+        return self.__ret(err, 'init()')
     #}}}
 
     ## Get the one-point PDF [calls hmpdf_get_op()]
@@ -309,6 +316,7 @@ class HMPDF(object) :
     #  \param binedges      a 1d numpy array
     #  \param **kwargs      to pass optional arguments:
     #                           + noisy: default False
+    #  \return the binned covariance matrix (2d numpy array)
     def get_cov(self, binedges, **kwargs) :
     #{{{
         noisy = kwargs['noisy'] if 'noisy' in kwargs else False
@@ -324,6 +332,7 @@ class HMPDF(object) :
     #  \param ell           a 1d numpy array
     #  \param **kwargs      to pass optional arguments
     #                           + mode: default total
+    #  \return the power spectrum at ell (1d numpy array)
     def get_Cell(self, ell, **kwargs) :
     #{{{
         mode = kwargs['mode'] if 'mode' in kwargs else 'total'
@@ -338,6 +347,7 @@ class HMPDF(object) :
     #  \param phi           a 1d numpy array
     #  \param **kwargs      to pass optional arguments
     #                           + mode: default total
+    #  \return the correlation function at phi (1d numpy array)
     def get_Cphi(self, phi, **kwargs) :
     #{{{
         mode = kwargs['mode'] if 'mode' in kwargs else 'total'
@@ -345,5 +355,23 @@ class HMPDF(object) :
         err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
                                _E(_corr_types)(mode))
         return self.__ret(err, 'get_Cphi()', out)
+    #}}}
+
+    ## Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
+    #
+    #  \return (phi, phiweights, corr_diagn)
+    def get_cov_diagnostics(self) :
+    #{{{
+        Nphi = c_int(0)
+        err = HMPDF.__get_Nphi(self.d, byref(Nphi))
+        if err :
+            return self.__ret(err, 'get_cov_diagnostics()',
+                              None, None, None)
+        phi = np.empty(Nphi)
+        phiweights = np.empty(Nphi)
+        corr_diagn = np.empty(Nphi)
+        err = HMPDF.__get_cov_diagnostics(self.d, phi, phiweights, corr_diagn)
+        return self.__ret(err, 'get_cov_diagnostics',
+                          phi, phiweights, corr_diagn)
     #}}}
 #}}}

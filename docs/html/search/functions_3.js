@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['init_120',['init',['../a00055.html#a368155a9f5dbf3bc7fd94808ef1d09e2',1,'hmpdf::HMPDF']]]
+  ['init_124',['init',['../a00052.html#adb5e935d4db82659c8f35a4024c34e94',1,'hmpdf::HMPDF']]]
 ];

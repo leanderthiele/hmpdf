@@ -4,7 +4,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "class_interface.h"
 #include "cosmology.h"
 #include "numerics.h"
@@ -339,6 +339,24 @@ unit_conversions(hmpdf_obj *d)
 }//}}}
 
 static int
+sanity_checks(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if ((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa))
+    {
+        HMPDFERR("Invalid signal type %d.", d->p->stype)
+    }
+
+    if ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0))
+    {
+        HMPDFERR("Invalid source redshift %g.", d->n->zsource);
+    }
+
+    ENDFCT
+}//}}}
+
+static int
 compute_necessary_for_all(hmpdf_obj *d)
 {//{{{
     STARTFCT
@@ -362,17 +380,8 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     gsl_set_error_handler_off();
 
-    // this frees all the computed quantities,
-    // since we assume that each call of init changes some
-    // parameter (cosmological or numerical)
-    SAFEHMPDF(reset_data(d))
-
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
-    if ((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa))
-    {
-        HMPDFERR("Invalid signal type %d.", d->p->stype)
-    }
 
     va_list valist;
     va_start(valist, stype);
@@ -380,10 +389,6 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     if (d->p->stype == hmpdf_kappa)
     {
         d->n->zsource = va_arg(valist, double);
-    }
-    if ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0))
-    {
-        HMPDFERR("Invalid source redshift %g.", d->n->zsource);
     }
 
     SAFEALLOC(param *, p, malloc((int)(hmpdf_end_configs) * sizeof(param)))
@@ -433,6 +438,14 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     // do necessary conversions
     SAFEHMPDF(unit_conversions(d))
+
+    // perform basic sanity checks
+    SAFEHMPDF(sanity_checks(d))
+
+    // this frees all the computed quantities,
+    // since we assume that each call of init changes some
+    // parameter (cosmological or numerical)
+    SAFEHMPDF(reset_data(d))
 
     // compute things that we need for all output products
     SAFEHMPDF(compute_necessary_for_all(d))

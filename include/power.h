@@ -15,6 +15,7 @@ typedef struct//{{{
     double autocorr;
 
     int created_corr;
+    double corr_rmax;
     gsl_spline *corr_interp;
     int Ncorr_accel;
     gsl_interp_accel **corr_accel;

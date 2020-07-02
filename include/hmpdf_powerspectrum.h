@@ -12,11 +12,11 @@ typedef enum
 
 /*! Returns the angular power spectrum.
  *
- *  \param d        hmpdf_init() must have been called on d
- *  \param Nell     number of ell-values the power spectrum is to be output at
- *  \param ell      array of length Nell
- *  \param Cell     output array, at least Nell long
- *  \param mode     one of #hmpdf_Cell_mode_e
+ *  \param[in,out] d    hmpdf_init() must have been called on d
+ *  \param[in] Nell     number of ell-values the power spectrum is to be output at
+ *  \param[in] ell      array of length Nell
+ *  \param[out] Cell    output array, at least Nell long
+ *  \param[in] mode     one of #hmpdf_Cell_mode_e
  *  \return error code
  */
 int hmpdf_get_Cell(hmpdf_obj *d,
@@ -27,11 +27,11 @@ int hmpdf_get_Cell(hmpdf_obj *d,
 
 /*! Returns the angular correlation function.
  *
- *  \param d        hmpdf_init() must have been called on d
- *  \param Nphi     number of phi-values the correlation function is to be output at
- *  \param phi      array of length Nphi
- *  \param Cphi     output array, at least Nphi long
- *  \param mode     one of #hmpdf_Cell_mode_e
+ *  \param[in,out] d    hmpdf_init() must have been called on d
+ *  \param[in] Nphi     number of phi-values the correlation function is to be output at
+ *  \param[in] phi      array of length Nphi (in radians)
+ *  \param[out] Cphi    output array, at least Nphi long
+ *  \param[in] mode     one of #hmpdf_Cell_mode_e
  *  \return error code
  */
 int hmpdf_get_Cphi(hmpdf_obj *d,

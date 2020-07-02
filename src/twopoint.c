@@ -9,7 +9,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "power.h"
 #include "profiles.h"
 #include "onepoint.h"
@@ -38,6 +38,8 @@ int
 reset_twopoint(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_twopoint\n")
 
     if (d->tp->dtsq != NULL)
     {
@@ -487,7 +489,7 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_breakpoints_or_monotonize(d))
+    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_phi_indep(d))
     SAFEHMPDF(create_op(d))
 
@@ -523,7 +525,7 @@ prepare_tp(hmpdf_obj *d, double phi)
 }//}}}
 
 int
-hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double out[Nbins*Nbins], int noisy)
+hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins*Nbins], int noisy)
 {//{{{
     STARTFCT
 
@@ -559,7 +561,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
-                     TPINTEGR_N, Nbins, _binedges, out, TPINTERP_TYPE))
+                     TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
 
     ENDFCT
 }//}}}

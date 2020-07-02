@@ -9,7 +9,7 @@
 
 #include "utils.h"
 #include "configs.h"
-#include "data.h"
+#include "object.h"
 #include "numerics.h"
 #include "cosmology.h"
 #include "power.h"
@@ -42,6 +42,8 @@ int
 reset_powerspectrum(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_powerspectrum\n")
 
     if (d->ps->ell != NULL) { free(d->ps->ell); }
     if (d->ps->Cell_1h != NULL) { free(d->ps->Cell_1h); }

@@ -1,5 +1,5 @@
-#ifndef DATA_H
-#define DATA_H
+#ifndef OBJECT_H
+#define OBJECT_H
 
 #include "utils.h"
 #include "numerics.h"

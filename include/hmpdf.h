@@ -5,7 +5,7 @@
 #ifndef HMPDF_H
 #define HMPDF_H
 
-/*! \mainpage hmpdf Documentation
+/*! \mainpage Overview
  *
  *  \section intro Introduction
  *  
@@ -56,8 +56,8 @@
  *      2. set all options (required and optional) with hmpdf_init(),
  *         this will also compute the data needed for all outputs.
  *         See #hmpdf_configs_e for optional inputs.
- *      3. get your output (#hmpdf_get_op, #hmpdf_get_tp, #hmpdf_get_cov,
- *                          #hmpdf_get_Cell, #hmpdf_get_Cphi).
+ *      3. get your output [hmpdf_get_op(), hmpdf_get_tp(), hmpdf_get_cov(),
+ *                          hmpdf_get_Cell(), hmpdf_get_Cphi()].
  *      4. go to (3.) if you require any other outputs;
  *         go to (2.) if you want to re-run the code with different options.
  *      5. free the memory associated with the #hmpdf_obj with hmpdf_delete().
@@ -137,7 +137,7 @@
  *  \snippet example.py example_ell_filter_use
  */
 
-#include "hmpdf_data.h"
+#include "hmpdf_object.h"
 #include "hmpdf_configs.h"
 #include "hmpdf_init.h"
 #include "hmpdf_onepoint.h"

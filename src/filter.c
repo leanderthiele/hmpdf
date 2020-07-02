@@ -11,7 +11,7 @@
 
 #include "configs.h"
 #include "utils.h"
-#include "data.h"
+#include "object.h"
 #include "filter.h"
 
 int
@@ -34,6 +34,8 @@ int
 reset_filters(hmpdf_obj *d)
 {//{{{
     STARTFCT
+
+    HMPDFPRINT(2, "\treset_filters\n")
 
     if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
