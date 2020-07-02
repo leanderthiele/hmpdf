@@ -93,7 +93,8 @@ not_inv_integral(hmpdf_obj *d, double *s, int lambda_index, complex *out)
     for (int ii=0; ii<d->p->prtilde_Ntheta; ii++)
     {
         integr[ii] = d->p->prtilde_thetagrid[ii]
-                     * cexp(- _Complex_I * s[ii] * d->n->lambdagrid[lambda_index]);
+                     * cexp(- _Complex_I * s[ii]
+                            * d->n->lambdagrid[lambda_index]);
     }
     // perform the integration
     *out = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1),
@@ -341,7 +342,7 @@ prepare_op(hmpdf_obj *d)
     {
         SAFEHMPDF(create_noisy_op(d))
     }
-    
+
     ENDFCT
 }//}}}
 

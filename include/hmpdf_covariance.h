@@ -2,6 +2,8 @@
 #ifndef HMPDF_COVARIANCE_H
 #define HMPDF_COVARIANCE_H
 
+#include "hmpdf_object.h"
+
 /*! Returns the covariance matrix of the one-point PDF.
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d

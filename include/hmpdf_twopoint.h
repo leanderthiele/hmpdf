@@ -2,6 +2,8 @@
 #ifndef HMPDF_TWOPOINT_H
 #define HMPDF_TWOPOINT_H
 
+#include "hmpdf_object.h"
+
 /*! Returns the two-point PDF.
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d

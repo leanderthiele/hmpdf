@@ -65,8 +65,6 @@ reset_filters(hmpdf_obj *d)
 
     ENDFCT
 }//}}}
-    
-char filter_pdf_ps[][256] = {"pdf", "ps"};
 
 static double
 sinc(double x)

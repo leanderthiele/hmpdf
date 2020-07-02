@@ -44,7 +44,7 @@
 
 #define INTEGR_MINSAMPLES 5
 
-#define PRTILDE_INTEGR_NTHETA 257
+#define PRTILDE_INTEGR_NTHETA 513
 
 #define OPINTERP_TYPE interp_cspline
 #define TPINTERP_TYPE interp2d_bilinear

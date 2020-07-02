@@ -154,8 +154,11 @@ create_grids(hmpdf_obj *d)
     }
 
     SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
-    linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
+    linspace(d->n->Nsignal, 0.0, d->n->signalmax - d->n->signalmin,
              d->n->signalgrid);
+    SAFEALLOC(, d->n->user_signalgrid, malloc(d->n->Nsignal * sizeof(double)))
+    linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
+             d->n->user_signalgrid);
 
     SAFEALLOC(, d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)))
     linspace(d->n->Nsignal/2+1,

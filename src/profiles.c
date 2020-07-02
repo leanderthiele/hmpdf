@@ -577,6 +577,7 @@ create_monotonicity(hmpdf_obj *d)
         {
             int _problems[d->p->Ntheta+1];
             d->p->is_not_monotonic[z_index][M_index]
+            // FIXME
                 = not_monotonic(d->p->Ntheta+1,
                                 d->p->profiles[z_index][M_index]+1,
                                 _problems);

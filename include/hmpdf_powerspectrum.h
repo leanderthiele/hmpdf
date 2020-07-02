@@ -2,6 +2,8 @@
 #ifndef HMPDF_POWERSPECTRUM_H
 #define HMPDF_POWERSPECTRUM_H
 
+#include "hmpdf_object.h"
+
 /*! Power spectrum/correlation function output modes. */
 typedef enum
 {

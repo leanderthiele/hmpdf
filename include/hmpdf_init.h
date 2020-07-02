@@ -2,6 +2,9 @@
 #ifndef HMPDF_INIT_H
 #define HMPDF_INIT_H
 
+#include "hmpdf_object.h"
+#include "hmpdf_configs.h"
+
 /*! Initializes the #hmpdf_obj and computes data that is needed for all outputs.
  *
  *  \param[in,out] d        created with hmpdf_new()
