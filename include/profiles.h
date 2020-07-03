@@ -22,7 +22,7 @@ typedef struct//{{{
     double *decr_tsqgrid;
     double *reci_tgrid; // reciprocal space grid
 
-    gsl_interp_accel *incr_tgrid_accel;
+    gsl_interp_accel **incr_tgrid_accel;
     gsl_interp_accel *reci_tgrid_accel;
 
     double ***profiles; // each profile has as zero entry theta out and then the profile

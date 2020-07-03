@@ -360,6 +360,37 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 }//}}}
 
 int
+roll_tp(int N, double *xorig, double *xnew, double *yorig, double *ynew)
+{//{{{
+    STARTFCT
+
+    // interpolate
+    interp2d *interp;
+    SAFEHMPDF(new_interp2d(N, xorig, yorig, 0.0, 0.0, ROLLTP_INTERP, NULL, &interp))
+    // roll the array
+    for (int ii=0; ii<N; ii++)
+    {
+        double x1 = xnew[ii];
+        if (x1 < 0.0)
+        {
+            x1 += xorig[N-1];
+        }
+        for (int jj=0; jj<N; jj++)
+        {
+            double x2 = xnew[ii];
+            if (x2 < 0.0)
+            {
+                x2 += xorig[N-1];
+            }
+            SAFEHMPDF(interp2d_eval(interp, x1, x2, ynew+ii*N+jj))
+        }
+    }
+    delete_interp2d(interp);
+
+    ENDFCT
+}//}}}
+
+int
 create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // computes one 2pt PDF
 {//{{{
@@ -509,12 +540,18 @@ prepare_tp(hmpdf_obj *d, double phi)
     {
         SAFEALLOC(, d->tp->pdf, malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double)))
     }
+    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal
+                                     * sizeof(double)))
     for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        memcpy(d->tp->pdf+ii*d->n->Nsignal,
+        memcpy(temp+ii*d->n->Nsignal,
                d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
                d->n->Nsignal * sizeof(double));
     }
+    // roll the pdf
+    SAFEHMPDF(roll_tp(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
+                      temp, d->tp->pdf))
+    free(temp);
 
     if (d->ns->noise > 0.0)
     {
@@ -559,7 +596,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
 
     HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->user_signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
                      TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
 

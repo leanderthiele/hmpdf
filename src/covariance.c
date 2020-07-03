@@ -484,6 +484,14 @@ create_cov(hmpdf_obj *d)
         }
     }
 
+    // roll the covariance matrix
+    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal
+                                     * sizeof(double)))
+    memcpy(temp, d->cov->Cov, d->n->Nsignal * d->n->Nsignal * sizeof(double));
+    SAFEHMPDF(roll_tp(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
+                      temp, d->cov->Cov))
+    free(temp);
+
     d->cov->created_cov = 1;
 
     ENDFCT

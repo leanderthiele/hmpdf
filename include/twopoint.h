@@ -46,6 +46,7 @@ int new_tp_ws(int N, twopoint_workspace **out);
 
 int null_twopoint(hmpdf_obj *d);
 int reset_twopoint(hmpdf_obj *d);
+int roll_tp(int N, double *xorig, double *xnew, double *yorig, double *ynew);
 int create_phi_indep(hmpdf_obj *d);
 int create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws);
 int hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins*Nbins], int noisy);

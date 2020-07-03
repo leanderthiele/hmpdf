@@ -9,6 +9,7 @@
 #endif
 
 #include <gsl/gsl_math.h>
+#include <gsl/gsl_integration.h>
 
 #include "utils.h"
 #include "configs.h"
@@ -26,9 +27,12 @@ null_onepoint(hmpdf_obj *d)
     STARTFCT
 
     d->op->created_op = 0;
+    d->op->created_rolled_op = 0;
     d->op->created_noisy_op = 0;
     d->op->PDFu = NULL;
     d->op->PDFc = NULL;
+    d->op->PDFu_rolled = NULL;
+    d->op->PDFc_rolled = NULL;
     d->op->PDFu_noisy = NULL;
     d->op->PDFc_noisy = NULL;
 
@@ -44,6 +48,8 @@ reset_onepoint(hmpdf_obj *d)
 
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
+    if (d->op->PDFu_rolled != NULL) { free(d->op->PDFu_rolled); }
+    if (d->op->PDFc_rolled != NULL) { free(d->op->PDFc_rolled); }
     if (d->op->PDFu_noisy != NULL) { free(d->op->PDFu_noisy); }
     if (d->op->PDFc_noisy != NULL) { free(d->op->PDFc_noisy); }
 
@@ -82,24 +88,46 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
     ENDFCT
 }//}}}
 
+typedef struct
+{//{{{
+    double (*f)(double);
+    double lambda;
+    interp1d *s;
+    int *hmpdf_status;
+    gsl_integration_workspace *ws;
+}//}}}
+not_inv_integrand_s;
+
+static double
+not_inv_integrand(double t, void *params)
+{//{{{
+    not_inv_integrand_s *p = (not_inv_integrand_s *)params;
+    double s;
+    *(p->hmpdf_status) = interp1d_eval(p->s, t, &s);
+    return t * p->f(s * p->lambda);
+}//}}}
+
 static int
-not_inv_integral(hmpdf_obj *d, double *s, int lambda_index, complex *out)
+not_inv_integral(hmpdf_obj *d, not_inv_integrand_s *params, int lambda_index, complex *out)
 // TODO can potentially speed this up a bit
 {//{{{
     STARTFCT
 
-    SAFEALLOC(complex *, integr, malloc(d->p->prtilde_Ntheta * sizeof(complex)))
-    // fill the integrand
-    for (int ii=0; ii<d->p->prtilde_Ntheta; ii++)
+    gsl_function f;
+    f.function = not_inv_integrand;
+    f.params = params;
+    params->lambda = d->n->lambdagrid[lambda_index];
+    params->hmpdf_status = &hmpdf_status;
+    double integrals[2];
+    double err;
+    size_t neval;
+    for (int ii=0; ii<2; ii++)
     {
-        integr[ii] = d->p->prtilde_thetagrid[ii]
-                     * cexp(- _Complex_I * s[ii]
-                            * d->n->lambdagrid[lambda_index]);
+        params->f = (ii==0) ? &cos : &sin;
+//        SAFEGSL(gsl_integration_qng(&f, 0.0, 1.0, 1e-6, 1e-2, integrals+ii, &err, &neval))
+        SAFEGSL(gsl_integration_qag(&f, 0.0, 1.0, 1e-6, 1e-2, 1000, 1, params->ws, integrals+ii, &err))
     }
-    // perform the integration
-    *out = integr_comp(d->p->prtilde_Ntheta, 1.0/(double)(d->p->prtilde_Ntheta-1),
-                       1, integr);
-    free(integr);
+    *out = integrals[0] - _Complex_I * integrals[1];
 
     ENDFCT
 }//}}}
@@ -109,24 +137,66 @@ lambda_loop(hmpdf_obj *d, int z_index, int M_index, complex *out)
 {//{{{
     STARTFCT
 
-    SAFEALLOC(double *, s, malloc(d->p->prtilde_Ntheta * sizeof(double)))
-    // evaluate the interpolated signal profile
-    SAFEHMPDF(s_of_t(d, z_index, M_index, d->p->prtilde_Ntheta,
-                     d->p->prtilde_thetagrid, s))
+    fprintf(stdout, "%d\t%d\n", z_index, M_index);
+    fflush(stdout);
+
+    // reverse the signal profile
+    SAFEALLOC(double *, temp, malloc((d->p->Ntheta+1) * sizeof(double)))
+    reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
+    SAFEALLOC(not_inv_integrand_s *, params,
+              malloc(d->Ncores * sizeof(not_inv_integrand_s)))
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
+                               PRINTERP_TYPE, d->p->incr_tgrid_accel[ii], &(params[ii].s)))
+        SAFEALLOC(, params[ii].ws, gsl_integration_workspace_alloc(1000))
+    }
 
     // loop over lambda values
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #pragma omp parallel for num_threads(1) /*FIXME*/ schedule(dynamic)
     #endif
     for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
+        if (temp[0] * d->n->lambdagrid[ii] > 1e1) { continue; }
         if (hmpdf_status) { continue; }
-        SAFEHMPDF_NORETURN(not_inv_integral(d, s, ii, out+ii))
-        if (hmpdf_status) { continue; }
+        SAFEHMPDF_NORETURN(not_inv_integral(d, params+this_core(), ii, out+ii))
+        // FIXME
+        if (temp[0] * d->n->lambdagrid[ii] > 8e0)
+        {
+            printf("%.8e\n", temp[0] * d->n->lambdagrid[ii]);
+            int N = 10000;
+            double *tgrid = malloc(N * sizeof(double));
+            double *y = malloc(N * sizeof(double));
+            double *s = malloc(N * sizeof(double));
+            linspace(N, 0.0, 1.0, tgrid);
+            double maxy = 0.0;
+            for (int jj=0; jj<N; jj++)
+            {
+                y[jj] = not_inv_integrand(tgrid[jj], params+this_core());
+                interp1d_eval(params[this_core()].s, tgrid[jj], s+jj);
+                s[jj] /= temp[0];
+                maxy = GSL_MAX(maxy, y[jj]);
+            }
+            for (int jj=0; jj<N; jj++)
+            {
+                y[jj] /= maxy;
+            }
+            gnuplot *gp = plot(NULL, N, tgrid, y);
+            plot(gp, N, tgrid, s);
+            
+            show(gp);
+        }
         out[ii] *= 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
     }
 
-    free(s);
+    free(temp);
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        delete_interp1d(params[ii].s);
+        gsl_integration_workspace_free(params[ii].ws);
+    }
+    free(params);
 
     ENDFCT
 }//}}}
@@ -229,7 +299,7 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
 }//}}}
 
 static int
-_mean(int N, double *x, double *p, double *out)
+_mean(int N, const double *const x, const double *const p, double *out)
 {//{{{
     STARTFCT
 
@@ -258,6 +328,30 @@ get_mean_signal(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
+static int
+roll_op(int N, double *xorig, double *xnew, double *yorig, double *ynew)
+// assumes that min(xorig) = 0.0
+{//{{{
+    STARTFCT
+    // interpolate the y-vector
+    interp1d *interp;
+    SAFEHMPDF(new_interp1d(N, xorig, yorig, 0.0, 0.0, ROLLOP_INTERP, NULL, &interp))
+    // roll the array
+    for (int ii=0; ii<N; ii++)
+    {
+        double x = xnew[ii];
+        if (x < 0.0)
+        {
+            x += xorig[N-1];
+        }
+        SAFEHMPDF(interp1d_eval(interp, x, ynew+ii))
+    }
+    // destroy the interpolator
+    delete_interp1d(interp);
+
+    ENDFCT
+}//}}}
+
 int
 create_noisy_op(hmpdf_obj *d)
 // convolves the original PDF with a Gaussian kernel of width sigma = noise
@@ -268,7 +362,7 @@ create_noisy_op(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_noisy_op\n")
 
-    double *in[] = {d->op->PDFu, d->op->PDFc};
+    double *in[] = {d->op->PDFu_rolled, d->op->PDFc_rolled};
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
     for (int ii=0; ii<2; ii++)
     {
@@ -314,10 +408,30 @@ create_op(hmpdf_obj *d)
     fftw_destroy_plan(plan_u);
     fftw_destroy_plan(plan_c);
 
-    // compute the mean of the distributions if needed later
+    // compute the mean of the distributions
     SAFEHMPDF(get_mean_signal(d))
 
     d->op->created_op = 1;
+
+    ENDFCT
+}//}}}
+
+int
+create_rolled_op(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if (d->op->created_rolled_op) { return hmpdf_status; }
+
+    HMPDFPRINT(2, "\tcreate_rolled_op\n")
+
+    SAFEALLOC(, d->op->PDFu_rolled, malloc(d->n->Nsignal * sizeof(double)))
+    SAFEALLOC(, d->op->PDFc_rolled, malloc(d->n->Nsignal * sizeof(double)))
+
+    SAFEHMPDF(roll_op(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
+                      d->op->PDFu, d->op->PDFu_rolled))
+    SAFEHMPDF(roll_op(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
+                      d->op->PDFc, d->op->PDFc_rolled))
 
     ENDFCT
 }//}}}
@@ -337,6 +451,7 @@ prepare_op(hmpdf_obj *d)
     }
     SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_op(d))
+    SAFEHMPDF(create_rolled_op(d))
     if (d->ns->noise > 0.0)
     // include gaussian noise
     {
@@ -374,9 +489,9 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
     }
 
     SAFEHMPDF(bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
-                     (noisy) ?  ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
-                     : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
+                     (noisy) ? d->n->signalgrid_noisy : d->n->user_signalgrid,
+                     (noisy) ? ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
+                     : ((incl_2h) ? d->op->PDFc_rolled : d->op->PDFu_rolled),
                      Nbins, _binedges, op, OPINTERP_TYPE))
 
     ENDFCT

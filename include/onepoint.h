@@ -9,6 +9,10 @@ typedef struct
     double *PDFu;
     double *PDFc;
 
+    int created_rolled_op;
+    double *PDFu_rolled;
+    double *PDFc_rolled;
+
     int created_noisy_op;
     double *PDFu_noisy;
     double *PDFc_noisy;

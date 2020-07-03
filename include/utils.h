@@ -204,7 +204,8 @@ typedef enum//{{{
 }//}}}
 interp_mode;
 typedef struct interp1d_s interp1d;
-int new_interp1d(int N, double *x, double *y, double ylo, double yhi,
+int new_interp1d(int N, double *x, double *y,
+                 double ylo, double yhi,
                  interp_mode m, gsl_interp_accel *a, interp1d **out);
 void delete_interp1d(interp1d *interp);
 int interp1d_eval(interp1d *interp, double x, double *out);

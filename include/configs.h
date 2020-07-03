@@ -73,6 +73,9 @@
 #define PS_COVINTEGR_N 100
 
 #define COV_STATUS_PERIOD 100
+
+#define ROLLOP_INTERP interp_cspline
+#define ROLLTP_INTERP interp2d_bilinear
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; char *class_pre;

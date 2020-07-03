@@ -61,7 +61,17 @@ reset_profiles(hmpdf_obj *d)
     if (d->p->decr_tsqgrid != NULL) { free(d->p->decr_tsqgrid); }
     if (d->p->reci_tgrid != NULL) { free(d->p->reci_tgrid); }
     if (d->p->prtilde_thetagrid != NULL) { free(d->p->prtilde_thetagrid); }
-    if (d->p->incr_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->incr_tgrid_accel); }
+    if (d->p->incr_tgrid_accel != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->p->incr_tgrid_accel[ii] != NULL)
+            {
+                gsl_interp_accel_free(d->p->incr_tgrid_accel[ii]);
+            }
+        }
+        free(d->p->incr_tgrid_accel);
+    }
     if (d->p->reci_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->reci_tgrid_accel); }
     if (d->p->profiles != NULL)
     {
@@ -151,7 +161,12 @@ create_angle_grids(hmpdf_obj *d)
     d->p->incr_tgrid[0] = 0.0;
 
     linspace(d->p->prtilde_Ntheta, 0.0, 1.0, d->p->prtilde_thetagrid);
-    SAFEALLOC(, d->p->incr_tgrid_accel, gsl_interp_accel_alloc())
+    SAFEALLOC(, d->p->incr_tgrid_accel,
+              malloc(d->Ncores * sizeof(gsl_interp_accel *)))
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        SAFEALLOC(, d->p->incr_tgrid_accel[ii], gsl_interp_accel_alloc())
+    }
     SAFEALLOC(, d->p->reci_tgrid_accel, gsl_interp_accel_alloc())
 
     ENDFCT
@@ -623,7 +638,7 @@ s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
     reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
     interp1d *interp;
     SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
-                           PRINTERP_TYPE, d->p->incr_tgrid_accel, &interp))
+                           PRINTERP_TYPE, d->p->incr_tgrid_accel[this_core()], &interp))
 
     for (int ii=0; ii<Nt; ii++)
     {
