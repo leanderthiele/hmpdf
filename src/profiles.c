@@ -829,7 +829,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index,
     {
         *filled = 1;
     }
-    
+
     double *temp;
     if (sgn == 1)
     {
@@ -844,6 +844,11 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index,
     interp1d *interp;
     double *ordinate;
     SAFEHMPDF(choose_ordinate(d, end, start, mode, sgn, &ordinate))
+
+    // FIXME
+    // check if we have exactly zero slope anywhere
+    //    (this is not found by the segments)
+
     SAFEHMPDF(new_interp1d(len, temp, ordinate,
                            0.0, 0.0, PRINTERP_TYPE, NULL, &interp))
     for (int ii=0; ii<d->n->Nsignal; ii++)

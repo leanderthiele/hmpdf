@@ -285,13 +285,14 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
     {
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
+
         for (int segment1=0;
              segment1<d->p->segment_boundaries[z_index][M_index][0];
              segment1++)
         {
             if (!(d->tp->filled[z_index][M_index][segment1])) { continue; }
             for (int segment2=0;
-                 segment2<=segment1;
+                 segment2<d->p->segment_boundaries[z_index][M_index][0];
                  segment2++)
             {
                 if (!(d->tp->filled[z_index][M_index][segment1])) { continue; }
@@ -304,7 +305,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
                 // loop over the direction that is Nsignal long
                 {
                     double t1 = d->tp->t[z_index][M_index][segment1][ii]; // t1 is monotonically decreasing with ii
-                    // check if no triangle can be formed anymore, since t1 only increases
+                    // check if no triangle can be formed anymore, since t1 only decreases
                     if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
                     int isnormal2 = (d->p->segment_boundaries[M_index][z_index][segment2+1] > 0) ? 1 : 0;
                     for (int jj = (isnormal2) ? 0 : ii;
@@ -323,13 +324,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
                                       * d->tp->dtsq[z_index][M_index][segment1][ii]
                                       * d->tp->dtsq[z_index][M_index][segment2][jj]
                                       * d->n->Mweights[M_index];
-                        
-                        // take care of symmetry factor
-                        if (segment1 != segment2)
-                        {
-                            temp *= 2.0;
-                        }
-
+                       
                         ws->tempc_real[ii*(d->n->Nsignal+2)+jj] += temp * b;
                         ws->pdf_real[ii*(d->n->Nsignal+2)+jj]
                             += temp * gsl_pow_2(d->c->comoving[z_index])
@@ -338,18 +333,6 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
                 }
             }
         }
-        // add the 1pt PDF unclustered contributions
-        /*
-        for (int ii=0; ii<d->n->Nsignal; ii++)
-        {
-            ws->pdf_real[ii*(d->n->Nsignal+2)]
-                -=  d->tp->dtsq[z_index][M_index][ii]
-                    * M_PI * n
-                    * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index]
-                    * d->n->Mweights[M_index] * d->n->zweights[z_index]
-                    * ((ii==0) ? 2.0 : 1.0);
-        }
-        */
     }
 
     ENDFCT
@@ -615,6 +598,7 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(create_filtered_profiles(d))
     }
     SAFEHMPDF(create_monotonicity(d))
+    SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_phi_indep(d))
     SAFEHMPDF(create_op(d))
 

@@ -511,6 +511,7 @@ prepare_cov(hmpdf_obj *d)
         SAFEHMPDF(create_filtered_profiles(d))
     }
     SAFEHMPDF(create_monotonicity(d))
+    SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_op(d))
 
     SAFEHMPDF(create_corr(d))
