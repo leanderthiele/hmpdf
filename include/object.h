@@ -10,6 +10,7 @@
 #include "profiles.h"
 #include "filter.h"
 #include "noise.h"
+#include "tilde.h"
 #include "onepoint.h"
 #include "twopoint.h"
 #include "powerspectrum.h"
@@ -30,6 +31,7 @@ struct hmpdf_obj_s
     filters_t *f;
     profiles_t *p;
     noise_t *ns;
+    tilde_t *tld;
     onepoint_t *op;
     twopoint_t *tp;
     powerspectrum_t *ps;

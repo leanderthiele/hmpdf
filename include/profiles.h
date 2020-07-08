@@ -20,6 +20,7 @@ typedef struct//{{{
     double *decr_tgrid;
     double *incr_tgrid;
     double *decr_tsqgrid;
+    double *incr_tsqgrid;
     double *reci_tgrid; // reciprocal space grid
 
     gsl_interp_accel **incr_tgrid_accel;
@@ -38,9 +39,19 @@ typedef struct//{{{
     int created_monotonicity;
     int **is_not_monotonic;
 
+    int created_segments;
+    int ***segment_boundaries;
+
     gsl_dht *dht_ws;
 }//}}}
 profiles_t;
+
+typedef enum
+{
+    dtsq_of_s,
+    t_of_s,
+}
+inv_profile_e;
 
 int null_profiles(hmpdf_obj *d);
 int reset_profiles(hmpdf_obj *d);
@@ -48,10 +59,10 @@ int init_profiles(hmpdf_obj *d);
 int create_conj_profiles(hmpdf_obj *d);
 int create_filtered_profiles(hmpdf_obj *d);
 int create_monotonicity(hmpdf_obj *d);
+int create_segments(hmpdf_obj *d);
 
 int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
 int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
-int dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq);
-int t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t);
+int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment, int *filled, inv_profile_e mode, double *out);
 
 #endif

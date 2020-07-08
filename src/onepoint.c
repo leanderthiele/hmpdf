@@ -17,6 +17,7 @@
 #include "profiles.h"
 #include "noise.h"
 #include "numerics.h"
+#include "tilde.h"
 #include "onepoint.h"
 
 #include "hmpdf.h"
@@ -67,136 +68,34 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
+        /* TODO test if we can do without
         if (d->p->is_not_monotonic[z_index][M_index])
         {
             continue;
         }
-        SAFEHMPDF(dtsq_of_s(d, z_index, M_index, temp))
+        */
         double n = d->h->hmf[z_index][M_index];
         double b = d->h->bias[z_index][M_index];
-        for (int ii=0; ii<d->n->Nsignal; ii++)
+        for (int segment=0;
+             segment<d->p->segment_boundaries[z_index][M_index][0];
+             segment++)
         {
-            au[ii] -= temp[ii] * M_PI * n
-                      * d->n->Mweights[M_index];
-            ac[ii] -= temp[ii] * M_PI * n * b
-                      * d->n->Mweights[M_index];
+            int filled;
+            SAFEHMPDF(inv_profile(d, z_index, M_index, segment, &filled, dtsq_of_s, temp))
+            if (filled)
+            {
+                for (int ii=0; ii<d->n->Nsignal; ii++)
+                {
+                    au[ii] -= temp[ii] * M_PI * n
+                              * d->n->Mweights[M_index];
+                    ac[ii] -= temp[ii] * M_PI * n * b
+                              * d->n->Mweights[M_index];
+                }
+            }
         }
     }
 
     free(temp);
-
-    ENDFCT
-}//}}}
-
-typedef struct
-{//{{{
-    double (*f)(double);
-    double lambda;
-    interp1d *s;
-    int *hmpdf_status;
-    gsl_integration_workspace *ws;
-}//}}}
-not_inv_integrand_s;
-
-static double
-not_inv_integrand(double t, void *params)
-{//{{{
-    not_inv_integrand_s *p = (not_inv_integrand_s *)params;
-    double s;
-    *(p->hmpdf_status) = interp1d_eval(p->s, t, &s);
-    return t * p->f(s * p->lambda);
-}//}}}
-
-static int
-not_inv_integral(hmpdf_obj *d, not_inv_integrand_s *params, int lambda_index, complex *out)
-// TODO can potentially speed this up a bit
-{//{{{
-    STARTFCT
-
-    gsl_function f;
-    f.function = not_inv_integrand;
-    f.params = params;
-    params->lambda = d->n->lambdagrid[lambda_index];
-    params->hmpdf_status = &hmpdf_status;
-    double integrals[2];
-    double err;
-    size_t neval;
-    for (int ii=0; ii<2; ii++)
-    {
-        params->f = (ii==0) ? &cos : &sin;
-//        SAFEGSL(gsl_integration_qng(&f, 0.0, 1.0, 1e-6, 1e-2, integrals+ii, &err, &neval))
-        SAFEGSL(gsl_integration_qag(&f, 0.0, 1.0, 1e-6, 1e-2, 1000, 1, params->ws, integrals+ii, &err))
-    }
-    *out = integrals[0] - _Complex_I * integrals[1];
-
-    ENDFCT
-}//}}}
-
-static int
-lambda_loop(hmpdf_obj *d, int z_index, int M_index, complex *out)
-{//{{{
-    STARTFCT
-
-    fprintf(stdout, "%d\t%d\n", z_index, M_index);
-    fflush(stdout);
-
-    // reverse the signal profile
-    SAFEALLOC(double *, temp, malloc((d->p->Ntheta+1) * sizeof(double)))
-    reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
-    SAFEALLOC(not_inv_integrand_s *, params,
-              malloc(d->Ncores * sizeof(not_inv_integrand_s)))
-    for (int ii=0; ii<d->Ncores; ii++)
-    {
-        SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
-                               PRINTERP_TYPE, d->p->incr_tgrid_accel[ii], &(params[ii].s)))
-        SAFEALLOC(, params[ii].ws, gsl_integration_workspace_alloc(1000))
-    }
-
-    // loop over lambda values
-    #ifdef _OPENMP
-    #pragma omp parallel for num_threads(1) /*FIXME*/ schedule(dynamic)
-    #endif
-    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
-    {
-        if (temp[0] * d->n->lambdagrid[ii] > 1e1) { continue; }
-        if (hmpdf_status) { continue; }
-        SAFEHMPDF_NORETURN(not_inv_integral(d, params+this_core(), ii, out+ii))
-        // FIXME
-        if (temp[0] * d->n->lambdagrid[ii] > 8e0)
-        {
-            printf("%.8e\n", temp[0] * d->n->lambdagrid[ii]);
-            int N = 10000;
-            double *tgrid = malloc(N * sizeof(double));
-            double *y = malloc(N * sizeof(double));
-            double *s = malloc(N * sizeof(double));
-            linspace(N, 0.0, 1.0, tgrid);
-            double maxy = 0.0;
-            for (int jj=0; jj<N; jj++)
-            {
-                y[jj] = not_inv_integrand(tgrid[jj], params+this_core());
-                interp1d_eval(params[this_core()].s, tgrid[jj], s+jj);
-                s[jj] /= temp[0];
-                maxy = GSL_MAX(maxy, y[jj]);
-            }
-            for (int jj=0; jj<N; jj++)
-            {
-                y[jj] /= maxy;
-            }
-            gnuplot *gp = plot(NULL, N, tgrid, y);
-            plot(gp, N, tgrid, s);
-            
-            show(gp);
-        }
-        out[ii] *= 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
-    }
-
-    free(temp);
-    for (int ii=0; ii<d->Ncores; ii++)
-    {
-        delete_interp1d(params[ii].s);
-        gsl_integration_workspace_free(params[ii].ws);
-    }
-    free(params);
 
     ENDFCT
 }//}}}
@@ -259,18 +158,22 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
+        /* TODO
         if (d->p->is_not_monotonic[z_index][d->n->NM] < d->n->NM)
         // there are samples for which we can do the FFT integral
         {
+        */
             SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
             fftw_execute(plan_u);
             fftw_execute(plan_c);
+        /* TODO
         }
         if (d->p->is_not_monotonic[z_index][d->n->NM])
         // there are samples for which we need to do the slow integral
         {
             SAFEHMPDF(op_Mint_notinvertible(d, z_index, au_comp, ac_comp))
         }
+        */
 
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -450,6 +353,7 @@ prepare_op(hmpdf_obj *d)
         SAFEHMPDF(create_filtered_profiles(d))
     }
     SAFEHMPDF(create_monotonicity(d))
+    SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_op(d))
     SAFEHMPDF(create_rolled_op(d))
     if (d->ns->noise > 0.0)

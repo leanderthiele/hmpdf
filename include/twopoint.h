@@ -27,8 +27,9 @@ typedef struct//{{{
 {
     // phi-independent quantities, to compute only once
     int created_phi_indep;
-    double ***dtsq; // [ z_index, M_index, signal_index ]
-    double ***t; // [ z_index, M_index, signal_index ]
+    double ****dtsq; // [ z_index, M_index, segment, signal_index ]
+    double ****t; // [ z_index, M_index, segment, signal_index ]
+    int ***filled; // [ z_index, M_index, segment ]
     complex **ac; // [ z_index, lambda_index ]
     complex *au; // [ lambda_index ] // allocated with fftw_malloc
     

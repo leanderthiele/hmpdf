@@ -16,6 +16,7 @@ null_data(hmpdf_obj *d)
     SAFEHMPDF(null_filters(d))
     SAFEHMPDF(null_profiles(d))
     SAFEHMPDF(null_noise(d))
+    SAFEHMPDF(null_tilde(d))
     SAFEHMPDF(null_onepoint(d))
     SAFEHMPDF(null_twopoint(d))
     SAFEHMPDF(null_powerspectrum(d))
@@ -38,6 +39,7 @@ hmpdf_obj *hmpdf_new(void)
     SAFEALLOC_NORETURN(, d->f, malloc(sizeof(filters_t)))
     SAFEALLOC_NORETURN(, d->p, malloc(sizeof(profiles_t)))
     SAFEALLOC_NORETURN(, d->ns, malloc(sizeof(noise_t)))
+    SAFEALLOC_NORETURN(, d->tld, malloc(sizeof(tilde_t)))
     SAFEALLOC_NORETURN(, d->op, malloc(sizeof(onepoint_t)))
     SAFEALLOC_NORETURN(, d->tp, malloc(sizeof(twopoint_t)))
     SAFEALLOC_NORETURN(, d->ps, malloc(sizeof(powerspectrum_t)))
@@ -94,6 +96,7 @@ hmpdf_delete(hmpdf_obj *d)
     free(d->h);
     free(d->n);
     free(d->ns);
+    free(d->tld);
     free(d->op);
     free(d->tp);
     free(d->ps);
