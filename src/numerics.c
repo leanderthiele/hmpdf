@@ -124,6 +124,32 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
 }//}}}
 
 static int
+construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
+// N1 holds the number of negative signal values
+{//{{{
+    STARTFCT
+
+    // find the index where we would like the signal to be
+    //    exactly zero
+    *N1 = (int)round(-*smin/(*smax-*smin)*(double)(N-1));
+    if (*N1 != 0)
+    {
+        // adjust the maximum signal accordingly
+        *smax = *smin * (1.0 - (double)(N-1)/(double)(*N1));
+    }
+    else
+    {
+        *smin = 0.0;
+    }
+    linspace(N, *smin, *smax, grid);
+
+    // guard against small numerical instabilities
+    grid[*N1] = 0.0;
+
+    ENDFCT
+}//}}}
+
+static int
 create_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
@@ -154,16 +180,13 @@ create_grids(hmpdf_obj *d)
     }
 
     SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
-    linspace(d->n->Nsignal, 0.0, d->n->signalmax - d->n->signalmin,
-             d->n->signalgrid);
-    SAFEALLOC(, d->n->user_signalgrid, malloc(d->n->Nsignal * sizeof(double)))
-    linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
-             d->n->user_signalgrid);
-
-    SAFEALLOC(, d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)))
-    linspace(d->n->Nsignal/2+1,
-             0.0, M_PI/(d->n->signalgrid[1]-d->n->signalgrid[0]),
-             d->n->lambdagrid);
+    SAFEALLOC(, d->n->incr_signalgrid, malloc(d->n->Nsignal * sizeof(double)))
+    SAFEHMPDF(construct_signalgrid(d->n->Nsignal,
+                                   &(d->n->Nsignal_negative),
+                                   &(d->n->signalmin), &(d->n->signalmax),
+                                   d->n->incr_signalgrid))
+    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal_negative, 1,
+                     d->n->incr_signalgrid, d->n->signalgrid))
 
     ENDFCT
 }//}}}

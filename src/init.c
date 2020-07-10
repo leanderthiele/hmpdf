@@ -13,7 +13,6 @@
 #include "filter.h"
 #include "profiles.h"
 #include "noise.h"
-#include "tilde.h"
 #include "init.h"
 
 #include "hmpdf.h"
@@ -370,7 +369,6 @@ compute_necessary_for_all(hmpdf_obj *d)
     SAFEHMPDF(init_filters(d))
     SAFEHMPDF(init_profiles(d))
     SAFEHMPDF(init_noise(d))
-    SAFEHMPDF(init_tilde(d));
 
     ENDFCT
 }//}}}
@@ -380,7 +378,7 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 {//{{{
     STARTFCT
 
-    gsl_set_error_handler_off();
+    gsl_set_error_handler(&new_gsl_error_handler);
 
     d->cls->class_ini = class_ini;
     d->p->stype = stype;

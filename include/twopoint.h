@@ -1,8 +1,11 @@
 #ifndef TWOPOINT_H
 #define TWOPOINT_H
 
+#include <complex.h>
+
 #include <fftw3.h>
 
+#include "profiles.h"
 #include "hmpdf.h"
 
 typedef struct//{{{
@@ -27,9 +30,8 @@ typedef struct//{{{
 {
     // phi-independent quantities, to compute only once
     int created_phi_indep;
-    double ****dtsq; // [ z_index, M_index, segment, signal_index ]
-    double ****t; // [ z_index, M_index, segment, signal_index ]
-    int ***filled; // [ z_index, M_index, segment ]
+    batch_container_t ***dtsq; // [ z_index, M_index, segment ]
+    batch_container_t ***t; // [ z_index, M_index, segment ]
     complex **ac; // [ z_index, lambda_index ]
     complex *au; // [ lambda_index ] // allocated with fftw_malloc
     

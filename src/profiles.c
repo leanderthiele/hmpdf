@@ -663,15 +663,22 @@ create_segments(hmpdf_obj *d)
 
     SAFEALLOC(, d->p->segment_boundaries,
               malloc(d->n->Nz * sizeof(int **)))
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(d->Ncores)
+    #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->p->segment_boundaries[z_index],
-                  malloc(d->n->NM * sizeof(int *)))
+        if (hmpdf_status) { continue; }
+        SAFEALLOC_NORETURN(, d->p->segment_boundaries[z_index],
+                           malloc(d->n->NM * sizeof(int *)))
+        if (hmpdf_status) { continue; }
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
+            if (hmpdf_status) { continue; }
             int len = 10;
-            SAFEALLOC(, d->p->segment_boundaries[z_index][M_index],
-                      malloc(len * sizeof(int)))
+            SAFEALLOC_NORETURN(, d->p->segment_boundaries[z_index][M_index],
+                               malloc(len * sizeof(int)))
+            if (hmpdf_status) { continue; }
             
             // 0th element stores the number of segments, it's at least one
             d->p->segment_boundaries[z_index][M_index][0] = 1;
@@ -687,15 +694,16 @@ create_segments(hmpdf_obj *d)
                                       - d->p->profiles[z_index][M_index][ii+1]);
                 if (sgn_lo != sgn_hi) // change in gradient
                 {
-                    ++d->p->segment_boundaries[z_index][M_index][0];
+                    ++(d->p->segment_boundaries[z_index][M_index][0]);
                     
                     // check if we still have enough space
                     if (d->p->segment_boundaries[z_index][M_index][0]+2 >= len)
                     {
                         len *= 2;
-                        SAFEALLOC(, d->p->segment_boundaries[z_index][M_index],
-                                  realloc(d->p->segment_boundaries[z_index][M_index],
-                                          len * sizeof(int)))
+                        SAFEALLOC_NORETURN(, d->p->segment_boundaries[z_index][M_index],
+                                           realloc(d->p->segment_boundaries[z_index][M_index],
+                                           len * sizeof(int)))
+                        if (hmpdf_status) { continue; }
                     }
                     d->p->segment_boundaries[z_index][M_index]
                         [d->p->segment_boundaries[z_index][M_index][0]] = ii + 1;
@@ -709,8 +717,36 @@ create_segments(hmpdf_obj *d)
             // the last segment ends at the cluster centre
             d->p->segment_boundaries[z_index][M_index]
                 [d->p->segment_boundaries[z_index][M_index][0]+1] = d->p->Ntheta + 1;
+            // get sign for last segment correct
+            d->p->segment_boundaries[z_index][M_index]
+                [d->p->segment_boundaries[z_index][M_index][0]]
+                *= GSL_SIGN(d->p->profiles[z_index][M_index][d->p->Ntheta + 1]
+                            - d->p->profiles[z_index][M_index][d->p->Ntheta]);
+
+            // TODO test
+            int broken = 0;
+            for (int ii=1; ii<d->p->segment_boundaries[z_index][M_index][0]; ii++)
+            {
+                if (GSL_SIGN(d->p->segment_boundaries[z_index][M_index][ii])
+                    == GSL_SIGN(d->p->segment_boundaries[z_index][M_index][ii+1]))
+                {
+                    broken = 1;
+                    printf("not consistent in %d %d\n", z_index, M_index);
+                    break;
+//                    HMPDFERR_NORETURN("invalid boundaries in %d %d\n", z_index, M_index);
+                }
+            }
+            if (broken)
+            {
+                for (int ii=0; ii<=d->p->segment_boundaries[z_index][M_index][0]; ii++)
+                {
+                    printf("\t%d\n", d->p->segment_boundaries[z_index][M_index][ii+1]);
+                }
+            }
         }
     }
+
+    d->p->created_segments = 1;
 
     ENDFCT
 }//}}}
@@ -777,40 +813,115 @@ choose_ordinate(hmpdf_obj *d, int end, int start, inv_profile_e mode, int sgn, d
         default   : HMPDFERR("unknown sign")
     }
 
+    double *ptr;
     switch (mode)
     {
         case (dtsq_of_s) :
             switch (sgn)
             {
-                case (1)  : *out = d->p->decr_tsqgrid;
+                case (1)  : ptr = d->p->decr_tsqgrid;
                             break;
-                case (-1) : *out = d->p->incr_tsqgrid;
+                case (-1) : ptr = d->p->incr_tsqgrid;
                             break;
             }
             break;
         case (t_of_s)    :
             switch (sgn)
             {
-                case (1)  : *out = d->p->decr_tgrid;
+                case (1)  : ptr = d->p->decr_tgrid;
                             break;
-                case (-1) : *out = d->p->incr_tgrid;
+                case (-1) : ptr = d->p->incr_tgrid;
                             break;
             }
             break;
         default          : HMPDFERR("unknown mode")
     }
 
-    *out += indx;
+    ptr += indx;
+
+    memcpy(*out, ptr, (end-start) * sizeof(double));
 
     ENDFCT
 }//}}}
 
+static int
+remove_duplicates(int *N, double *x, double *y, double eps)
+// removes duplicates in y and adjusts x accordingly
+//     values are considered equal if they fall within eps of one another
+{//{{{
+    STARTFCT
+
+    for (int ii=1; ii<*N; ii++)
+    {
+        if (fabs(y[ii] - y[ii-1]) < eps)
+        {
+            memmove(y+ii-1, y+ii, (*N - ii)*sizeof(double));
+            memmove(x+ii-1, x+ii, (*N - ii)*sizeof(double));
+            --*N;
+            --ii;
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+static int
+update_batches(batch_container_t *b, int inrange, int *inbatch,
+               int len_this_batch, int sgn, int ii, double val)
+{//{{{
+    STARTFCT
+
+        if (!(inrange))
+        {
+            *inbatch = 0;
+        }
+        else
+        {
+            if (!(*inbatch))
+            // need to start a new batch
+            {
+                if (b->Nbatches == 0)
+                {
+                    SAFEALLOC(, b->batches,
+                              malloc(sizeof(batch_t)))
+                }
+                else
+                {
+                    SAFEALLOC(, b->batches,
+                              realloc(b->batches, (b->Nbatches+1) * sizeof(batch_t)))
+                }
+                ++b->Nbatches;
+                b->batches[b->Nbatches-1].incr = sgn;
+                b->batches[b->Nbatches-1].start = ii;
+                b->batches[b->Nbatches-1].len = 0;
+                SAFEALLOC(, b->batches[b->Nbatches-1].data,
+                          malloc(len_this_batch * sizeof(double)));
+            }
+            b->batches[b->Nbatches-1].data[b->batches[b->Nbatches-1].len] = val;
+            ++b->batches[b->Nbatches-1].len;
+            *inbatch = 1;
+        }
+
+    ENDFCT
+}//}}}
+
+void
+delete_batch_container(batch_container_t *b)
+{//{{{
+    for (int ii=0; ii<b->Nbatches; ii++)
+    {
+        free(b->batches[ii].data);
+    }
+}//}}}
+
 int
-inv_profile(hmpdf_obj *d, int z_index, int M_index,
-            int segment, int *filled, inv_profile_e mode, double *out)
+inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
+            inv_profile_e mode, batch_container_t *b)
 // write dtheta^2(signal)/dsignal*dsignal into return values
 {//{{{
     STARTFCT
+
+    b->Nbatches = 0;
 
     int end   = abs(d->p->segment_boundaries[z_index][M_index][segment+2]);
     int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);
@@ -822,55 +933,69 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index,
                  1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))
         || (len < 5))
     {
-        *filled = 0;
         return hmpdf_status;
-    }
-    else
-    {
-        *filled = 1;
     }
 
     double *temp;
+    SAFEALLOC(, temp, malloc(len * sizeof(double)))
     if (sgn == 1)
     {
-        temp = d->p->profiles[z_index][M_index]+start;
+        memcpy(temp, d->p->profiles[z_index][M_index]+start,
+               len * sizeof(double));
     }
     else
     {
-        SAFEALLOC(, temp, malloc(len * sizeof(double)))
         reverse(len, d->p->profiles[z_index][M_index]+start, temp);
     }
 
-    interp1d *interp;
-    double *ordinate;
+    SAFEALLOC(double *, ordinate, malloc(len * sizeof(double)))
     SAFEHMPDF(choose_ordinate(d, end, start, mode, sgn, &ordinate))
 
-    // FIXME
-    // check if we have exactly zero slope anywhere
-    //    (this is not found by the segments)
+    // check if there are duplicates in temp
+    SAFEHMPDF(remove_duplicates(&len, ordinate, temp,
+              1e-3 * (d->n->signalgrid[1] - d->n->signalgrid[0])))
+    // check if it's too short now
+    if (len < 5)
+    {
+        return hmpdf_status;
+    }
 
+    interp1d *interp;
     SAFEHMPDF(new_interp1d(len, temp, ordinate,
                            0.0, 0.0, PRINTERP_TYPE, NULL, &interp))
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+
+    // auxiliary variables to keep track of current state
+    int inbatch = 0;
+    int len_this_batch = (int)(fabs(temp[len-1]-temp[0])
+                               / (d->n->signalgrid[1]-d->n->signalgrid[0])) + 4;
+
+    for (int ii = (sgn==1) ? 0 : d->n->Nsignal-1;
+         (sgn==1) ? ii<d->n->Nsignal : ii>=0;
+         ii += sgn)
     {
-        SAFEHMPDF(interp1d_eval_deriv(interp, d->n->signalgrid[ii], out+ii))
+        double val;
+        int inrange;
         switch (mode)
         {
             case (dtsq_of_s) :
-                out[ii] *= gsl_pow_2(d->p->profiles[z_index][M_index][0])
-                           * (d->n->signalgrid[1] - d->n->signalgrid[0]);
+                SAFEHMPDF(interp1d_eval_deriv1(interp, d->n->signalgrid[ii],
+                                               &inrange, &val))
+                val *= gsl_pow_2(d->p->profiles[z_index][M_index][0])
+                       * (d->n->signalgrid[1] - d->n->signalgrid[0]);
                 break;
             case (t_of_s)    :
-                out[ii] *= d->p->profiles[z_index][M_index][0];
+                SAFEHMPDF(interp1d_eval1(interp, d->n->signalgrid[ii],
+                                         &inrange, &val))
+                val *= d->p->profiles[z_index][M_index][0];
                 break;
         }
+        SAFEHMPDF(update_batches(b, inrange, &inbatch, len_this_batch,
+                                 sgn, ii, val))
     }
     delete_interp1d(interp);
 
-    if (sgn == -1)
-    {
-        free(temp);
-    }
+    free(temp);
+    free(ordinate);
 
     ENDFCT
 }//}}}

@@ -80,7 +80,7 @@ init_class_interface(hmpdf_obj *d)
 
     int argc = (strcmp(argv[2], "none")) ? 3 : 2;
 
-    SAFEHMPDF(alloc_class(d))
+    SAFEHMPDF(alloc_class(d));
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;

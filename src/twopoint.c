@@ -24,7 +24,6 @@ null_twopoint(hmpdf_obj *d)
     d->tp->created_phi_indep = 0;
     d->tp->dtsq = NULL;
     d->tp->t = NULL;
-    d->tp->filled = NULL;
     d->tp->ac = NULL;
     d->tp->au = NULL;
     d->tp->ws = NULL;
@@ -56,10 +55,7 @@ reset_twopoint(hmpdf_obj *d)
                              segment<d->p->segment_boundaries[z_index][M_index][0];
                              segment++)
                         {
-                            if (d->tp->dtsq[z_index][M_index][segment] != NULL)
-                            {
-                                free(d->tp->dtsq[z_index][M_index][segment]);
-                            }
+                            delete_batch_container(d->tp->dtsq[z_index][M_index]+segment);
                         }
                         free(d->tp->dtsq[z_index][M_index]);
                     }
@@ -83,10 +79,7 @@ reset_twopoint(hmpdf_obj *d)
                              segment<d->p->segment_boundaries[z_index][M_index][0];
                              segment++)
                         {
-                            if (d->tp->t[z_index][M_index][segment] != NULL)
-                            {
-                                free(d->tp->t[z_index][M_index][segment]);
-                            }
+                            delete_batch_container(d->tp->t[z_index][M_index]+segment);
                         }
                         free(d->tp->t[z_index][M_index]);
                     }
@@ -95,24 +88,6 @@ reset_twopoint(hmpdf_obj *d)
             }
         }
         free(d->tp->t);
-    }
-    if (d->tp->filled != NULL)
-    {
-        for (int z_index=0; z_index<d->n->Nz; z_index++)
-        {
-            if (d->tp->filled[z_index] != NULL)
-            {
-                for (int M_index=0; M_index<d->n->NM; M_index++)
-                {
-                    if (d->tp->filled[z_index][M_index] != NULL)
-                    {
-                        free(d->tp->filled[z_index][M_index]);
-                    }
-                }
-                free(d->tp->filled[z_index]);
-            }
-        }
-        free(d->tp->filled);
     }
     if (d->tp->ac != NULL)
     {
@@ -152,9 +127,8 @@ create_phi_indep(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phi_indep\n")
     
-    SAFEALLOC(, d->tp->dtsq,   malloc(d->n->Nz * sizeof(double ***)))
-    SAFEALLOC(, d->tp->t,      malloc(d->n->Nz * sizeof(double ***)))
-    SAFEALLOC(, d->tp->filled, malloc(d->n->Nz * sizeof(int **)))
+    SAFEALLOC(, d->tp->dtsq,   malloc(d->n->Nz * sizeof(batch_container_t **)))
+    SAFEALLOC(, d->tp->t,      malloc(d->n->Nz * sizeof(batch_container_t **)))
     SAFEALLOC(, d->tp->ac, malloc(d->n->Nz * sizeof(complex *)))
     SAFEALLOC(, d->tp->au, fftw_malloc((d->n->Nsignal/2+1) * sizeof(complex)))
     double *au_real = (double *)(d->tp->au);
@@ -173,9 +147,8 @@ create_phi_indep(hmpdf_obj *d)
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->tp->dtsq[z_index],   malloc(d->n->NM * sizeof(double **)))
-        SAFEALLOC(, d->tp->t[z_index],      malloc(d->n->NM * sizeof(double **)))
-        SAFEALLOC(, d->tp->filled[z_index], malloc(d->n->NM * sizeof(int *)))
+        SAFEALLOC(, d->tp->dtsq[z_index],   malloc(d->n->NM * sizeof(batch_container_t *)))
+        SAFEALLOC(, d->tp->t[z_index],      malloc(d->n->NM * sizeof(batch_container_t *)))
         SAFEALLOC(, d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(complex)))
         // null the FFT array
         for (int ii=0; ii<d->n->Nsignal+2; ii++)
@@ -191,46 +164,32 @@ create_phi_indep(hmpdf_obj *d)
 
             SAFEALLOC(, d->tp->dtsq[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(double *)))
+                             * sizeof(batch_container_t)))
             SAFEALLOC(, d->tp->t[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(double *)))
-            SAFEALLOC(, d->tp->filled[z_index][M_index],
-                      malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(int)))
+                             * sizeof(batch_container_t)))
 
             for (int segment=0;
                  segment<d->p->segment_boundaries[z_index][M_index][0];
                  segment++)
             {
-                SAFEALLOC(, d->tp->dtsq[z_index][M_index][segment],
-                          malloc(d->n->Nsignal * sizeof(double)))
-                SAFEALLOC(, d->tp->t[z_index][M_index][segment],
-                          malloc(d->n->Nsignal * sizeof(double)))
+                SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
+                                      dtsq_of_s, d->tp->dtsq[z_index][M_index]+segment))
+                SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
+                                      t_of_s, d->tp->t[z_index][M_index]+segment))
 
-                SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
-                                      d->tp->filled[z_index][M_index]+segment,
-                                      dtsq_of_s, d->tp->dtsq[z_index][M_index][segment]))
-                SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
-                                      d->tp->filled[z_index][M_index]+segment,
-                                      t_of_s, d->tp->t[z_index][M_index][segment]))
-                if (!(d->tp->filled[z_index][M_index][segment]))
+                for (int ii=0; ii<d->tp->t[z_index][M_index][segment].Nbatches; ii++)
                 {
-                    free(d->tp->dtsq[z_index][M_index][segment]);
-                    free(d->tp->t[z_index][M_index][segment]);
-                    d->tp->dtsq[z_index][M_index][segment] = NULL;
-                    d->tp->t[z_index][M_index][segment] = NULL;
-                }
-                else
-                {
-                    for (int ii=0; ii<d->n->Nsignal; ii++)
+                    for (int signalindex=d->tp->t[z_index][M_index][segment].batches[ii].start, jj=0;
+                         jj < d->tp->t[z_index][M_index][segment].batches[ii].len;
+                         signalindex += d->tp->t[z_index][M_index][segment].batches[ii].incr, jj++)
                     {
-                        au_real[ii] -= M_PI * n * d->tp->dtsq[z_index][M_index][segment][ii]
-                                       * d->n->Mweights[M_index] * d->n->zweights[z_index]
-                                       * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index];
-                        tempc_real[ii] -= M_PI * n * b
-                                          * d->tp->dtsq[z_index][M_index][segment][ii]
-                                          * d->n->Mweights[M_index];
+                        au_real[signalindex] -= M_PI * n * d->tp->dtsq[z_index][M_index][segment].batches[ii].data[jj]
+                                                * d->n->Mweights[M_index] * d->n->zweights[z_index]
+                                                * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index];
+                        tempc_real[signalindex] -= M_PI * n * b
+                                                   * d->tp->dtsq[z_index][M_index][segment].batches[ii].data[jj]
+                                                   * d->n->Mweights[M_index];
                     }
                 }
             }
@@ -268,6 +227,76 @@ triang_A(double a, double b, double c)
 }//}}}
 
 static int
+tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_workspace *ws)
+{//{{{
+    STARTFCT
+
+    double n = d->h->hmf[z_index][M_index];
+    double b = d->h->bias[z_index][M_index];
+
+    for (int segment1=0;
+         segment1<d->p->segment_boundaries[z_index][M_index][0];
+         segment1++)
+    {
+        for (int b1=0; b1<d->tp->t[z_index][M_index][segment1].Nbatches; b1++)
+        {
+            for (int segment2=0;
+                 segment2<d->p->segment_boundaries[z_index][M_index][0];
+                 segment2++)
+            {
+                for (int b2=0; b2<d->tp->t[z_index][M_index][segment2].Nbatches; b2++)
+                {
+                    // loop such that the theta values are always monotonically decreasing
+                    // so that we know when to break
+                    for (int signalindex1 = d->tp->t[z_index][M_index][segment1].batches[b1].start, ii=0;
+                         ii < d->tp->t[z_index][M_index][segment1].batches[b1].len;
+                         signalindex1 += d->tp->t[z_index][M_index][segment1].batches[b1].incr, ii++)
+                    // loop over the direction that is Nsignal long
+                    {
+                        double t1 = d->tp->t[z_index][M_index][segment1].batches[b1].data[ii];
+                        // t1 is monotonically decreasing with ii
+                        // check if no triangle can be formed anymore, since t1 only decreases
+                        if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
+                        for (int signalindex2 = d->tp->t[z_index][M_index][segment2].batches[b2].start, jj=0;
+                             jj < d->tp->t[z_index][M_index][segment2].batches[b2].len;
+                             signalindex2 += d->tp->t[z_index][M_index][segment2].batches[b2].incr, jj++)
+                        // loop over the direction that is Nsignal+2 long
+                        {
+                            double t2 = d->tp->t[z_index][M_index][segment2].batches[b2].data[jj];
+                            // t2 is monotonically decreasing with jj
+                            // check if we can form a triangle
+                            if (t1 >= t2 + phi) { continue; }
+                            if (t2 >= phi + t1) { continue; }
+                            if (phi >= t1 + t2) { break; }
+                            //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
+                            double Delta = triang_A(phi, t1, t2);
+                            double temp = 0.25 * n * Delta
+                                          * d->tp->dtsq[z_index][M_index][segment1].batches[b1].data[ii]
+                                          * d->tp->dtsq[z_index][M_index][segment2].batches[b2].data[jj]
+                                          * d->n->Mweights[M_index];
+
+                            // take care of the symmetry factor on the diagonal
+                            // TODO think about this!!!
+                            if ((ii==jj) && (segment1 != segment2))
+                            {
+                                temp *= 0.5;
+                            }
+                           
+                            ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2] += temp * b;
+                            ws->pdf_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
+                                += temp * gsl_pow_2(d->c->comoving[z_index])
+                                   / d->c->hubble[z_index] * d->n->zweights[z_index];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+static int
 tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 // adds to pdf_real, with the required zweight * Mweight, including the unclustered 1pt PDF contributions
 // creates new tempc_real (nulls first) --> tempc created with fftw_malloc
@@ -283,56 +312,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
-        double n = d->h->hmf[z_index][M_index];
-        double b = d->h->bias[z_index][M_index];
-
-        for (int segment1=0;
-             segment1<d->p->segment_boundaries[z_index][M_index][0];
-             segment1++)
-        {
-            if (!(d->tp->filled[z_index][M_index][segment1])) { continue; }
-            for (int segment2=0;
-                 segment2<d->p->segment_boundaries[z_index][M_index][0];
-                 segment2++)
-            {
-                if (!(d->tp->filled[z_index][M_index][segment1])) { continue; }
-                // loop such that the theta values are always monotonically increasing
-                // so that we know when to break
-                int isnormal1 = (d->p->segment_boundaries[M_index][z_index][segment1+1] > 0) ? 1 : 0;
-                for (int ii = (isnormal1) ? 0 : d->n->Nsignal-1;
-                     (isnormal1) ? (ii<d->n->Nsignal) : (ii>=0);
-                     (isnormal1) ? ii++ : ii--)
-                // loop over the direction that is Nsignal long
-                {
-                    double t1 = d->tp->t[z_index][M_index][segment1][ii]; // t1 is monotonically decreasing with ii
-                    // check if no triangle can be formed anymore, since t1 only decreases
-                    if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
-                    int isnormal2 = (d->p->segment_boundaries[M_index][z_index][segment2+1] > 0) ? 1 : 0;
-                    for (int jj = (isnormal2) ? 0 : ii;
-                         (isnormal2) ? (jj<=ii) : (jj>=0);
-                         (isnormal2) ? jj++ : jj--)
-                    // loop over the direction that is Nsignal+2 long
-                    {
-                        double t2 = d->tp->t[z_index][M_index][segment2][jj]; // t2 is monotonically decreasing with jj
-                        // check if we can form a triangle
-                        if (t1 >= t2 + phi) { continue; }
-                        if (t2 >= phi + t1) { continue; }
-                        if (phi >= t1 + t2) { break; }
-                        //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
-                        double Delta = triang_A(phi, t1, t2);
-                        double temp = 0.25 * n * Delta
-                                      * d->tp->dtsq[z_index][M_index][segment1][ii]
-                                      * d->tp->dtsq[z_index][M_index][segment2][jj]
-                                      * d->n->Mweights[M_index];
-                       
-                        ws->tempc_real[ii*(d->n->Nsignal+2)+jj] += temp * b;
-                        ws->pdf_real[ii*(d->n->Nsignal+2)+jj]
-                            += temp * gsl_pow_2(d->c->comoving[z_index])
-                               / d->c->hubble[z_index] * d->n->zweights[z_index];
-                    }
-                }
-            }
-        }
+        tp_segmentsum(d, z_index, M_index, phi, ws);
     }
 
     ENDFCT
@@ -618,18 +598,15 @@ prepare_tp(hmpdf_obj *d, double phi)
     {
         SAFEALLOC(, d->tp->pdf, malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double)))
     }
-    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal
-                                     * sizeof(double)))
     for (int ii=0; ii<d->n->Nsignal; ii++)
     {
-        memcpy(temp+ii*d->n->Nsignal,
+        memcpy(d->tp->pdf+ii*d->n->Nsignal,
                d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
                d->n->Nsignal * sizeof(double));
     }
     // roll the pdf
-    SAFEHMPDF(roll_tp(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
-                      temp, d->tp->pdf))
-    free(temp);
+    SAFEHMPDF(roll2d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative,
+                     d->tp->pdf, d->tp->pdf))
 
     if (d->ns->noise > 0.0)
     {
@@ -674,7 +651,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
 
     HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->user_signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->incr_signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
                      TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
 

@@ -22,10 +22,11 @@ typedef struct//{{{
     double *Mweights;
 
     int Nsignal;
+    int Nsignal_negative;
     double signalmin;
     double signalmax;
     double *signalgrid;
-    double *user_signalgrid;
+    double *incr_signalgrid;
     double *lambdagrid;
 
     int Nsignal_noisy;

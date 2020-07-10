@@ -27,6 +27,13 @@ hmpdf_status_update(int *status, int result)
     return result;
 }//}}}
 
+void
+new_gsl_error_handler(const char *reason, const char *file, int line, int gsl_errno)
+{//{{{
+    fprintf(stderr, "***GSL error: %s in %s line %d\n", reason, file, line);
+    fflush(stderr);
+}//}}}
+
 int
 ispwr2(int N, int *k)
 // returns 1 if N = 2^k, 0 otherwise
@@ -79,6 +86,56 @@ reverse(int N, double *in, double *out)
             out[ii] = in[N-1-ii];
         }
     }
+}//}}}
+
+int
+roll1d(int N, int N1, int stride, double *in, double *out)
+// { a1 ... aN1 aN1+1 ... aN }
+// --> { aN1+1 ... aN a1 ... aN1 }
+// safe if in and out are overlapping
+{//{{{
+    STARTFCT
+
+    SAFEALLOC(double *, temp, malloc(N * sizeof(double)))
+
+    // copy the N1 segment
+    for (int ii=0; ii<N1; ii++)
+    {
+        temp[ii+N-N1] = in[ii*stride];
+    }
+    // copy the N-N1 segment
+    for (int ii=0; ii<N-N1; ii++)
+    {
+        temp[ii] = in[(ii+N1)*stride];
+    }
+    // copy back into output array
+    for (int ii=0; ii<N; ii++)
+    {
+        out[ii*stride] = temp[ii];
+    }
+    free(temp);
+
+    ENDFCT
+}//}}}
+
+int
+roll2d(int N, int N1, double *in, double *out)
+// analogous to roll1d, along two directions
+{//{{{
+    STARTFCT
+
+    // do the row-wise rolls
+    for (int ii=0; ii<N; ii++)
+    {
+        SAFEHMPDF(roll1d(N, N1, 1, in+ii*N, out+ii*N))
+    }
+    // do the col-wise rolls
+    for (int ii=0; ii<N; ii++)
+    {
+        SAFEHMPDF(roll1d(N, N1, N, in+ii, out+ii))
+    }
+
+    ENDFCT
 }//}}}
 
 int
@@ -175,7 +232,7 @@ plot(gnuplot *gp, int N, double *x, double *y)
     }
     for (int ii=0; ii<N; ii++)
     {
-        fprintf(gp->gp, "%.8e %.8e\n", x[ii], y[ii]);
+        fprintf(gp->gp, "%.16e %.16e\n", x[ii], y[ii]);
     }
     fprintf(gp->gp, "e\n");
     gp->Nlines += 1;
@@ -195,7 +252,7 @@ plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
     }
     for (int ii=0; ii<N; ii++)
     {
-        fprintf(gp->gp, "%.8e %.8e\n", x[ii], (mode==0) ? creal(y[ii]) : cimag(y[ii]));
+        fprintf(gp->gp, "%.16e %.16e\n", x[ii], (mode==0) ? creal(y[ii]) : cimag(y[ii]));
     }
     fprintf(gp->gp, "e\n");
     gp->Nlines += 1;
@@ -473,12 +530,7 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
         (*out)->a = a;
     }
     
-    SAFEGSL_NORETURN(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N))
-
-    if (hmpdf_status)
-    {
-        delete_interp1d(*out);
-    }
+    SAFEGSL(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N))
 
     ENDFCT
 }//}}}
@@ -517,6 +569,31 @@ interp1d_eval(interp1d *interp, double x, double *out)
 }//}}}
 
 int
+interp1d_eval1(interp1d *interp, double x, int *inrange, double *out)
+{//{{{
+    STARTFCT
+
+    if (x < interp->x[0])
+    {
+        *inrange = 0;
+        *out = interp->ylo;
+    }
+    else if (x > interp->x[interp->N-1])
+    {
+        *inrange = 0;
+        *out = interp->yhi;
+    }
+    else
+    {
+        *inrange = 1;
+        SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
+                                  interp->a, out))
+    }
+
+    ENDFCT
+}//}}}
+
+int
 interp1d_eval_deriv(interp1d *interp, double x, double *out)
 {//{{{
     STARTFCT
@@ -531,6 +608,31 @@ interp1d_eval_deriv(interp1d *interp, double x, double *out)
     }
     else
     {
+        SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
+                                        interp->a, out))
+    }
+
+    ENDFCT
+}//}}}
+
+int
+interp1d_eval_deriv1(interp1d *interp, double x, int *inrange, double *out)
+{//{{{
+    STARTFCT
+
+    if (x < interp->x[0])
+    {
+        *inrange = 0;
+        *out = 0.0;
+    }
+    else if (x > interp->x[interp->N-1])
+    {
+        *inrange = 0;
+        *out = 0.0;
+    }
+    else
+    {
+        *inrange = 1;
         SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
                                         interp->a, out))
     }
@@ -607,12 +709,8 @@ new_interp2d(int N, double *x, double *z,
         (*out)->alloced_accel = 0;
         (*out)->a = a;
     }
-    SAFEGSL_NORETURN(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
-                                       (*out)->z, (*out)->N, (*out)->N))
-    if (hmpdf_status)
-    {
-        delete_interp2d(*out);
-    }
+    SAFEGSL(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
+                              (*out)->z, (*out)->N, (*out)->N))
 
     ENDFCT
 }//}}}

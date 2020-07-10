@@ -17,7 +17,6 @@
 #include "profiles.h"
 #include "noise.h"
 #include "numerics.h"
-#include "tilde.h"
 #include "onepoint.h"
 
 #include "hmpdf.h"
@@ -58,44 +57,46 @@ reset_onepoint(hmpdf_obj *d)
 }//}}}
 
 static int
+op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
+{//{{{
+    STARTFCT
+
+    double n = d->h->hmf[z_index][M_index];
+    double b = d->h->bias[z_index][M_index];
+    for (int segment=0;
+         segment<d->p->segment_boundaries[z_index][M_index][0];
+         segment++)
+    {
+        batch_container_t bt;
+        SAFEHMPDF(inv_profile(d, z_index, M_index, segment, dtsq_of_s, &bt))
+        for (int ii=0; ii<bt.Nbatches; ii++)
+        {
+            for (int signalindex=bt.batches[ii].start, jj=0;
+                 jj < bt.batches[ii].len; signalindex += bt.batches[ii].incr, jj++)
+            {
+                au[signalindex] -= bt.batches[ii].data[jj] * M_PI * n
+                                   * d->n->Mweights[M_index];
+                ac[signalindex] -= bt.batches[ii].data[jj] * M_PI * n * b
+                                   * d->n->Mweights[M_index];
+            }
+        }
+        delete_batch_container(&bt);
+    }
+
+    ENDFCT
+}//}}}
+
+static int
 op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 // performs the mass integrals, for the invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
     STARTFCT
 
-    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * sizeof(double)))
-
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
-        /* TODO test if we can do without
-        if (d->p->is_not_monotonic[z_index][M_index])
-        {
-            continue;
-        }
-        */
-        double n = d->h->hmf[z_index][M_index];
-        double b = d->h->bias[z_index][M_index];
-        for (int segment=0;
-             segment<d->p->segment_boundaries[z_index][M_index][0];
-             segment++)
-        {
-            int filled;
-            SAFEHMPDF(inv_profile(d, z_index, M_index, segment, &filled, dtsq_of_s, temp))
-            if (filled)
-            {
-                for (int ii=0; ii<d->n->Nsignal; ii++)
-                {
-                    au[ii] -= temp[ii] * M_PI * n
-                              * d->n->Mweights[M_index];
-                    ac[ii] -= temp[ii] * M_PI * n * b
-                              * d->n->Mweights[M_index];
-                }
-            }
-        }
+        SAFEHMPDF(op_segmentsum(d, z_index, M_index, au, ac))
     }
-
-    free(temp);
 
     ENDFCT
 }//}}}
@@ -164,6 +165,9 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
         {
         */
             SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
+            // TODO for testing
+            gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->signalgrid, au_real);
+            show(gp);
             fftw_execute(plan_u);
             fftw_execute(plan_c);
         /* TODO
@@ -227,30 +231,6 @@ get_mean_signal(hmpdf_obj *d)
                     d->op->PDFu, &(d->op->signalmeanu)))
     SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
                     d->op->PDFc, &(d->op->signalmeanc)))
-
-    ENDFCT
-}//}}}
-
-static int
-roll_op(int N, double *xorig, double *xnew, double *yorig, double *ynew)
-// assumes that min(xorig) = 0.0
-{//{{{
-    STARTFCT
-    // interpolate the y-vector
-    interp1d *interp;
-    SAFEHMPDF(new_interp1d(N, xorig, yorig, 0.0, 0.0, ROLLOP_INTERP, NULL, &interp))
-    // roll the array
-    for (int ii=0; ii<N; ii++)
-    {
-        double x = xnew[ii];
-        if (x < 0.0)
-        {
-            x += xorig[N-1];
-        }
-        SAFEHMPDF(interp1d_eval(interp, x, ynew+ii))
-    }
-    // destroy the interpolator
-    delete_interp1d(interp);
 
     ENDFCT
 }//}}}
@@ -331,10 +311,10 @@ create_rolled_op(hmpdf_obj *d)
     SAFEALLOC(, d->op->PDFu_rolled, malloc(d->n->Nsignal * sizeof(double)))
     SAFEALLOC(, d->op->PDFc_rolled, malloc(d->n->Nsignal * sizeof(double)))
 
-    SAFEHMPDF(roll_op(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
-                      d->op->PDFu, d->op->PDFu_rolled))
-    SAFEHMPDF(roll_op(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
-                      d->op->PDFc, d->op->PDFc_rolled))
+    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative, 1,
+                     d->op->PDFu, d->op->PDFu_rolled))
+    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative, 1,
+                     d->op->PDFc, d->op->PDFc_rolled))
 
     ENDFCT
 }//}}}
@@ -392,8 +372,12 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
         }
     }
 
+    // TODO testing
+    gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->incr_signalgrid, d->op->PDFc_rolled);
+    show(gp);
+
     SAFEHMPDF(bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->user_signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->incr_signalgrid,
                      (noisy) ? ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
                      : ((incl_2h) ? d->op->PDFc_rolled : d->op->PDFu_rolled),
                      Nbins, _binedges, op, OPINTERP_TYPE))

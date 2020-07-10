@@ -47,11 +47,30 @@ typedef struct//{{{
 profiles_t;
 
 typedef enum
-{
+{//{{{
     dtsq_of_s,
     t_of_s,
-}
+}//}}}
 inv_profile_e;
+
+typedef struct
+{//{{{
+    int start;    // the start index in the signal grid
+    int len;      // length of this batch
+    int incr;     // +-1 --> loop over signal grid such that
+                  //    theta is always decreasing
+    double *data; // either t_of_s or dtsq_of_s, of length len
+}//}}}
+batch_t;
+
+typedef struct
+{//{{{
+    int Nbatches;
+    batch_t *batches;
+}//}}}
+batch_container_t;
+
+void delete_batch_container(batch_container_t *b);
 
 int null_profiles(hmpdf_obj *d);
 int reset_profiles(hmpdf_obj *d);
@@ -63,6 +82,7 @@ int create_segments(hmpdf_obj *d);
 
 int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
 int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
-int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment, int *filled, inv_profile_e mode, double *out);
+int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
+                inv_profile_e mode, batch_container_t *b);
 
 #endif

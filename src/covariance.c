@@ -485,12 +485,8 @@ create_cov(hmpdf_obj *d)
     }
 
     // roll the covariance matrix
-    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal
-                                     * sizeof(double)))
-    memcpy(temp, d->cov->Cov, d->n->Nsignal * d->n->Nsignal * sizeof(double));
-    SAFEHMPDF(roll_tp(d->n->Nsignal, d->n->signalgrid, d->n->user_signalgrid,
-                      temp, d->cov->Cov))
-    free(temp);
+    SAFEHMPDF(roll2d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative,
+                     d->cov->Cov, d->cov->Cov))
 
     d->cov->created_cov = 1;
 
@@ -568,7 +564,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     // perform the binning
     HMPDFPRINT(3, "\t\tbinning the covariance matrix\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->incr_signalgrid,
                      (noisy) ? d->cov->Cov_noisy : d->cov->Cov,
                      COVINTEGR_N, Nbins, _binedges, cov, TPINTERP_TYPE))
 

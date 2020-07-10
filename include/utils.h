@@ -48,6 +48,9 @@
 
 int hmpdf_status_update(int *status, int result);
 
+void new_gsl_error_handler(const char *reason, const char *file,
+                           int line, int gsl_errno);
+
 //SAFEGSL{{{
 #define SAFEGSL(expr)                                \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
@@ -173,6 +176,8 @@ void logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
 void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
+int roll1d(int N, int N1, int stride, double *in, double *out);
+int roll2d(int N, int N1, double *in, double *out);
 int not_monotonic(int N, double *x, int *problems);
 int all_zero(int N, double *x, double threshold);
 
@@ -209,7 +214,9 @@ int new_interp1d(int N, double *x, double *y,
                  interp_mode m, gsl_interp_accel *a, interp1d **out);
 void delete_interp1d(interp1d *interp);
 int interp1d_eval(interp1d *interp, double x, double *out);
+int interp1d_eval1(interp1d *interp, double x, int *inrange, double *out);
 int interp1d_eval_deriv(interp1d *interp, double x, double *out);
+int interp1d_eval_deriv1(interp1d *interp, double x, int *inrange, double *out);
 int interp1d_eval_integ(interp1d *interp, double a, double b, double *out);
 
 typedef enum//{{{
