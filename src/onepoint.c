@@ -63,7 +63,7 @@ correct_phase1d(hmpdf_obj *d, complex *x, int stride, int sgn)
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             x[ii*stride]
-                *= cexp((complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
+                *= cexp(- (complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
         }
     }
 
