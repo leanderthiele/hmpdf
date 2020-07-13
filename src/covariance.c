@@ -247,7 +247,7 @@ create_phigrid(hmpdf_obj *d)
         _indices[ii] = ii;
     }
     gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
-    gsl_rng_set(r, 10); // FIXME seed this randomly
+    gsl_rng_set(r, time(NULL));
     gsl_ran_shuffle(r, _indices, d->n->Nphi, sizeof(int));
     gsl_rng_free(r);
     for (int ii=0; ii<d->n->Nphi; ii++)
@@ -502,7 +502,6 @@ prepare_cov(hmpdf_obj *d)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_op(d))
 
@@ -538,7 +537,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
         HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.")
     }
 
-    if (not_monotonic(Nbins+1, binedges, NULL))
+    if (not_monotonic(Nbins+1, binedges))
     {
         HMPDFERR("binedges not monotonically increasing.")
     }

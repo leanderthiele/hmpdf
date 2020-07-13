@@ -35,10 +35,7 @@ null_profiles(hmpdf_obj *d)
     d->p->incr_tgrid = NULL;
     d->p->decr_tsqgrid = NULL;
     d->p->incr_tsqgrid = NULL;
-    d->p->prtilde_thetagrid = NULL;
     d->p->reci_tgrid = NULL;
-    d->p->created_monotonicity = 0;
-    d->p->is_not_monotonic = NULL;
     d->p->created_segments = 0;
     d->p->segment_boundaries = NULL;
     d->p->dht_ws = NULL;
@@ -64,7 +61,6 @@ reset_profiles(hmpdf_obj *d)
     if (d->p->decr_tsqgrid != NULL) { free(d->p->decr_tsqgrid); }
     if (d->p->incr_tsqgrid != NULL) { free(d->p->incr_tsqgrid); }
     if (d->p->reci_tgrid != NULL) { free(d->p->reci_tgrid); }
-    if (d->p->prtilde_thetagrid != NULL) { free(d->p->prtilde_thetagrid); }
     if (d->p->incr_tgrid_accel != NULL)
     {
         for (int ii=0; ii<d->Ncores; ii++)
@@ -113,17 +109,6 @@ reset_profiles(hmpdf_obj *d)
         }
         free(d->p->conj_profiles);
     }
-    if (d->p->is_not_monotonic != NULL)
-    {
-        for (int z_index=0; z_index<d->n->Nz; z_index++)
-        {
-            if (d->p->is_not_monotonic[z_index] != NULL)
-            {
-                free(d->p->is_not_monotonic[z_index]);
-            }
-        }
-        free(d->p->is_not_monotonic);
-    }
     if (d->p->segment_boundaries != NULL)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)
@@ -153,16 +138,12 @@ create_angle_grids(hmpdf_obj *d)
     STARTFCT
 
     HMPDFPRINT(2, "\tcreate_angle_grids\n")
-    
-    d->p->prtilde_Ntheta = PRTILDE_INTEGR_NTHETA;
 
     SAFEALLOC(, d->p->decr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)))
     SAFEALLOC(, d->p->incr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)))
     SAFEALLOC(, d->p->decr_tsqgrid, malloc((d->p->Ntheta+1) * sizeof(double)))
     SAFEALLOC(, d->p->incr_tsqgrid, malloc((d->p->Ntheta+1) * sizeof(double)))
     SAFEALLOC(, d->p->reci_tgrid,   malloc(d->p->Ntheta     * sizeof(double)))
-    // TODO rename, perhaps we don't need it!
-    SAFEALLOC(, d->p->prtilde_thetagrid, malloc(d->p->prtilde_Ntheta * sizeof(double)))
 
     for (int ii=0; ii<d->p->Ntheta; ii++)
     {
@@ -185,7 +166,6 @@ create_angle_grids(hmpdf_obj *d)
     d->p->incr_tsqgrid[0] = 0.0;
     d->p->incr_tgrid[0] = 0.0;
 
-    linspace(d->p->prtilde_Ntheta, 0.0, 1.0, d->p->prtilde_thetagrid);
     SAFEALLOC(, d->p->incr_tgrid_accel,
               malloc(d->Ncores * sizeof(gsl_interp_accel *)))
     for (int ii=0; ii<d->Ncores; ii++)
@@ -249,7 +229,6 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
         {
             p[ii] = 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
-        // TODO check if rho_m here physical or comoving
         p[ii] -= 2.0*lout*d->c->rho_m[z_index];
         p[ii] /= d->c->Scrit[z_index];
     }
@@ -508,150 +487,6 @@ create_filtered_profiles(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-static int
-monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
-// problems is an int[Nproblems], holding the indices where y was decreasing,
-// in increasing order
-{//{{{
-    STARTFCT
-
-    double scale = 0.0;
-    for (int jj=1; jj<Nx; jj++)
-    {
-        scale += y[jj] * y[jj];
-    }
-    scale = sqrt(scale/(double)(Nx-1));
-
-    int ledge = 0;
-    int redge = 0;
-    for (int ii=0; ii<Nproblems; ii++)
-    {
-        // check if we have already covered this problem
-        if (redge > problems[ii])
-        {
-            continue;
-        }
-        ledge = problems[ii] - 1; // >= 0
-        
-        // find the right edge
-        redge = Nx;
-        for (int jj=ledge+1; jj<Nx; jj++)
-        {
-            if (y[jj] > y[ledge]+0.1*scale)
-            {
-                redge = jj;
-                break;
-            }
-        }
-
-        double a, b;
-        // treat the case when no redge was found (only decreasing from here onwards)
-        // in this case, we build a simple linear ramp, and hope that this profile is not important
-        if (redge == Nx)
-        {
-            if (ledge == 0)
-            // case when we have no valid points
-            // use stdev as relevant scale
-            // profiles using this are completely irrelevant hopefully
-            {
-                a = scale / (x[Nx-1] - x[ledge]);
-                b = - a * x[ledge];
-            }
-            else
-            // perform linear fit through the last few datapoints
-            // x       x      x      x    x
-            // _start ...   ....   ....  ledge
-            {
-                int _start = GSL_MAX(0, ledge-3);
-                double cov00, cov01, cov11, sumsq;
-                SAFEGSL(gsl_fit_linear(x+_start, 1, y+_start, 1, ledge-_start+1,
-                                       &b, &a, &cov00, &cov01, &cov11, &sumsq))
-                // as is by construction negative, but we still need to ensure
-                // b doesn't spoil the party,
-                // and ensure numerical stability in a
-                a = GSL_MIN(-scale/fabs(x[Nx-1]-x[0]), a);
-                b = GSL_MAX(y[ledge] - a * x[ledge], b);
-            }
-        }
-        // a redge was found
-        else
-        {
-            a = (y[redge]-y[ledge]) / (x[redge] - x[ledge]);
-            b = y[ledge] - a * x[ledge];
-        }
-
-        for (int jj=ledge+1; jj<redge; jj++)
-        {
-            y[jj] = a * x[jj] + b;
-        }
-    }
-    
-    ENDFCT
-}//}}}
-
-int
-create_monotonicity(hmpdf_obj *d)
-{//{{{
-    STARTFCT
-
-    if (d->p->created_monotonicity) { return hmpdf_status; }
-
-    HMPDFPRINT(2, "\tcreate_monotonicity\n")
-
-    if (d->n->monotonize)
-    {
-        HMPDFPRINT(3, "\t\tmonotonizing\n")
-    }
-    else
-    {
-        HMPDFPRINT(3, "\t\tnot monotonizing\n")
-    }
-
-    SAFEALLOC(, d->p->is_not_monotonic, malloc(d->n->Nz * sizeof(int *)))
-    for (int z_index=0; z_index<d->n->Nz; z_index++)
-    {
-        SAFEALLOC(, d->p->is_not_monotonic[z_index],
-                  malloc((d->n->NM+1) * sizeof(int)))
-        d->p->is_not_monotonic[z_index][d->n->NM] = 0;
-        for (int M_index=0; M_index<d->n->NM; M_index++)
-        {
-            int _problems[d->p->Ntheta+1];
-            d->p->is_not_monotonic[z_index][M_index]
-            // FIXME
-                = not_monotonic(d->p->Ntheta+1,
-                                d->p->profiles[z_index][M_index]+1,
-                                _problems);
-            
-            if (d->n->monotonize && d->p->is_not_monotonic[z_index][M_index])
-            {
-                SAFEHMPDF(monotonize(d->p->Ntheta+1,
-                                     d->p->is_not_monotonic[z_index][M_index],
-                                     _problems, d->p->decr_tgrid,
-                                     d->p->profiles[z_index][M_index]+1))
-                // check if it worked correctly
-                if (!(all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                               1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))))
-                {
-                    SAFEHMPDF(not_monotonic(d->p->Ntheta+1,
-                                            d->p->profiles[z_index][M_index]+1,
-                                            NULL))
-                }
-                d->p->is_not_monotonic[z_index][M_index] = 0;
-            }
-
-            if (d->p->is_not_monotonic[z_index][M_index])
-            {
-                d->p->is_not_monotonic[z_index][d->n->NM] += 1;
-            }
-        }
-        
-    }
-
-    d->p->created_monotonicity = 1;
-
-    ENDFCT
-}//}}}
-
 int
 create_segments(hmpdf_obj *d)
 {//{{{
@@ -722,27 +557,6 @@ create_segments(hmpdf_obj *d)
                 [d->p->segment_boundaries[z_index][M_index][0]]
                 *= GSL_SIGN(d->p->profiles[z_index][M_index][d->p->Ntheta + 1]
                             - d->p->profiles[z_index][M_index][d->p->Ntheta]);
-
-            // TODO test
-            int broken = 0;
-            for (int ii=1; ii<d->p->segment_boundaries[z_index][M_index][0]; ii++)
-            {
-                if (GSL_SIGN(d->p->segment_boundaries[z_index][M_index][ii])
-                    == GSL_SIGN(d->p->segment_boundaries[z_index][M_index][ii+1]))
-                {
-                    broken = 1;
-                    printf("not consistent in %d %d\n", z_index, M_index);
-                    break;
-//                    HMPDFERR_NORETURN("invalid boundaries in %d %d\n", z_index, M_index);
-                }
-            }
-            if (broken)
-            {
-                for (int ii=0; ii<=d->p->segment_boundaries[z_index][M_index][0]; ii++)
-                {
-                    printf("\t%d\n", d->p->segment_boundaries[z_index][M_index][ii+1]);
-                }
-            }
         }
     }
 
@@ -754,7 +568,6 @@ create_segments(hmpdf_obj *d)
 int
 s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
-// TODO thread safety : one accelerator per core!
 {//{{{
     STARTFCT
 
@@ -861,46 +674,6 @@ remove_duplicates(int *N, double *x, double *y, double eps)
             --ii;
         }
     }
-
-    ENDFCT
-}//}}}
-
-static int
-update_batches(batch_container_t *b, int inrange, int *inbatch,
-               int len_this_batch, int sgn, int ii, double val)
-{//{{{
-    STARTFCT
-
-        if (!(inrange))
-        {
-            *inbatch = 0;
-        }
-        else
-        {
-            if (!(*inbatch))
-            // need to start a new batch
-            {
-                if (b->Nbatches == 0)
-                {
-                    SAFEALLOC(, b->batches,
-                              malloc(sizeof(batch_t)))
-                }
-                else
-                {
-                    SAFEALLOC(, b->batches,
-                              realloc(b->batches, (b->Nbatches+1) * sizeof(batch_t)))
-                }
-                ++b->Nbatches;
-                b->batches[b->Nbatches-1].incr = sgn;
-                b->batches[b->Nbatches-1].start = ii;
-                b->batches[b->Nbatches-1].len = 0;
-                SAFEALLOC(, b->batches[b->Nbatches-1].data,
-                          malloc(len_this_batch * sizeof(double)));
-            }
-            b->batches[b->Nbatches-1].data[b->batches[b->Nbatches-1].len] = val;
-            ++b->batches[b->Nbatches-1].len;
-            *inbatch = 1;
-        }
 
     ENDFCT
 }//}}}
@@ -1015,23 +788,6 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
         }
     }
     delete_interp1d(interp);
-
-    // TODO testing
-    /*
-    if (M_index > 20)
-    {
-        for (int ii=0; ii<b->Nbatches; ii++)
-        {
-            printf("delta signal = %.8e\n", d->n->signalgrid[1]-d->n->signalgrid[0]);
-            printf("batch #%d : len = %d, incr = %d, elements= [ %.8e , %.8e )\n", ii,
-                   b->batches[ii].len, b->batches[ii].incr,
-                   d->n->signalgrid[b->batches[ii].start],
-                   d->n->signalgrid[b->batches[ii].start + b->batches[ii].incr * b->batches[ii].len]);
-        }
-        gnuplot *gp = plot(NULL, len, ordinate, temp);
-        show(gp);
-    }
-    */
 
     free(temp);
     free(ordinate);

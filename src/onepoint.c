@@ -99,7 +99,7 @@ op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
 }//}}}
 
 static int
-op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
+op_Mint(hmpdf_obj *d, int z_index, double *au, double *ac)
 // performs the mass integrals, for the invertible profiles
 // integrals are _added_ to au, ac
 {//{{{
@@ -112,39 +112,6 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
 
     ENDFCT
 }//}}}
-
-/*
-static int
-op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
-// performs the mass integration over the non-invertible profiles
-// integrals are _added_ to au, ac
-{//{{{
-    STARTFCT
-
-    SAFEALLOC(complex *, temp, malloc((d->n->Nsignal/2+1) * sizeof(complex)))
-    for (int M_index=0; M_index<d->n->NM; M_index++)
-    {
-        if (!(d->p->is_not_monotonic[z_index][M_index]))
-        {
-            continue;
-        }
-        SAFEHMPDF(lambda_loop(d, z_index, M_index, temp))
-        double n = d->h->hmf[z_index][M_index];
-        double b = d->h->bias[z_index][M_index];
-        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
-        {
-            au[ii] += temp[ii] * n
-                      * d->n->Mweights[M_index];
-            ac[ii] += temp[ii] * n * b
-                      * d->n->Mweights[M_index];
-        }
-    }
-
-    free(temp);
-
-    ENDFCT
-}//}}}
-*/
 
 static int
 op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
@@ -173,7 +140,7 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
+        SAFEHMPDF(op_Mint(d, z_index, au_real, ac_real))
         // perform FFTs real -> complex
         fftw_execute(plan_u);
         fftw_execute(plan_c);
@@ -317,7 +284,6 @@ prepare_op(hmpdf_obj *d)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_op(d))
     if (d->ns->noise > 0.0)
@@ -339,7 +305,7 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
         HMPDFERR("noisy pdf requested but no/invalid noise level passed.")
     }
 
-    if (not_monotonic(Nbins+1, binedges, NULL))
+    if (not_monotonic(Nbins+1, binedges))
     {
         HMPDFERR("binedges not monotonically increasing.")
     }
@@ -355,10 +321,6 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
             _binedges[ii] += (incl_2h) ? d->op->signalmeanc : d->op->signalmeanu;
         }
     }
-
-    // TODO testing
-    gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->signalgrid, d->op->PDFc);
-    show(gp);
 
     SAFEHMPDF(bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,

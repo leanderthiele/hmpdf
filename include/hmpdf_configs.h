@@ -73,7 +73,6 @@ typedef enum
  *                                   #hmpdf_Tinker10_hmf_params,
  *                                   #hmpdf_Battaglia12_tsz_params
  *      + k space filter: #hmpdf_custom_k_filter (and #hmpdf_custom_k_filter_params)
- *      + monotonization of halo profiles: #hmpdf_monotonize
  *      + PDF internal sampling points: #hmpdf_N_signal, #hmpdf_signal_min, #hmpdf_signal_max
  *  
  *  Integration grids:
@@ -256,16 +255,6 @@ typedef enum
                     *   \remark If you encounter numerical instability (e.g., wild covariance matrix entries),
                     *           increasing this number can potentially be helpful.
                     */
-    hmpdf_monotonize, /*!< If non-zero (default), non-monotonic sections in the signal profiles will be patched.
-                       *   \par
-                       *   Type: int. Default: 1.
-                       *   \remark as long as you do not apply any custom ell- or k-space filter to the signal
-                       *           profiles, leaving this as 1 is very safe.
-                       *   \remark if you do use a custom filter, the rule of thumb is that as long as the filter
-                       *           is close to 1 for small ell/k, it should be fine as well.
-                       *   \remark this has to be set to 1 for two-point PDF and covariance matrix calculations
-                       *           (otherwise the integrations are impossibly slow).
-                       */
     hmpdf_zintegr_type, /*!< Fixed point integration mode for redshift integration.
                          *   \par
                          *   Type: #hmpdf_integr_mode_e. Default: #hmpdf_legendre.

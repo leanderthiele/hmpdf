@@ -178,15 +178,17 @@ void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
 int roll1d(int N, int N1, int stride, double *in, double *out);
 int roll2d(int N, int N1, double *in, double *out);
-int not_monotonic(int N, double *x, int *problems);
+int not_monotonic(int N, double *x);
 int all_zero(int N, double *x, double threshold);
 
 int wait(void);
 
+#ifdef GNUPLOT
 typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
 gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode);
 void show(gnuplot *gp);
+#endif
 
 void savetxt(char *fname, int Nlines, int Nvec, ...);
 double **loadtxt(char *fname, int *Nlines, int Nvec);

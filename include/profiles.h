@@ -33,12 +33,6 @@ typedef struct//{{{
 
     int created_filtered_profiles;
 
-    int prtilde_Ntheta;
-    double *prtilde_thetagrid;
-
-    int created_monotonicity;
-    int **is_not_monotonic;
-
     int created_segments;
     int ***segment_boundaries;
 
@@ -77,7 +71,6 @@ int reset_profiles(hmpdf_obj *d);
 int init_profiles(hmpdf_obj *d);
 int create_conj_profiles(hmpdf_obj *d);
 int create_filtered_profiles(hmpdf_obj *d);
-int create_monotonicity(hmpdf_obj *d);
 int create_segments(hmpdf_obj *d);
 
 int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);

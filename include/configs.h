@@ -81,14 +81,13 @@
 struct DEFAULTS {int Ncores[3]; int verbosity; char *class_pre;
                  int Npoints_z[3]; double z_min[3]; double z_max[3];
                  int Npoints_M[3]; double M_min[3]; double M_max[3];
-                 int Npoints_signal[3]; double signal_min[3]; double max_kappa[3]; double max_tsz[3];
+                 int Npoints_signal[3]; double min_kappa[3]; double min_tsz[3]; double max_kappa[3]; double max_tsz[3];
                  int Npoints_theta[3]; double rout_scale[3]; hmpdf_mdef_e rout_rdef[3];
                  double pixel_sidelength[3]; double tophat_radius[3]; double gaussian_fwhm[3];
                  hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;
                  hmpdf_k_filter_f custom_k_filter; void *custom_k_filter_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
-                 int monotonize;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;
                  hmpdf_integr_mode_e Mintegr_type[3]; double Mintegr_alpha; double Mintegr_beta;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p;

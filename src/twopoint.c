@@ -279,16 +279,17 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                 // check if no triangle can be formed anymore, since t1 only decreases
                 if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
                 for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
-                     jj < d->tp->t[z_index][M_index][segment2].len;
+                     (jj < d->tp->t[z_index][M_index][segment2].len)
+                     && (signalindex2 <= signalindex1);
                      signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
                 // loop over the direction that is Nsignal+2 long
                 {
                     double t2 = d->tp->t[z_index][M_index][segment2].data[jj];
                     // t2 is monotonically decreasing with jj
                     // check if we can form a triangle
-                    if (t1 >= t2 + phi) { continue; }
+                    if (t1 >= t2 + phi) { break; }    // t2 only decreases
                     if (t2 >= phi + t1) { continue; }
-                    if (phi >= t1 + t2) { break; }
+                    if (phi >= t1 + t2) { break; }    // t1,t2 only decrease
                     //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
                     double Delta = triang_A(phi, t1, t2);
                     double temp = 0.25 * n * Delta
@@ -298,7 +299,7 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
 
                     // take care of the symmetry factor on the diagonal
                     // TODO think about this!!!
-                    if ((ii==jj) && (segment1 != segment2))
+                    if ((signalindex1==signalindex2) && (segment1 != segment2))
                     {
                         temp *= 0.5;
                     }
@@ -559,11 +560,6 @@ prepare_tp(hmpdf_obj *d, double phi)
 
     HMPDFPRINT(1, "prepare_tp\n")
 
-    if (!(d->n->monotonize))
-    {
-        HMPDFERR("twopoint only possible if monotonize=1.")
-    }
-
     // run necessary code from other modules
     SAFEHMPDF(create_corr(d))
     if (d->f->Nfilters > 0)
@@ -571,7 +567,6 @@ prepare_tp(hmpdf_obj *d, double phi)
         SAFEHMPDF(create_conj_profiles(d))
         SAFEHMPDF(create_filtered_profiles(d))
     }
-    SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_phi_indep(d))
     SAFEHMPDF(create_op(d))
@@ -617,7 +612,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
         HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.")
     }
 
-    if (not_monotonic(Nbins+1, binedges, NULL))
+    if (not_monotonic(Nbins+1, binedges))
     {
         HMPDFERR("binedges not monotonically increasing.")
     }

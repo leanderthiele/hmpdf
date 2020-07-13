@@ -144,8 +144,8 @@ init_params(hmpdf_obj *d, param *p)
              d->n->Mmax, dbl_type, def.M_max)
     INIT_P_B(hmpdf_N_signal,
              d->n->Nsignal, int_type, def.Npoints_signal)
-    INIT_P_B(hmpdf_signal_min,
-             d->n->signalmin, dbl_type, def.signal_min)
+    INIT_P2_BKT(hmpdf_signal_min,
+               d->n->signalmin, dbl_type, def.min_kappa, def.min_tsz)
     INIT_P2_BKT(hmpdf_signal_max,
                 d->n->signalmax, dbl_type, def.max_kappa, def.max_tsz)
     INIT_P_B(hmpdf_N_theta,
@@ -178,8 +178,6 @@ init_params(hmpdf_obj *d, param *p)
              d->n->phijitter, dbl_type, def.phijitter)
     INIT_P(hmpdf_phi_pwr,
            d->n->phipwr, dbl_type, def.phipwr)
-    INIT_P(hmpdf_monotonize,
-           d->n->monotonize, int_type, def.monotonize)
     INIT_P_B(hmpdf_zintegr_type,
              d->n->zintegr_type, integr_type, def.zintegr_type)
     INIT_P(hmpdf_zintegr_alpha,

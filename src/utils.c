@@ -4,6 +4,10 @@
 #include <stdarg.h>
 #include <complex.h>
 #include <math.h>
+#ifdef GNUPLOT
+#include <termios.h>
+#include <unistd.h>
+#endif
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -11,8 +15,6 @@
 #pragma message "Warning: compiling without OpenMP. Covariance matrix will be slow."
 #endif
 
-#include <termios.h>
-#include <unistd.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_interp2d.h>
@@ -139,30 +141,17 @@ roll2d(int N, int N1, double *in, double *out)
 }//}}}
 
 int
-not_monotonic(int N, double *x, int *problems)
+not_monotonic(int N, double *x)
 // checks if x is monotonically increasing
-// (this is what we require for the FFTs to work)
-// if problems != NULL, writes problematic indices into the array
-// if problems == NULL, returns immediately if a non-monotonic
-//     value is found (useful to check user input binedges)
 {//{{{
-    int out = 0;
     for (int ii=1; ii<N; ii++)
     {
         if (x[ii] <= x[ii-1])
         {
-            out += 1;
-            if (problems != NULL)
-            {
-                problems[out-1] = ii;
-            }
-            else
-            {
-                break;
-            }
+            return 1;
         }
     }
-    return out;
+    return 0;
 }//}}}
 
 int
@@ -198,20 +187,7 @@ zero_comp(int N, complex *x)
     }
 }//}}}
 
-int
-wait(void)
-{//{{{
-    int ch;
-    struct termios oldt, newt;
-    tcgetattr ( STDIN_FILENO, &oldt );
-    newt = oldt;
-    newt.c_lflag &= ~( ICANON | ECHO );
-    tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
-    ch = getchar();
-    tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
-    return ch;
-}//}}}
-
+#ifdef GNUPLOT
 struct
 gnuplot_s
 {//{{{
@@ -259,6 +235,20 @@ plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
     return gp;
 }//}}}
 
+int
+wait(void)
+{//{{{
+    int ch;
+    struct termios oldt, newt;
+    tcgetattr ( STDIN_FILENO, &oldt );
+    newt = oldt;
+    newt.c_lflag &= ~( ICANON | ECHO );
+    tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
+    ch = getchar();
+    tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
+    return ch;
+}//}}}
+
 void
 show(gnuplot *gp)
 {//{{{
@@ -271,6 +261,7 @@ show(gnuplot *gp)
     pclose(gp->gp);
     free(gp);
 }//}}}
+#endif // GNUPLOT
 
 static int
 lcounttxt(FILE *f)

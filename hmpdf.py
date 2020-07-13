@@ -82,7 +82,6 @@ class _Configs(object) :
                'custom_k_filter', _F(2), 'custom_k_filter_params', None,
                'N_phi', c_int, 'phi_max', c_double, 'pixelexact_max', c_int,
                'phi_jitter', c_double, 'phi_pwr', c_double,
-               'monotonize', c_int,
                'zintegr_type', _E(_integr), 'zintegr_alpha', c_double, 'zintegr_beta', c_double,
                'Mintegr_type', _E(_integr), 'Mintegr_alpha', c_double, 'Mintegr_beta', c_double,
                'Duffy08_conc_params', _D(9),
