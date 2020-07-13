@@ -20,14 +20,16 @@
 #define PKINTEGR_EPSABS 0.0
 #define PKINTEGR_EPSREL 1e-6
 
-#define MDEF_GLOBAL hmpdf_mdef_m // FIXME this needs to be automatic
+#define MDEF_GLOBAL hmpdf_mdef_m // this should not be changed,
+                                 //    since it's assumed in computation
+                                 //    of the mass function
 
 #define CINTERP_NC 10000
 #define CINTERP_CMIN 0.1
 #define CINTERP_CMAX 100.0
 #define CINTERP_TYPE interp_cspline
 
-#define PRINTERP_TYPE interp_cspline
+#define PRINTERP_TYPE interp_steffen // ensure monotonicity is preserved
 
 #define CORRINTERP_N 1000
 #define CORRINTERP_TYPE interp_cspline

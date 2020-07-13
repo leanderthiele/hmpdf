@@ -176,9 +176,7 @@ void logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
 void zero_comp(int N, complex *x);
 void reverse(int N, double *in, double *out);
-int roll1d(int N, int N1, int stride, double *in, double *out);
-int roll2d(int N, int N1, double *in, double *out);
-int not_monotonic(int N, double *x);
+int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);
 
 int wait(void);
@@ -211,6 +209,7 @@ typedef enum//{{{
 }//}}}
 interp_mode;
 typedef struct interp1d_s interp1d;
+const gsl_interp_type *interp1d_type(interp_mode m);
 int new_interp1d(int N, double *x, double *y,
                  double ylo, double yhi,
                  interp_mode m, gsl_interp_accel *a, interp1d **out);

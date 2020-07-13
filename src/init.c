@@ -443,7 +443,7 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     // this frees all the computed quantities,
     // since we assume that each call of init changes some
     // parameter (cosmological or numerical)
-    SAFEHMPDF(reset_data(d))
+    SAFEHMPDF(reset_obj(d))
 
     // compute things that we need for all output products
     SAFEHMPDF(compute_necessary_for_all(d))

@@ -91,62 +91,12 @@ reverse(int N, double *in, double *out)
 }//}}}
 
 int
-roll1d(int N, int N1, int stride, double *in, double *out)
-// { a1 ... aN1 aN1+1 ... aN }
-// --> { aN1+1 ... aN a1 ... aN1 }
-// safe if in and out are overlapping
-{//{{{
-    STARTFCT
-
-    SAFEALLOC(double *, temp, malloc(N * sizeof(double)))
-
-    // copy the N1 segment
-    for (int ii=0; ii<N1; ii++)
-    {
-        temp[ii+N-N1] = in[ii*stride];
-    }
-    // copy the N-N1 segment
-    for (int ii=0; ii<N-N1; ii++)
-    {
-        temp[ii] = in[(ii+N1)*stride];
-    }
-    // copy back into output array
-    for (int ii=0; ii<N; ii++)
-    {
-        out[ii*stride] = temp[ii];
-    }
-    free(temp);
-
-    ENDFCT
-}//}}}
-
-int
-roll2d(int N, int N1, double *in, double *out)
-// analogous to roll1d, along two directions
-{//{{{
-    STARTFCT
-
-    // do the row-wise rolls
-    for (int ii=0; ii<N; ii++)
-    {
-        SAFEHMPDF(roll1d(N, N1, 1, in+ii*N, out+ii*N))
-    }
-    // do the col-wise rolls
-    for (int ii=0; ii<N; ii++)
-    {
-        SAFEHMPDF(roll1d(N, N1, N, in+ii, out+ii))
-    }
-
-    ENDFCT
-}//}}}
-
-int
-not_monotonic(int N, double *x)
-// checks if x is monotonically increasing
+not_monotonic(int N, double *x, int sgn)
+// checks if x is monotonically increasing (sgn>0) / decreasing (sgn<0)
 {//{{{
     for (int ii=1; ii<N; ii++)
     {
-        if (x[ii] <= x[ii-1])
+        if ((sgn > 0) ? (x[ii] <= x[ii-1]) : (x[ii] >= x[ii-1]))
         {
             return 1;
         }
@@ -477,32 +427,28 @@ interp1d_s
     double yhi;
 };//}}}
 
+const gsl_interp_type *interp1d_type(interp_mode m)
+{//{{{
+    switch (m)
+    {
+        case interp_linear           : return gsl_interp_linear;
+        case interp_polynomial       : return gsl_interp_polynomial;
+        case interp_cspline          : return gsl_interp_cspline;
+        case interp_cspline_periodic : return gsl_interp_cspline_periodic;
+        case interp_akima            : return gsl_interp_akima;
+        case interp_akima_periodic   : return gsl_interp_akima_periodic;
+        case interp_steffen          : return gsl_interp_steffen;
+        default                      : return NULL;
+    }
+}//}}}
+
 int
 new_interp1d(int N, double *x, double *y, double ylo, double yhi,
              interp_mode m, gsl_interp_accel *a, interp1d **out)
 {//{{{
     STARTFCT
 
-    const gsl_interp_type *T;
-    switch (m)
-    {
-        case interp_linear           : T = gsl_interp_linear;
-                                       break;
-        case interp_polynomial       : T = gsl_interp_polynomial;
-                                       break;
-        case interp_cspline          : T = gsl_interp_cspline;
-                                       break;
-        case interp_cspline_periodic : T = gsl_interp_cspline_periodic;
-                                       break;
-        case interp_akima            : T = gsl_interp_akima;
-                                       break;
-        case interp_akima_periodic   : T = gsl_interp_akima_periodic;
-                                       break;
-        case interp_steffen          : T = gsl_interp_steffen;
-                                       break;
-        default                      : T = NULL;
-                                       HMPDFERR("Unkown interpolation type.")
-    }
+    const gsl_interp_type *T = interp1d_type(m);
     SAFEALLOC(, *out, malloc(sizeof(interp1d)))
     (*out)->N = N;
     (*out)->x = x;

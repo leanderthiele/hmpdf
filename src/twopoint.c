@@ -200,6 +200,20 @@ create_phi_indep(hmpdf_obj *d)
                 SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
                                       t_of_s, d->tp->t[z_index][M_index]+segment))
 
+                // sanity check
+                if (not_monotonic(d->tp->t[z_index][M_index][segment].len,
+                                  d->tp->t[z_index][M_index][segment].data,
+                                  -1))
+                {
+                    for (int ii=0; ii<d->tp->t[z_index][M_index][segment].len; ii++)
+                    {
+                        printf("%.8e\n", d->tp->t[z_index][M_index][segment].data[ii]);
+                    }
+                    HMPDFERR("theta values not monotonically decreasing in "
+                             "z = %d, M = %d, segment = %d",
+                             z_index, M_index, segment)
+                }
+
                 for (int signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
                      ii < d->tp->t[z_index][M_index][segment].len;
                      signalindex += d->tp->t[z_index][M_index][segment].incr, ii++)
@@ -280,7 +294,7 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                 if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
                 for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
                      (jj < d->tp->t[z_index][M_index][segment2].len)
-                     && (signalindex2 <= signalindex1);
+                     && (signalindex2 <= signalindex1)/*compute only half of the matrix, because it's symmetric*/;
                      signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
                 // loop over the direction that is Nsignal+2 long
                 {
@@ -489,7 +503,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     ENDFCT
 }//}}}
 
-int
+static int
 create_noisy_tp(hmpdf_obj *d)
 {//{{{
     STARTFCT
@@ -612,7 +626,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
         HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.")
     }
 
-    if (not_monotonic(Nbins+1, binedges))
+    if (not_monotonic(Nbins+1, binedges, 1))
     {
         HMPDFERR("binedges not monotonically increasing.")
     }

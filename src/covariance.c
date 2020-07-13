@@ -537,7 +537,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
         HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.")
     }
 
-    if (not_monotonic(Nbins+1, binedges))
+    if (not_monotonic(Nbins+1, binedges, 1))
     {
         HMPDFERR("binedges not monotonically increasing.")
     }

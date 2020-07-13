@@ -700,11 +700,12 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);
     int len = end - start;
     int sgn = GSL_SIGN(d->p->segment_boundaries[z_index][M_index][segment+1]);
+    int min_size = gsl_interp_type_min_size(interp1d_type(PRINTERP_TYPE));
 
     // check if there is anything interesting here
     if (all_zero(len, d->p->profiles[z_index][M_index]+start,
                  1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))
-        || (len < 5))
+        || (len < min_size));
     {
         return hmpdf_status;
     }
@@ -728,7 +729,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     SAFEHMPDF(remove_duplicates(&len, ordinate, temp,
               1e-3 * (d->n->signalgrid[1] - d->n->signalgrid[0])))
     // check if it's too short now
-    if (len < 5)
+    if (len < min_size)
     {
         return hmpdf_status;
     }

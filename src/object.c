@@ -55,7 +55,7 @@ hmpdf_obj *hmpdf_new(void)
 }//}}}
 
 int
-reset_data(hmpdf_obj *d)
+reset_obj(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
@@ -65,12 +65,12 @@ reset_data(hmpdf_obj *d)
     SAFEHMPDF(reset_power(d))
     SAFEHMPDF(reset_halo_model(d))
     SAFEHMPDF(reset_filters(d))
-    SAFEHMPDF(reset_profiles(d))
     SAFEHMPDF(reset_noise(d))
     SAFEHMPDF(reset_onepoint(d))
     SAFEHMPDF(reset_twopoint(d))
     SAFEHMPDF(reset_powerspectrum(d))
     SAFEHMPDF(reset_covariance(d))
+    SAFEHMPDF(reset_profiles(d))
 
     SAFEHMPDF(null_data(d))
 
@@ -84,7 +84,7 @@ hmpdf_delete(hmpdf_obj *d)
 
     HMPDFPRINT(1, "hmpdf_delete\n")
 
-    SAFEHMPDF(reset_data(d))
+    SAFEHMPDF(reset_obj(d))
 
     free(d->cls);
     free(d->c);
