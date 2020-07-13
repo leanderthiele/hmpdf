@@ -26,7 +26,6 @@ typedef struct//{{{
     double signalmin;
     double signalmax;
     double *signalgrid;
-    double *incr_signalgrid;
     double *lambdagrid;
 
     int Nsignal_noisy;

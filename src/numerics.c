@@ -180,13 +180,10 @@ create_grids(hmpdf_obj *d)
     }
 
     SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
-    SAFEALLOC(, d->n->incr_signalgrid, malloc(d->n->Nsignal * sizeof(double)))
     SAFEHMPDF(construct_signalgrid(d->n->Nsignal,
                                    &(d->n->Nsignal_negative),
                                    &(d->n->signalmin), &(d->n->signalmax),
-                                   d->n->incr_signalgrid))
-    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal_negative, 1,
-                     d->n->incr_signalgrid, d->n->signalgrid))
+                                   d->n->signalgrid))
 
     ENDFCT
 }//}}}

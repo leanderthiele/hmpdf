@@ -27,12 +27,9 @@ null_onepoint(hmpdf_obj *d)
     STARTFCT
 
     d->op->created_op = 0;
-    d->op->created_rolled_op = 0;
     d->op->created_noisy_op = 0;
     d->op->PDFu = NULL;
     d->op->PDFc = NULL;
-    d->op->PDFu_rolled = NULL;
-    d->op->PDFc_rolled = NULL;
     d->op->PDFu_noisy = NULL;
     d->op->PDFc_noisy = NULL;
 
@@ -48,10 +45,27 @@ reset_onepoint(hmpdf_obj *d)
 
     if (d->op->PDFu != NULL) { free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { free(d->op->PDFc); }
-    if (d->op->PDFu_rolled != NULL) { free(d->op->PDFu_rolled); }
-    if (d->op->PDFc_rolled != NULL) { free(d->op->PDFc_rolled); }
     if (d->op->PDFu_noisy != NULL) { free(d->op->PDFu_noisy); }
     if (d->op->PDFc_noisy != NULL) { free(d->op->PDFc_noisy); }
+
+    ENDFCT
+}//}}}
+
+int
+correct_phase1d(hmpdf_obj *d, complex *x, int stride, int sgn)
+// sign is +1 for application after real -> complex FFT
+// and -1 for application before complex -> real FFT
+{//{{{
+    STARTFCT
+
+    if (d->n->Nsignal_negative > 0)
+    {
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        {
+            x[ii*stride]
+                *= cexp((complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
+        }
+    }
 
     ENDFCT
 }//}}}
@@ -67,20 +81,18 @@ op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
          segment<d->p->segment_boundaries[z_index][M_index][0];
          segment++)
     {
-        batch_container_t bt;
+        batch_t bt;
         SAFEHMPDF(inv_profile(d, z_index, M_index, segment, dtsq_of_s, &bt))
-        for (int ii=0; ii<bt.Nbatches; ii++)
+        for (int signalindex=bt.start, ii=0;
+             ii < bt.len;
+             signalindex += bt.incr, ii++)
         {
-            for (int signalindex=bt.batches[ii].start, jj=0;
-                 jj < bt.batches[ii].len; signalindex += bt.batches[ii].incr, jj++)
-            {
-                au[signalindex] -= bt.batches[ii].data[jj] * M_PI * n
-                                   * d->n->Mweights[M_index];
-                ac[signalindex] -= bt.batches[ii].data[jj] * M_PI * n * b
-                                   * d->n->Mweights[M_index];
-            }
+            au[signalindex] += fabs(bt.data[ii]) * M_PI * n
+                               * d->n->Mweights[M_index];
+            ac[signalindex] += fabs(bt.data[ii]) * M_PI * n * b
+                               * d->n->Mweights[M_index];
         }
-        delete_batch_container(&bt);
+        delete_batch(&bt);
     }
 
     ENDFCT
@@ -101,6 +113,7 @@ op_Mint_invertible(hmpdf_obj *d, int z_index, double *au, double *ac)
     ENDFCT
 }//}}}
 
+/*
 static int
 op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 // performs the mass integration over the non-invertible profiles
@@ -131,6 +144,7 @@ op_Mint_notinvertible(hmpdf_obj *d, int z_index, complex *au, complex *ac)
 
     ENDFCT
 }//}}}
+*/
 
 static int
 op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
@@ -159,25 +173,13 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        /* TODO
-        if (d->p->is_not_monotonic[z_index][d->n->NM] < d->n->NM)
-        // there are samples for which we can do the FFT integral
-        {
-        */
-            SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
-            // TODO for testing
-            gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->signalgrid, au_real);
-            show(gp);
-            fftw_execute(plan_u);
-            fftw_execute(plan_c);
-        /* TODO
-        }
-        if (d->p->is_not_monotonic[z_index][d->n->NM])
-        // there are samples for which we need to do the slow integral
-        {
-            SAFEHMPDF(op_Mint_notinvertible(d, z_index, au_comp, ac_comp))
-        }
-        */
+        SAFEHMPDF(op_Mint_invertible(d, z_index, au_real, ac_real))
+        // perform FFTs real -> complex
+        fftw_execute(plan_u);
+        fftw_execute(plan_c);
+        // correct phases
+        SAFEHMPDF(correct_phase1d(d, au_comp, 1, 1))
+        SAFEHMPDF(correct_phase1d(d, ac_comp, 1, 1))
 
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -245,7 +247,7 @@ create_noisy_op(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_noisy_op\n")
 
-    double *in[] = {d->op->PDFu_rolled, d->op->PDFc_rolled};
+    double *in[] = {d->op->PDFu, d->op->PDFc};
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
     for (int ii=0; ii<2; ii++)
     {
@@ -285,6 +287,9 @@ create_op(hmpdf_obj *d)
         PDFc_comp[ii] = cexp(PDFc_comp[ii])/(double)(d->n->Nsignal);
     }
 
+    // correct phases
+    SAFEHMPDF(correct_phase1d(d, PDFu_comp, 1, -1))
+    SAFEHMPDF(correct_phase1d(d, PDFc_comp, 1, -1))
     // transform back to real space
     fftw_execute(plan_u);
     fftw_execute(plan_c);
@@ -295,26 +300,6 @@ create_op(hmpdf_obj *d)
     SAFEHMPDF(get_mean_signal(d))
 
     d->op->created_op = 1;
-
-    ENDFCT
-}//}}}
-
-int
-create_rolled_op(hmpdf_obj *d)
-{//{{{
-    STARTFCT
-
-    if (d->op->created_rolled_op) { return hmpdf_status; }
-
-    HMPDFPRINT(2, "\tcreate_rolled_op\n")
-
-    SAFEALLOC(, d->op->PDFu_rolled, malloc(d->n->Nsignal * sizeof(double)))
-    SAFEALLOC(, d->op->PDFc_rolled, malloc(d->n->Nsignal * sizeof(double)))
-
-    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative, 1,
-                     d->op->PDFu, d->op->PDFu_rolled))
-    SAFEHMPDF(roll1d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative, 1,
-                     d->op->PDFc, d->op->PDFc_rolled))
 
     ENDFCT
 }//}}}
@@ -335,7 +320,6 @@ prepare_op(hmpdf_obj *d)
     SAFEHMPDF(create_monotonicity(d))
     SAFEHMPDF(create_segments(d))
     SAFEHMPDF(create_op(d))
-    SAFEHMPDF(create_rolled_op(d))
     if (d->ns->noise > 0.0)
     // include gaussian noise
     {
@@ -373,13 +357,13 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
     }
 
     // TODO testing
-    gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->incr_signalgrid, d->op->PDFc_rolled);
+    gnuplot *gp = plot(NULL, d->n->Nsignal, d->n->signalgrid, d->op->PDFc);
     show(gp);
 
     SAFEHMPDF(bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->incr_signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
-                     : ((incl_2h) ? d->op->PDFc_rolled : d->op->PDFu_rolled),
+                     : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
                      Nbins, _binedges, op, OPINTERP_TYPE))
 
     ENDFCT

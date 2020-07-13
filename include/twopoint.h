@@ -30,8 +30,8 @@ typedef struct//{{{
 {
     // phi-independent quantities, to compute only once
     int created_phi_indep;
-    batch_container_t ***dtsq; // [ z_index, M_index, segment ]
-    batch_container_t ***t; // [ z_index, M_index, segment ]
+    batch_t ***dtsq; // [ z_index, M_index, segment ]
+    batch_t ***t; // [ z_index, M_index, segment ]
     complex **ac; // [ z_index, lambda_index ]
     complex *au; // [ lambda_index ] // allocated with fftw_malloc
     
@@ -49,7 +49,6 @@ int new_tp_ws(int N, twopoint_workspace **out);
 
 int null_twopoint(hmpdf_obj *d);
 int reset_twopoint(hmpdf_obj *d);
-int roll_tp(int N, double *xorig, double *xnew, double *yorig, double *ynew);
 int create_phi_indep(hmpdf_obj *d);
 int create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws);
 int hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins*Nbins], int noisy);

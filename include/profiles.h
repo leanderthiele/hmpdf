@@ -70,7 +70,7 @@ typedef struct
 }//}}}
 batch_container_t;
 
-void delete_batch_container(batch_container_t *b);
+void delete_batch(batch_t *b);
 
 int null_profiles(hmpdf_obj *d);
 int reset_profiles(hmpdf_obj *d);
@@ -83,6 +83,6 @@ int create_segments(hmpdf_obj *d);
 int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
 int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
 int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
-                inv_profile_e mode, batch_container_t *b);
+                inv_profile_e mode, batch_t *b);
 
 #endif

@@ -55,7 +55,7 @@ reset_twopoint(hmpdf_obj *d)
                              segment<d->p->segment_boundaries[z_index][M_index][0];
                              segment++)
                         {
-                            delete_batch_container(d->tp->dtsq[z_index][M_index]+segment);
+                            delete_batch(d->tp->dtsq[z_index][M_index]+segment);
                         }
                         free(d->tp->dtsq[z_index][M_index]);
                     }
@@ -79,7 +79,7 @@ reset_twopoint(hmpdf_obj *d)
                              segment<d->p->segment_boundaries[z_index][M_index][0];
                              segment++)
                         {
-                            delete_batch_container(d->tp->t[z_index][M_index]+segment);
+                            delete_batch(d->tp->t[z_index][M_index]+segment);
                         }
                         free(d->tp->t[z_index][M_index]);
                     }
@@ -117,6 +117,28 @@ reset_twopoint(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
+static int
+correct_phase2d(hmpdf_obj *d, complex *x, int sgn)
+{//{{{
+    STARTFCT
+
+    if (d->n->Nsignal_negative > 0)
+    {
+        // correct rows
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        {
+            correct_phase1d(d, x+ii*(d->n->Nsignal/2+1), 1, sgn);
+        }
+        // correct cols
+        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        {
+            correct_phase1d(d, x+ii, d->n->Nsignal/2+1, sgn);
+        }
+    }
+
+    ENDFCT
+}//}}}
+
 int
 create_phi_indep(hmpdf_obj *d)
 // computes tp->dtsq, tp->t, tp->ac
@@ -127,10 +149,10 @@ create_phi_indep(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phi_indep\n")
     
-    SAFEALLOC(, d->tp->dtsq,   malloc(d->n->Nz * sizeof(batch_container_t **)))
-    SAFEALLOC(, d->tp->t,      malloc(d->n->Nz * sizeof(batch_container_t **)))
-    SAFEALLOC(, d->tp->ac, malloc(d->n->Nz * sizeof(complex *)))
-    SAFEALLOC(, d->tp->au, fftw_malloc((d->n->Nsignal/2+1) * sizeof(complex)))
+    SAFEALLOC(, d->tp->dtsq,   malloc(d->n->Nz * sizeof(batch_t **)))
+    SAFEALLOC(, d->tp->t,      malloc(d->n->Nz * sizeof(batch_t **)))
+    SAFEALLOC(, d->tp->ac,     malloc(d->n->Nz * sizeof(complex *)))
+    SAFEALLOC(, d->tp->au,     fftw_malloc((d->n->Nsignal/2+1) * sizeof(complex)))
     double *au_real = (double *)(d->tp->au);
 
     SAFEALLOC(double *, tempc_real, fftw_malloc((d->n->Nsignal+2)*sizeof(double)))
@@ -147,9 +169,9 @@ create_phi_indep(hmpdf_obj *d)
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->tp->dtsq[z_index],   malloc(d->n->NM * sizeof(batch_container_t *)))
-        SAFEALLOC(, d->tp->t[z_index],      malloc(d->n->NM * sizeof(batch_container_t *)))
-        SAFEALLOC(, d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(complex)))
+        SAFEALLOC(, d->tp->dtsq[z_index],   malloc(d->n->NM * sizeof(batch_t *)))
+        SAFEALLOC(, d->tp->t[z_index],      malloc(d->n->NM * sizeof(batch_t *)))
+        SAFEALLOC(, d->tp->ac[z_index],     malloc((d->n->Nsignal/2+1) * sizeof(complex)))
         // null the FFT array
         for (int ii=0; ii<d->n->Nsignal+2; ii++)
         {
@@ -164,10 +186,10 @@ create_phi_indep(hmpdf_obj *d)
 
             SAFEALLOC(, d->tp->dtsq[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(batch_container_t)))
+                             * sizeof(batch_t)))
             SAFEALLOC(, d->tp->t[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(batch_container_t)))
+                             * sizeof(batch_t)))
 
             for (int segment=0;
                  segment<d->p->segment_boundaries[z_index][M_index][0];
@@ -178,32 +200,35 @@ create_phi_indep(hmpdf_obj *d)
                 SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
                                       t_of_s, d->tp->t[z_index][M_index]+segment))
 
-                for (int ii=0; ii<d->tp->t[z_index][M_index][segment].Nbatches; ii++)
+                for (int signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
+                     ii < d->tp->t[z_index][M_index][segment].len;
+                     signalindex += d->tp->t[z_index][M_index][segment].incr, ii++)
                 {
-                    for (int signalindex=d->tp->t[z_index][M_index][segment].batches[ii].start, jj=0;
-                         jj < d->tp->t[z_index][M_index][segment].batches[ii].len;
-                         signalindex += d->tp->t[z_index][M_index][segment].batches[ii].incr, jj++)
-                    {
-                        au_real[signalindex] -= M_PI * n * d->tp->dtsq[z_index][M_index][segment].batches[ii].data[jj]
-                                                * d->n->Mweights[M_index] * d->n->zweights[z_index]
-                                                * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index];
-                        tempc_real[signalindex] -= M_PI * n * b
-                                                   * d->tp->dtsq[z_index][M_index][segment].batches[ii].data[jj]
-                                                   * d->n->Mweights[M_index];
-                    }
+                    au_real[signalindex] += M_PI * n
+                                            * fabs(d->tp->dtsq[z_index][M_index][segment].data[ii])
+                                            * d->n->Mweights[M_index] * d->n->zweights[z_index]
+                                            * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index];
+                    tempc_real[signalindex] += M_PI * n * b
+                                               * fabs(d->tp->dtsq[z_index][M_index][segment].data[ii])
+                                               * d->n->Mweights[M_index];
                 }
             }
         }
 
-        // perform FFT
+        // perform FFT for clustered term
         fftw_execute(plan_c);
+        // correct phases
+        SAFEHMPDF(correct_phase1d(d, tempc_comp, 1, 1))
         // write into the output array, subtracting the zero mode
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             d->tp->ac[z_index][ii] = tempc_comp[ii] - tempc_comp[0];
         }
     }
+    // perform FFT for unclustered term
     fftw_execute(plan_u);
+    // correct phases
+    SAFEHMPDF(correct_phase1d(d, d->tp->au, 1, 1))
     // subtract zero mode of unclustered contribution
     for (int ii=d->n->Nsignal/2; ii>=0; ii--)
     {
@@ -238,56 +263,50 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
          segment1<d->p->segment_boundaries[z_index][M_index][0];
          segment1++)
     {
-        for (int b1=0; b1<d->tp->t[z_index][M_index][segment1].Nbatches; b1++)
+        for (int segment2=0;
+             segment2<d->p->segment_boundaries[z_index][M_index][0];
+             segment2++)
         {
-            for (int segment2=0;
-                 segment2<d->p->segment_boundaries[z_index][M_index][0];
-                 segment2++)
+            // loop such that the theta values are always monotonically decreasing
+            // so that we know when to break
+            for (int signalindex1 = d->tp->t[z_index][M_index][segment1].start, ii=0;
+                 ii < d->tp->t[z_index][M_index][segment1].len;
+                 signalindex1 += d->tp->t[z_index][M_index][segment1].incr, ii++)
+            // loop over the direction that is Nsignal long
             {
-                for (int b2=0; b2<d->tp->t[z_index][M_index][segment2].Nbatches; b2++)
+                double t1 = d->tp->t[z_index][M_index][segment1].data[ii];
+                // t1 is monotonically decreasing with ii
+                // check if no triangle can be formed anymore, since t1 only decreases
+                if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
+                for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
+                     jj < d->tp->t[z_index][M_index][segment2].len;
+                     signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
+                // loop over the direction that is Nsignal+2 long
                 {
-                    // loop such that the theta values are always monotonically decreasing
-                    // so that we know when to break
-                    for (int signalindex1 = d->tp->t[z_index][M_index][segment1].batches[b1].start, ii=0;
-                         ii < d->tp->t[z_index][M_index][segment1].batches[b1].len;
-                         signalindex1 += d->tp->t[z_index][M_index][segment1].batches[b1].incr, ii++)
-                    // loop over the direction that is Nsignal long
-                    {
-                        double t1 = d->tp->t[z_index][M_index][segment1].batches[b1].data[ii];
-                        // t1 is monotonically decreasing with ii
-                        // check if no triangle can be formed anymore, since t1 only decreases
-                        if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
-                        for (int signalindex2 = d->tp->t[z_index][M_index][segment2].batches[b2].start, jj=0;
-                             jj < d->tp->t[z_index][M_index][segment2].batches[b2].len;
-                             signalindex2 += d->tp->t[z_index][M_index][segment2].batches[b2].incr, jj++)
-                        // loop over the direction that is Nsignal+2 long
-                        {
-                            double t2 = d->tp->t[z_index][M_index][segment2].batches[b2].data[jj];
-                            // t2 is monotonically decreasing with jj
-                            // check if we can form a triangle
-                            if (t1 >= t2 + phi) { continue; }
-                            if (t2 >= phi + t1) { continue; }
-                            if (phi >= t1 + t2) { break; }
-                            //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
-                            double Delta = triang_A(phi, t1, t2);
-                            double temp = 0.25 * n * Delta
-                                          * d->tp->dtsq[z_index][M_index][segment1].batches[b1].data[ii]
-                                          * d->tp->dtsq[z_index][M_index][segment2].batches[b2].data[jj]
-                                          * d->n->Mweights[M_index];
+                    double t2 = d->tp->t[z_index][M_index][segment2].data[jj];
+                    // t2 is monotonically decreasing with jj
+                    // check if we can form a triangle
+                    if (t1 >= t2 + phi) { continue; }
+                    if (t2 >= phi + t1) { continue; }
+                    if (phi >= t1 + t2) { break; }
+                    //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
+                    double Delta = triang_A(phi, t1, t2);
+                    double temp = 0.25 * n * Delta
+                                  * fabs(d->tp->dtsq[z_index][M_index][segment1].data[ii])
+                                  * fabs(d->tp->dtsq[z_index][M_index][segment2].data[jj])
+                                  * d->n->Mweights[M_index];
 
-                            // take care of the symmetry factor on the diagonal
-                            // TODO think about this!!!
-                            if ((ii==jj) && (segment1 != segment2))
-                            {
-                                temp *= 0.5;
-                            }
-                           
-                            ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2] += temp * b;
-                            ws->pdf_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
-                                += temp * gsl_pow_2(d->c->comoving[z_index])
-                                   / d->c->hubble[z_index] * d->n->zweights[z_index];
-                        }
+                    // take care of the symmetry factor on the diagonal
+                    // TODO think about this!!!
+                    if ((ii==jj) && (segment1 != segment2))
+                    {
+                        temp *= 0.5;
                     }
+                   
+                    ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2] += temp * b;
+                    ws->pdf_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
+                        += temp * gsl_pow_2(d->c->comoving[z_index])
+                           / d->c->hubble[z_index] * d->n->zweights[z_index];
                 }
             }
         }
@@ -395,6 +414,8 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         }
         // perform the FFT on the clustered part tempc_real -> tempc_comp
         fftw_execute(ws->pc_r2c);
+        // correct phases
+        SAFEHMPDF(correct_phase2d(d, ws->tempc_comp, 1))
 
         // add to the clustered output
         for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -412,37 +433,6 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
             }
         }
     }
-
-    ENDFCT
-}//}}}
-
-int
-roll_tp(int N, double *xorig, double *xnew, double *yorig, double *ynew)
-{//{{{
-    STARTFCT
-
-    // interpolate
-    interp2d *interp;
-    SAFEHMPDF(new_interp2d(N, xorig, yorig, 0.0, 0.0, ROLLTP_INTERP, NULL, &interp))
-    // roll the array
-    for (int ii=0; ii<N; ii++)
-    {
-        double x1 = xnew[ii];
-        if (x1 < 0.0)
-        {
-            x1 += xorig[N-1];
-        }
-        for (int jj=0; jj<N; jj++)
-        {
-            double x2 = xnew[ii];
-            if (x2 < 0.0)
-            {
-                x2 += xorig[N-1];
-            }
-            SAFEHMPDF(interp2d_eval(interp, x1, x2, ynew+ii*N+jj))
-        }
-    }
-    delete_interp2d(interp);
 
     ENDFCT
 }//}}}
@@ -468,6 +458,8 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     
     // perform the FFT on the unclustered part pdf_real -> pdf_comp
     fftw_execute(ws->pu_r2c);
+    // correct phases
+    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, 1))
 
     // add the clustering contribution,
     // subtract the zero modes in the unclustered part,
@@ -488,6 +480,8 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         }
     }
 
+    // correct phases
+    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, -1))
     // perform backward FFT pdf_comp -> pdf_real
     fftw_execute(ws->ppdf_c2r);
 
@@ -604,9 +598,6 @@ prepare_tp(hmpdf_obj *d, double phi)
                d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
                d->n->Nsignal * sizeof(double));
     }
-    // roll the pdf
-    SAFEHMPDF(roll2d(d->n->Nsignal, d->n->Nsignal - d->n->Nsignal_negative,
-                     d->tp->pdf, d->tp->pdf))
 
     if (d->ns->noise > 0.0)
     {
@@ -651,7 +642,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
 
     HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n")
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
-                     (noisy) ? d->n->signalgrid_noisy : d->n->incr_signalgrid,
+                     (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
                      TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
 

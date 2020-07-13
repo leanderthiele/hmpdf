@@ -906,22 +906,22 @@ update_batches(batch_container_t *b, int inrange, int *inbatch,
 }//}}}
 
 void
-delete_batch_container(batch_container_t *b)
+delete_batch(batch_t *b)
 {//{{{
-    for (int ii=0; ii<b->Nbatches; ii++)
+    if (b->len > 0)
     {
-        free(b->batches[ii].data);
+        free(b->data);
     }
 }//}}}
 
 int
 inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
-            inv_profile_e mode, batch_container_t *b)
+            inv_profile_e mode, batch_t *b)
 // write dtheta^2(signal)/dsignal*dsignal into return values
 {//{{{
     STARTFCT
 
-    b->Nbatches = 0;
+    b->len = 0;
 
     int end   = abs(d->p->segment_boundaries[z_index][M_index][segment+2]);
     int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);
@@ -989,10 +989,49 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
                 val *= d->p->profiles[z_index][M_index][0];
                 break;
         }
-        SAFEHMPDF(update_batches(b, inrange, &inbatch, len_this_batch,
-                                 sgn, ii, val))
+        if (inrange)
+        {
+            if (!(inbatch))
+            // first element in the batch
+            {
+                if (b->len > 0)
+                {
+                    HMPDFERR("something is weird with this profile "
+                             "(z = %d, M = %d, segment = %d)",
+                             z_index, M_index, segment)
+                }
+                SAFEALLOC(, b->data, malloc(len_this_batch * sizeof(double)))
+                b->start = ii;
+                b->incr = sgn;
+                b->len = 0;
+            }
+            b->data[b->len] = val;
+            ++b->len;
+            inbatch = 1;
+        }
+        else
+        {
+            inbatch = 0;
+        }
     }
     delete_interp1d(interp);
+
+    // TODO testing
+    /*
+    if (M_index > 20)
+    {
+        for (int ii=0; ii<b->Nbatches; ii++)
+        {
+            printf("delta signal = %.8e\n", d->n->signalgrid[1]-d->n->signalgrid[0]);
+            printf("batch #%d : len = %d, incr = %d, elements= [ %.8e , %.8e )\n", ii,
+                   b->batches[ii].len, b->batches[ii].incr,
+                   d->n->signalgrid[b->batches[ii].start],
+                   d->n->signalgrid[b->batches[ii].start + b->batches[ii].incr * b->batches[ii].len]);
+        }
+        gnuplot *gp = plot(NULL, len, ordinate, temp);
+        show(gp);
+    }
+    */
 
     free(temp);
     free(ordinate);

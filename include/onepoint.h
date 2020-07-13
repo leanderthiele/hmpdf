@@ -9,10 +9,6 @@ typedef struct
     double *PDFu;
     double *PDFc;
 
-    int created_rolled_op;
-    double *PDFu_rolled;
-    double *PDFc_rolled;
-
     int created_noisy_op;
     double *PDFu_noisy;
     double *PDFc_noisy;
@@ -24,6 +20,7 @@ onepoint_t;
 
 int null_onepoint(hmpdf_obj *d);
 int reset_onepoint(hmpdf_obj *d);
+int correct_phase1d(hmpdf_obj *d, complex *x, int stride, int sgn);
 int create_op(hmpdf_obj *d);
 int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy);
 
