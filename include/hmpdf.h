@@ -109,7 +109,6 @@
  *
  *  All functions are *not* threadsafe: making two calls on the same #hmpdf_obj
  *  concurrently results in undefined behaviour.
- *  However, no global non-static variables exist.
  *
  *  \section examples Examples
  *
