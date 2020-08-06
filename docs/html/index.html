@@ -155,7 +155,7 @@ Error handling</h1>
 <p>All functions [except <a class="el" href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>] return a non-zero int if an error occured. A traceback will be printed to stderr.</p>
 <h1><a class="anchor" id="threads"></a>
 Thread safety</h1>
-<p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour. However, no global non-static variables exist.</p>
+<p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour.</p>
 <h1><a class="anchor" id="examples"></a>
 Examples</h1>
 <p>Some examples are collected in examples/example.c and examples/example.py. You can compile the C code with </p><div class="fragment"><div class="line"><span class="comment">/* gcc -I../include -o example example.c -L.. -lhmpdf */</span></div>
