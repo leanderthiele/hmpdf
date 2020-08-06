@@ -57,7 +57,7 @@
 
 #define BATTINTEGR_LIMIT 1000
 #define BATTINTEGR_KEY 6
-#define BATTINTEGR_EPSABS 0.0
+#define BATTINTEGR_EPSABS 1e-1 // in units of the signal grid spacing
 #define BATTINTEGR_EPSREL 1e-4
 
 #define TP_PHI_EQ_TOL 1e-10

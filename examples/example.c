@@ -1,6 +1,9 @@
 /*! [compile] */
 /* gcc -I../include -o example example.c -L.. -lhmpdf */
 /*! [compile] */
+// TODO
+#include <stdio.h>
+
 #include "hmpdf.h"
 
 /*! [example_kappa_onepoint] */
@@ -77,5 +80,6 @@ int example_ell_filter_use(void)
 
 int main(void)
 {
-    return example_kappa_onepoint();
+    // TODO
+    printf("exit status : %d\n",example_kappa_onepoint());
 }

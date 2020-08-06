@@ -80,21 +80,17 @@
  *
  *  \section time Runtime
  *
- *  The following are empirically found with standard settings (and only approximate!).
+ *  The following were found with default settings on a laptop.
  *  All functions scale as #hmpdf_N_M x #hmpdf_N_z, this is omitted in the following:
- *      + hmpdf_init(): ~3 seconds on a single thread.
+ *      + hmpdf_init(): a few seconds (depends strongly on the configuration)
  *                      \par
  *                      scales as #hmpdf_N_theta to #hmpdf_N_theta^2.
  *                      Different if CLASS runtime starts to dominate.
  *                      #hmpdf_tsz takes longer than #hmpdf_kappa.
- *      + hmpdf_get_op(): fast if #hmpdf_monotonize is set to non-zero (default),
- *                        otherwise ~1 min (?)
- *                        \par
- *                        scales as #hmpdf_N_signal
- *      + hmpdf_get_tp(): ~1 min on a single thread.
+ *      + hmpdf_get_tp(): ~10 seconds on a single thread.
  *                        \par
  *                        scales as #hmpdf_N_signal^2.
- *      + hmpdf_get_cov(): ~20 min on 40 threads.
+ *      + hmpdf_get_cov(): ~20 minutes on 8 threads.
  *                         \par
  *                         scales as #hmpdf_N_signal^2 x #hmpdf_N_phi.
  *
@@ -113,6 +109,7 @@
  *
  *  All functions are *not* threadsafe: making two calls on the same #hmpdf_obj
  *  concurrently results in undefined behaviour.
+ *  However, no global non-static variables exist.
  *
  *  \section examples Examples
  *

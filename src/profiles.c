@@ -285,6 +285,12 @@ tsz_profile(hmpdf_obj *d, int z_index, int M_index,
     SAFEALLOC(gsl_integration_workspace *, ws,
               gsl_integration_workspace_alloc(BATTINTEGR_LIMIT))
 
+    // rescaling from integration units to physical Compton-y
+    double scaling = P0 * xc * M200c * 200.0
+                     * d->c->rho_c[z_index] * d->c->Ob_0 / d->c->Om_0
+                     * GNEWTON * SIGMATHOMSON / MELECTRON / gsl_pow_2(SPEEDOFLIGHT)
+                     / 1.932/*convert from thermal to electron pressure*/;
+
     // loop over angles
     for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
     {
@@ -294,15 +300,14 @@ tsz_profile(hmpdf_obj *d, int z_index, int M_index,
         
         double err;
         SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout,
-                                    BATTINTEGR_EPSABS, BATTINTEGR_EPSREL,
+                                    BATTINTEGR_EPSABS
+                                    * (d->n->signalgrid[1]-d->n->signalgrid[0]) / scaling,
+                                    BATTINTEGR_EPSREL,
                                     BATTINTEGR_LIMIT, BATTINTEGR_KEY,
                                     ws, p+ii, &err))
 
         // normalize
-        p[ii] *= P0 * xc * M200c * 200.0
-                 * d->c->rho_c[z_index] * d->c->Ob_0 / d->c->Om_0
-                 * GNEWTON * SIGMATHOMSON / MELECTRON / gsl_pow_2(SPEEDOFLIGHT)
-                 / 1.932; // convert from thermal to electron pressure
+        p[ii] *= scaling;
     }
 
     gsl_integration_workspace_free(ws);

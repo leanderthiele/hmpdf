@@ -101,7 +101,7 @@ create_phigrid(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phigrid\n");
 
-    SAFEALLOC(double *, _phigrid, malloc(2 * d->n->Nphi * sizeof(double)))
+    SAFEALLOC(double *, _phigrid,    malloc(2 * d->n->Nphi * sizeof(double)))
     SAFEALLOC(double *, _phiweights, malloc(2 * d->n->Nphi * sizeof(double)))
     // allocate twice as much as we probably need to be safe,
     // the continuum integral adds a bit of noise
@@ -223,11 +223,11 @@ create_phigrid(hmpdf_obj *d)
             _phigrid[nn] = pow(nodes[ii], d->n->phipwr);
             // fix the normalization
             _phiweights[nn] = weights[ii]
-                                       * 2.0 * M_PI * _phigrid[nn]
-                                       / gsl_pow_2(d->f->pixelside)
-                                       // Jacobian of the transformation
-                                       * d->n->phipwr
-                                       * pow(nodes[ii], d->n->phipwr-1.0);
+                              * 2.0 * M_PI * _phigrid[nn]          
+                              / gsl_pow_2(d->f->pixelside)                 
+                              // Jacobian of the transformation            
+                              * d->n->phipwr                               
+                              * pow(nodes[ii], d->n->phipwr-1.0);          
             ++nn;
         }
     }
@@ -239,7 +239,7 @@ create_phigrid(hmpdf_obj *d)
 
     // now copy into the main grids
     // including shuffling to make parallel execution more efficient
-    SAFEALLOC(, d->n->phigrid, malloc(d->n->Nphi * sizeof(double)))
+    SAFEALLOC(, d->n->phigrid,    malloc(d->n->Nphi * sizeof(double)))
     SAFEALLOC(, d->n->phiweights, malloc(d->n->Nphi * sizeof(double)))
     SAFEALLOC(int *, _indices, malloc(d->n->Nphi * sizeof(int)))
     for (int ii=0; ii<d->n->Nphi; ii++)
@@ -252,7 +252,7 @@ create_phigrid(hmpdf_obj *d)
     gsl_rng_free(r);
     for (int ii=0; ii<d->n->Nphi; ii++)
     {
-        d->n->phigrid[ii] = _phigrid[_indices[ii]];
+        d->n->phigrid[ii]    = _phigrid[_indices[ii]];
         d->n->phiweights[ii] = _phiweights[_indices[ii]];
     }
     free(_phigrid);
@@ -272,7 +272,7 @@ create_tp_ws(hmpdf_obj *d)
     if (d->cov->created_tp_ws) { return hmpdf_status; }
 
     HMPDFPRINT(2, "\tcreate_tp_ws\n")
-    HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d cores.\n", d->Ncores)
+    HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d threads.\n", d->Ncores)
     
     SAFEALLOC(, d->cov->ws, malloc(d->Ncores * sizeof(twopoint_workspace *)))
     d->cov->Nws = 0;
@@ -305,7 +305,7 @@ create_tp_ws(hmpdf_obj *d)
 
     if (d->cov->Nws < 1)
     {
-        HMPDFERR("No workspaces allocated.")
+        HMPDFERR("Failed to allocate any workspaces.")
     }
 
     d->cov->created_tp_ws = 1;
@@ -540,6 +540,11 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     if (not_monotonic(Nbins+1, binedges, 1))
     {
         HMPDFERR("binedges not monotonically increasing.")
+    }
+
+    if (d->f->pixelside < 0.0)
+    {
+        HMPDFERR("pixel sidelength must be set for covariance matrix.");
     }
 
     // perform the computation

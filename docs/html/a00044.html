@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: hmpdf.py File Reference</title>
+<title>hmpdf: hmpdf_twopoint.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,24 +93,91 @@ $(document).ready(function(){initNavTree('a00044.html',''); initResizable(); });
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Data Structures</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">hmpdf.py File Reference</div>  </div>
+<div class="title">hmpdf_twopoint.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Data Structures</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html">HMPDF</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Python wrapper around <a class="el" href="a00020.html">hmpdf.h</a>.  <a href="a00052.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<div class="textblock"><code>#include &quot;<a class="el" href="a00035.html">hmpdf_object.h</a>&quot;</code><br />
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad1429fbee3b8bbbd20482679fe118704"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp</a> (<a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins *Nbins], int noisy)</td></tr>
+<tr class="separator:ad1429fbee3b8bbbd20482679fe118704"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ad1429fbee3b8bbbd20482679fe118704"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1429fbee3b8bbbd20482679fe118704">&#9670;&nbsp;</a></span>hmpdf_get_tp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int hmpdf_get_tp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>phi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>Nbins</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>binedges</em>[Nbins+1], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>tp</em>[Nbins *Nbins], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>noisy</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns the two-point PDF.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">phi</td><td>angular separation for which the two-point PDF will be computed (in radians). Must be strictly positive, and less than <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789af8fec1238cb2148f69b5ab784abe28ad">hmpdf_phi_max</a> (note different units!) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Nbins</td><td>number of bins the two-point PDF will be binned into </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">tp</td><td>the binned two-point PDF will be written into the first Nbins*Nbins elements of this output array </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">noisy</td><td>if set to non-zero, the two-point PDF will be convolved with a Gaussian of standard deviation <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>If the two-point PDF has already been computed with the same value of phi and since then no <a class="el" href="a00032.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> has been called on d or <a class="el" href="a00044.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a> has been called with a different value of phi, the pre-computed result is used and only the binning is performed. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="a00044.html">hmpdf.py</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00044.html">hmpdf_twopoint.h</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.17 </li>
