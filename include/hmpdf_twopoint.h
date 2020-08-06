@@ -7,9 +7,8 @@
 /*! Returns the two-point PDF.
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d
- *  \param[in] phi      angular separation for which the two-point PDF will be computed (in radians).
- *                      Must be strictly positive, and less than #hmpdf_phi_max
- *                      (note different units!)
+ *  \param[in] phi      angular separation for which the two-point PDF will be computed (in arcmin).
+ *                      Must be strictly positive, and less than #hmpdf_phi_max.
  *  \param[in] Nbins    number of bins the two-point PDF will be binned into
  *  \param[in] binedges monotonically increasing array of length Nbins+1
  *  \param[out] tp      the binned two-point PDF will be written into the first Nbins*Nbins elements of 

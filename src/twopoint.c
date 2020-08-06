@@ -597,6 +597,8 @@ prepare_tp(hmpdf_obj *d, double phi)
         }
     }
 
+    // convert from arcmin to radians
+    phi *= M_PI/60.0/180.0;
     SAFEHMPDF(create_tp(d, phi, d->tp->ws))
     
     // copy PDF into contiguous array (tp->pdf_real has padding from the FFTs)
