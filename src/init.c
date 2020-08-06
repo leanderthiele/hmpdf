@@ -428,10 +428,10 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     #ifndef _OPENMP
     if (d->Ncores > 1)
     {
-        fprintf(stdout, "***Warning: You specified hmpdf_N_threads = %d, "
+        fprintf(stderr, "***Warning: You specified hmpdf_N_threads = %d, "
                         "but code is compiled without OpenMP.\n",
                         d->Ncores);
-        fflush(stdout);
+        fflush(stderr);
     }
     #endif
 
