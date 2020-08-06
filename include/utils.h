@@ -22,10 +22,10 @@
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 //ERRLOC{{{
-#define ERRLOC                                   \
-    fprintf(stderr, "Error in %s line %d "       \
-                    "(see upward for cause) \n", \
-                    __FILE__, __LINE__);         \
+#define ERRLOC                                     \
+    fprintf(stderr, "Error in %s (%s; line %d) "   \
+                    "(see upward for cause) \n",   \
+                    __FILE__, __func__, __LINE__); \
 //}}}
 
 // when calling external code (CLASS, GSL) we set errno=0 afterwards
@@ -174,7 +174,7 @@ int ispwr2(int N, int *k);
 void linspace(int N, double xmin, double xmax, double *x);
 void logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
-void zero_comp(int N, complex *x);
+void zero_comp(int N, double complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);
@@ -184,7 +184,7 @@ int wait(void);
 #ifdef GNUPLOT
 typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
-gnuplot *plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode);
+gnuplot *plot_comp(gnuplot *gp, int N, double *x, double complex *y, int mode);
 void show(gnuplot *gp);
 #endif
 

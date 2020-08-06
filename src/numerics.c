@@ -193,8 +193,8 @@ create_grids(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-static
-double simps_real(int N, double dx, int stride, double *f)
+static double
+simps_real(int N, double dx, int stride, double *f)
 // real Simpson integration, N must be odd (even number of intervals)
 {//{{{
     assert(GSL_IS_ODD(N));
@@ -207,13 +207,13 @@ double simps_real(int N, double dx, int stride, double *f)
     return out * dx / 3.0;
 }//}}}
 
-static
-complex simps_comp(int N, double dx, int stride, complex *f)
-// complex Simpson integration, N must be odd (even number of intervals)
+static double complex
+simps_comp(int N, double dx, int stride, double complex *f)
+// double double complex Simpson integration, N must be odd (even number of intervals)
 {//{{{
     assert(GSL_IS_ODD(N));
     --N;
-    complex out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
+    double complex out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
     for (int ii=1; ii<N-2; ii+=2)
     {
         out += 4.0*f[ii*stride] + 2.0*f[(ii+1)*stride];
@@ -221,8 +221,8 @@ complex simps_comp(int N, double dx, int stride, complex *f)
     return out * dx / 3.0;
 }//}}}
 
-static
-double romb_real(int k, double dx, int stride, double *f)
+static double
+romb_real(int k, double dx, int stride, double *f)
 // real Romberg integration. N = 2^k+1 sample points, real integrand
 {//{{{
     int N = 1<<k;
@@ -253,22 +253,22 @@ double romb_real(int k, double dx, int stride, double *f)
     return Rp[k - 1];
 }//}}}
 
-static
-complex romb_comp(int k, double dx, int stride, complex *f)
-// complex Romberg integration. N = 2^k subdivisions, complex integrand
+static double complex
+romb_comp(int k, double dx, int stride, double complex *f)
+// double double complex Romberg integration. N = 2^k subdivisions, double complex integrand
 {//{{{
     int N = 1<<k;
-    complex R1[k];
-    complex R2[k];
-    complex *Rc = &R1[0];
-    complex *Rp = &R2[0];
+    double complex R1[k];
+    double complex R2[k];
+    double complex *Rc = &R1[0];
+    double complex *Rp = &R2[0];
     double h = (double)(N) * dx;
     Rp[0] = 0.5 * h * (f[0] + f[N*stride]);
 
     for (int nn=1; nn <= k; nn++)
     {
         h *= 0.5;
-        complex temp = 0.0;
+        double complex temp = 0.0;
         for (int jj=1; jj<=(1<<(nn-1)); jj++)
         {
             temp += f[((2*jj-1)*(N/(1<<nn)))*stride];
@@ -278,14 +278,15 @@ complex romb_comp(int k, double dx, int stride, complex *f)
         {
             Rc[jj] = ((1<<(2*jj))*Rc[jj-1] - Rp[jj-1]) / (double)((1<<(2*jj)) - 1);
         }
-        complex *Rt = Rp;
+        double complex *Rt = Rp;
         Rp = Rc;
         Rc = Rt;
     }
     return Rp[k - 1];
 }//}}}
 
-double integr_real(int N, double dx, int stride, double *f)
+double
+integr_real(int N, double dx, int stride, double *f)
 {//{{{
     assert(GSL_IS_ODD(N));
     int k;
@@ -299,7 +300,8 @@ double integr_real(int N, double dx, int stride, double *f)
     }
 }//}}}
 
-complex integr_comp(int N, double dx, int stride, complex *f)
+double complex
+integr_comp(int N, double dx, int stride, double complex *f)
 {//{{{
     assert(GSL_IS_ODD(N));
     int k;

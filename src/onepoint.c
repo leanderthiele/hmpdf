@@ -52,9 +52,9 @@ reset_onepoint(hmpdf_obj *d)
 }//}}}
 
 int
-correct_phase1d(hmpdf_obj *d, complex *x, int stride, int sgn)
-// sign is +1 for application after real -> complex FFT
-// and -1 for application before complex -> real FFT
+correct_phase1d(hmpdf_obj *d, double complex *x, int stride, int sgn)
+// sign is +1 for application after real -> double complex FFT
+// and -1 for application before double complex -> real FFT
 {//{{{
     STARTFCT
 
@@ -63,7 +63,7 @@ correct_phase1d(hmpdf_obj *d, complex *x, int stride, int sgn)
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             x[ii*stride]
-                *= cexp(- (complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
+                *= cexp(- (double complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
         }
     }
 
@@ -114,14 +114,14 @@ op_Mint(hmpdf_obj *d, int z_index, double *au, double *ac)
 }//}}}
 
 static int
-op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent in P(lambda)
+op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is the exponent in P(lambda)
 {//{{{
     STARTFCT
 
     SAFEALLOC(double *, ac_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)))
-    complex *ac_comp = (complex *)ac_real;
+    double complex *ac_comp = (double complex *)ac_real;
     SAFEALLOC(double *, au_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)))
-    complex *au_comp = (complex *)au_real;
+    double complex *au_comp = (double complex *)au_real;
     fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->Nsignal, au_real, au_comp, FFTW_MEASURE);
     fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, ac_real, ac_comp, FFTW_MEASURE);
 
@@ -141,7 +141,7 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
         }
 
         SAFEHMPDF(op_Mint(d, z_index, au_real, ac_real))
-        // perform FFTs real -> complex
+        // perform FFTs real -> double complex
         fftw_execute(plan_u);
         fftw_execute(plan_c);
         // correct phases
@@ -151,8 +151,8 @@ op_zint(hmpdf_obj *d, complex *pu_comp, complex *pc_comp) // p is the exponent i
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             // subtract the zero modes, square the clustered mass integral
-            complex tempu = au_comp[ii] - au_comp[0];
-            complex tempc = (ac_comp[ii] - ac_comp[0])
+            double complex tempu = au_comp[ii] - au_comp[0];
+            double complex tempc = (ac_comp[ii] - ac_comp[0])
                             * (ac_comp[ii] - ac_comp[0]);
             // multiply with the prefactors
             tempu *= gsl_pow_2(d->c->comoving[z_index])
@@ -238,8 +238,8 @@ create_op(hmpdf_obj *d)
     
     SAFEALLOC(, d->op->PDFu, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
     SAFEALLOC(, d->op->PDFc, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
-    complex *PDFu_comp = (complex *)d->op->PDFu;
-    complex *PDFc_comp = (complex *)d->op->PDFc;
+    double complex *PDFu_comp = (double complex *)d->op->PDFu;
+    double complex *PDFc_comp = (double complex *)d->op->PDFc;
 
     fftw_plan plan_u = fftw_plan_dft_c2r_1d(d->n->Nsignal, PDFu_comp, d->op->PDFu, FFTW_ESTIMATE);
     fftw_plan plan_c = fftw_plan_dft_c2r_1d(d->n->Nsignal, PDFc_comp, d->op->PDFc, FFTW_ESTIMATE);

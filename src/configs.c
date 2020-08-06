@@ -1,18 +1,18 @@
 #include "configs.h"
 
-                              //    A       B      C
+//                                      A       B      C
 double def_Duffy08_conc_params[] = { 5.71, -0.087, -0.47,   // M200c
                                      7.85, -0.081, -0.71,   // Mvir
                                     10.14, -0.081, -1.01, };// M200m
 
-                       // param = factor * (1+z)^pwr
+//                         param = factor * (1+z)^pwr
 double def_Tinker10_hmf_params[] = { 0.589,  0.20,   // beta
                                     -0.729, -0.08,   // phi
                                     -0.243,  0.27,   // eta
                                      0.864, -0.01,   // gamma
                                      0.368,  0.00, };// alpha
 
-                              // param = A0 * (M/1e14)^am * (1+z)^az
+//                              param = A0 * (M/1e14)^am * (1+z)^az
 double def_Battaglia12_tsz_params[] = { 18.1  ,  0.154  , -0.758,   // P0
                                          0.497, -0.00865,  0.731,   // xc
                                          1.0  ,  0.0    ,  0.0  ,   // alpha
@@ -45,3 +45,4 @@ struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .class_pre="none",
                         .Tinker10_p=def_Tinker10_hmf_params,
                         .Battaglia12_p=def_Battaglia12_tsz_params,
                         .noise={-1.0,0.0,1e2}, };
+

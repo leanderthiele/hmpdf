@@ -346,7 +346,8 @@ sanity_checks(hmpdf_obj *d)
         HMPDFERR("Invalid signal type %d.", d->p->stype)
     }
 
-    if ((d->p->stype==hmpdf_kappa) && ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0)))
+    if ((d->p->stype==hmpdf_kappa)
+        && ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0)))
     {
         HMPDFERR("Invalid source redshift %g.", d->n->zsource);
     }

@@ -705,7 +705,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     // check if there is anything interesting here
     if (all_zero(len, d->p->profiles[z_index][M_index]+start,
                  1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))
-        || (len < min_size));
+        || (len < min_size))
     {
         return hmpdf_status;
     }

@@ -118,7 +118,7 @@ reset_twopoint(hmpdf_obj *d)
 }//}}}
 
 static int
-correct_phase2d(hmpdf_obj *d, complex *x, int sgn)
+correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
 {//{{{
     STARTFCT
 
@@ -127,12 +127,14 @@ correct_phase2d(hmpdf_obj *d, complex *x, int sgn)
         // correct rows
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
-            correct_phase1d(d, x+ii*(d->n->Nsignal/2+1), 1, sgn);
+            correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
+                            1, sgn);
         }
         // correct cols
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
-            correct_phase1d(d, x+ii, d->n->Nsignal/2+1, sgn);
+            correct_phase1d(d, x+ii,
+                            d->n->Nsignal/2+1, sgn);
         }
     }
 
@@ -149,14 +151,14 @@ create_phi_indep(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phi_indep\n")
     
-    SAFEALLOC(, d->tp->dtsq,   malloc(d->n->Nz * sizeof(batch_t **)))
-    SAFEALLOC(, d->tp->t,      malloc(d->n->Nz * sizeof(batch_t **)))
-    SAFEALLOC(, d->tp->ac,     malloc(d->n->Nz * sizeof(complex *)))
-    SAFEALLOC(, d->tp->au,     fftw_malloc((d->n->Nsignal/2+1) * sizeof(complex)))
+    SAFEALLOC(, d->tp->dtsq, malloc(d->n->Nz * sizeof(batch_t **)))
+    SAFEALLOC(, d->tp->t,    malloc(d->n->Nz * sizeof(batch_t **)))
+    SAFEALLOC(, d->tp->ac,   malloc(d->n->Nz * sizeof(double complex *)))
+    SAFEALLOC(, d->tp->au,   fftw_malloc((d->n->Nsignal/2+1) * sizeof(double complex)))
     double *au_real = (double *)(d->tp->au);
 
     SAFEALLOC(double *, tempc_real, fftw_malloc((d->n->Nsignal+2)*sizeof(double)))
-    complex *tempc_comp = (complex *)tempc_real;
+    double complex *tempc_comp = (double complex *)tempc_real;
     fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, tempc_real,
                                             tempc_comp, FFTW_MEASURE);
     fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->Nsignal, au_real,
@@ -169,9 +171,9 @@ create_phi_indep(hmpdf_obj *d)
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->tp->dtsq[z_index],   malloc(d->n->NM * sizeof(batch_t *)))
-        SAFEALLOC(, d->tp->t[z_index],      malloc(d->n->NM * sizeof(batch_t *)))
-        SAFEALLOC(, d->tp->ac[z_index],     malloc((d->n->Nsignal/2+1) * sizeof(complex)))
+        SAFEALLOC(, d->tp->dtsq[z_index], malloc(d->n->NM * sizeof(batch_t *)))
+        SAFEALLOC(, d->tp->t[z_index],    malloc(d->n->NM * sizeof(batch_t *)))
+        SAFEALLOC(, d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(double complex)))
         // null the FFT array
         for (int ii=0; ii<d->n->Nsignal+2; ii++)
         {
@@ -201,14 +203,11 @@ create_phi_indep(hmpdf_obj *d)
                                       t_of_s, d->tp->t[z_index][M_index]+segment))
 
                 // sanity check
+                // TODO can remove this later for performance?
                 if (not_monotonic(d->tp->t[z_index][M_index][segment].len,
                                   d->tp->t[z_index][M_index][segment].data,
                                   -1))
                 {
-                    for (int ii=0; ii<d->tp->t[z_index][M_index][segment].len; ii++)
-                    {
-                        printf("%.8e\n", d->tp->t[z_index][M_index][segment].data[ii]);
-                    }
                     HMPDFERR("theta values not monotonically decreasing in "
                              "z = %d, M = %d, segment = %d",
                              z_index, M_index, segment)
@@ -257,7 +256,7 @@ create_phi_indep(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-static double
+static inline double
 triang_A(double a, double b, double c)
 // inverse triangle area by Heron's formula
 {//{{{
@@ -273,13 +272,15 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
     double n = d->h->hmf[z_index][M_index];
     double b = d->h->bias[z_index][M_index];
 
-    for (int segment1=0;
-         segment1<d->p->segment_boundaries[z_index][M_index][0];
+    for (int segment1 = 0;
+         segment1 < d->p->segment_boundaries[z_index][M_index][0];
          segment1++)
     {
-        for (int segment2=0;
-             segment2<d->p->segment_boundaries[z_index][M_index][0];
+        for (int segment2 = 0;
+             segment2 < d->p->segment_boundaries[z_index][M_index][0];
              segment2++)
+        // TODO maybe go to segment2 <= segment1 and then symmetrize differently in
+        //      the end [ probably 1/2 * (A + A^T) ]
         {
             // loop such that the theta values are always monotonically decreasing
             // so that we know when to break
@@ -292,9 +293,11 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                 // t1 is monotonically decreasing with ii
                 // check if no triangle can be formed anymore, since t1 only decreases
                 if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
+
                 for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
                      (jj < d->tp->t[z_index][M_index][segment2].len)
-                     && (signalindex2 <= signalindex1)/*compute only half of the matrix, because it's symmetric*/;
+                      && (signalindex2 <= signalindex1); // FIXME I think this is the problem
+                     // compute only half of the matrix, because it's symmetric
                      signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
                 // loop over the direction that is Nsignal+2 long
                 {
@@ -302,7 +305,7 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                     // t2 is monotonically decreasing with jj
                     // check if we can form a triangle
                     if (t1 >= t2 + phi) { break; }    // t2 only decreases
-                    if (t2 >= phi + t1) { continue; }
+                    if (t2 >= phi + t1) { continue; } // no triangle possible here, but perhaps later
                     if (phi >= t1 + t2) { break; }    // t1,t2 only decrease
                     //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
                     double Delta = triang_A(phi, t1, t2);
@@ -313,7 +316,7 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
 
                     // take care of the symmetry factor on the diagonal
                     // TODO think about this!!!
-                    if ((signalindex1==signalindex2) && (segment1 != segment2))
+                    if ((signalindex1 == signalindex2) && (segment1 != segment2))
                     {
                         temp *= 0.5;
                     }
@@ -352,8 +355,8 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
     ENDFCT
 }//}}}
 
-static complex
-redundant(int N, complex *a, int ii)
+static double complex
+redundant(int N, double complex *a, int ii)
 // extends the vector a[N/2+1] to N elements through conjugation
 // N is assumed even
 {//{{{
@@ -367,10 +370,10 @@ redundant(int N, complex *a, int ii)
     }
 }//}}}
 
-static int
+static inline int
 clustered_term(hmpdf_obj *d, int z_index, double phi,
                        int i1/*long direction*/, int i2/*short direction*/,
-                       complex *b12, complex *out)
+                       double complex *b12, double complex *out)
 // computes 1/2 * (alpha1^2 + alpha2^2) * zeta(0)
 //          + alpha1 * alpha2 * zeta(phi)
 //          + 1/2 * beta12^2 * zeta(0)
@@ -381,9 +384,9 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
 
     *out = 0.0; // to avoid maybe-uninitialized
 
-    complex a1 = redundant(d->n->Nsignal, d->tp->ac[z_index], i1);
-    complex a2 = d->tp->ac[z_index][i2];
-    complex b = b12[i1*(d->n->Nsignal/2+1)+i2]
+    double complex a1 = redundant(d->n->Nsignal, d->tp->ac[z_index], i1);
+    double complex a2 = d->tp->ac[z_index][i2];
+    double complex b = b12[i1*(d->n->Nsignal/2+1)+i2]
                 - b12[i1*(d->n->Nsignal/2+1)]
                 - b12[i2] + b12[0];
     double corr1, corr2;
@@ -439,9 +442,9 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
             for (int jj=0; jj<d->n->Nsignal/2+1; jj++)
             // loop over the short direction
             {
-                complex clterm;
+                double complex clterm;
                 SAFEHMPDF(clustered_term(d, z_index, phi, ii, jj, ws->tempc_comp, &clterm))
-                complex temp = clterm
+                double complex temp = clterm
                                * gsl_pow_4(d->c->comoving[z_index])
                                / d->c->hubble[z_index];
                 ws->bc[ii*(d->n->Nsignal/2+1)+jj] += temp * d->n->zweights[z_index];
@@ -535,13 +538,13 @@ new_tp_ws(int N, twopoint_workspace **out)
         free(*out);
         return hmpdf_status;
     }//}}}
-    ws->pdf_comp = (complex *)(ws->pdf_real);
+    ws->pdf_comp = (double complex *)(ws->pdf_real);
     ws->pu_r2c = fftw_plan_dft_r2c_2d(N, N, ws->pdf_real,
                                       ws->pdf_comp, PU_R2C_MODE);
     ws->ppdf_c2r = fftw_plan_dft_c2r_2d(N, N, ws->pdf_comp,
                                         ws->pdf_real, PPDF_C2R_MODE);
     
-    SAFEALLOC_NORETURN(, ws->bc, malloc(N * (N/2+1) * sizeof(complex)))
+    SAFEALLOC_NORETURN(, ws->bc, malloc(N * (N/2+1) * sizeof(double complex)))
     if (hmpdf_status)
     {//{{{
         fftw_destroy_plan(ws->ppdf_c2r);
@@ -561,7 +564,7 @@ new_tp_ws(int N, twopoint_workspace **out)
         free(*out);
         return hmpdf_status;
     }//}}}
-    ws->tempc_comp = (complex *)(ws->tempc_real);
+    ws->tempc_comp = (double complex *)(ws->tempc_real);
     ws->pc_r2c = fftw_plan_dft_r2c_2d(N, N, ws->tempc_real, ws->tempc_comp, PC_R2C_MODE);
 
     ENDFCT

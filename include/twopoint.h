@@ -12,16 +12,16 @@ typedef struct//{{{
 {
     // holds the unclustered term, bc is added in the end
     double *pdf_real; // [ Nsignal * Nsignal+2 ]
-    complex *pdf_comp; // not malloced
+    double complex *pdf_comp; // not malloced
     fftw_plan pu_r2c; // pdf_real -> pdf_comp
     fftw_plan ppdf_c2r; // pdf_comp -> pdf_real
 
     // holds the clustering term
-    complex *bc; // [ Nsignal * Nsignal/2+1
+    double complex *bc; // [ Nsignal * Nsignal/2+1
 
     // holds the z-specific clustering contribution
     double *tempc_real; // [ Nsignal * Nsignal+2 ]
-    complex *tempc_comp; // not malloced
+    double complex *tempc_comp; // not malloced
     fftw_plan pc_r2c; // tempc_real -> tempc_comp
 }//}}}
 twopoint_workspace;
@@ -32,8 +32,8 @@ typedef struct//{{{
     int created_phi_indep;
     batch_t ***dtsq; // [ z_index, M_index, segment ]
     batch_t ***t; // [ z_index, M_index, segment ]
-    complex **ac; // [ z_index, lambda_index ]
-    complex *au; // [ lambda_index ] // allocated with fftw_malloc
+    double complex **ac; // [ z_index, lambda_index ]
+    double complex *au; // [ lambda_index ] // allocated with fftw_malloc
     
     double last_phi;
 

@@ -129,7 +129,7 @@ zero_real(int N, double *x)
 }//}}}
 
 void
-zero_comp(int N, complex *x)
+zero_comp(int N, double complex *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -166,7 +166,7 @@ plot(gnuplot *gp, int N, double *x, double *y)
 }//}}}
 
 gnuplot *
-plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
+plot_comp(gnuplot *gp, int N, double *x, double complex *y, int mode)
 {//{{{
     if (gp == NULL)
     {
