@@ -69,6 +69,7 @@ typedef enum
  *  
  *  Less frequently used options:
  *      + verbosity: #hmpdf_verbosity
+ *      + behaviour when unusual states are encountered: #hmpdf_warn_is_err
  *      + halo model fit parameters: #hmpdf_Duffy08_conc_params,
  *                                   #hmpdf_Tinker10_hmf_params,
  *                                   #hmpdf_Battaglia12_tsz_params
@@ -100,6 +101,14 @@ typedef enum
                       *   \par
                       *   Type: int. Default: 0.
                       */
+    hmpdf_warn_is_err, /*!< Controls the behaviour when a warning is encountered.
+                        *   Positive values will treat warnings as error and return,
+                        *   zero value will continue execution but print a message to
+                        *   stderr,
+                        *   and negative values will ignore the warning.
+                        *   \par
+                        *   Type: int. Default: 1.
+                        */
     hmpdf_class_pre, /*!< optional CLASS precision file.
                       *   \par
                       *   Type: char *. Default: None (use CLASS's default precision settings).
@@ -150,7 +159,14 @@ typedef enum
     hmpdf_signal_min, /*!< minimum signal value at which PDF is sampled internally.
                        *   \par
                        *   Type: double. Default: 0.
-                       *   \warning non-zero values are not tested and will likely give wrong results.
+                       *   \remark The PDF should be well converged to zero for smaller signal values.
+                       *   \remark If your signal is only positive
+                       *           (this is quite often true, as long as you are not applying any
+                       *            special ell- or k-space filters)
+                       *           you should set this to zero.
+                       *   \note   This is in the internal units,
+                       *           in which negative WL convergence regions do not exist.
+                       *           Read the paper for a discussion.
                        */
     hmpdf_signal_max, /*!< maximum signal value at which PDF is sampled internally.
                        *   \par
@@ -158,6 +174,9 @@ typedef enum
                        *   \remark Should be chosen such that PDF is well converged to zero to avoid ringing.
                        *   \remark Should be at least 2x larger than maximum signal value you are interested in.
                        *   \remark For weak lensing, you should change this option depending on source redshift.
+                       *   \note   This is in the internal units,
+                       *           in which negative WL convergence regions do not exist.
+                       *           Read the paper for a discussion.
                        */
     hmpdf_N_theta, /*!< number of points on which the signal profiles are sampled.
                     *   \par

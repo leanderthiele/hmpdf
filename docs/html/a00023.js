@@ -25,6 +25,7 @@ var a00023 =
     [ "hmpdf_configs_e", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789", [
       [ "hmpdf_N_threads", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428", null ],
       [ "hmpdf_verbosity", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be", null ],
+      [ "hmpdf_warn_is_err", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a87764a5772dbcd746f3b8f543d9f75ee", null ],
       [ "hmpdf_class_pre", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ad3762c49b7f951bd88e226e6f5ea4dea", null ],
       [ "hmpdf_N_z", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574", null ],
       [ "hmpdf_z_min", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a0af4ada2697ea24182397d26d6bd4473", null ],
@@ -50,7 +51,6 @@ var a00023 =
       [ "hmpdf_pixelexact_max", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e", null ],
       [ "hmpdf_phi_jitter", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789af8345055efd076d5198cd12ad7c0c8d7", null ],
       [ "hmpdf_phi_pwr", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3d3fac9287865a8399a7e144499653ef", null ],
-      [ "hmpdf_monotonize", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8", null ],
       [ "hmpdf_zintegr_type", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789acb8f68b7d9532865f7c87580fa0e311d", null ],
       [ "hmpdf_zintegr_alpha", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a42e4390976e5dca9be73485cf503b18e", null ],
       [ "hmpdf_zintegr_beta", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a25569df40535090008f1e322a7d44bda", null ],

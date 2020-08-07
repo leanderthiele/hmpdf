@@ -169,6 +169,31 @@ void new_gsl_error_handler(const char *reason, const char *file,
     }                                 \
 //}}}
 
+//HMPDFWARN{{{
+#define HMPDFWARN(...)                                      \
+    if (d->warn_is_err > 0)                                 \
+    {                                                       \
+        HMPDFERR_NORETURN(__VA_ARGS__)                      \
+        fprintf(stderr, "\t\t>This error can be suppressed "\
+                        "by changing the option "           \
+                        "hmpdf_warn_is_err, "               \
+                        "in case you know what you are "    \
+                        "doing.\n");                        \
+        fflush(stderr);                                     \
+        return hmpdf_status;                                \
+    }                                                       \
+    else if (d->warn_is_err == 0)                           \
+    {                                                       \
+        fprintf(stderr, "***hmpdf warning: ");              \
+        fprintf(stderr, __VA_ARGS__);                       \
+        fprintf(stderr, "\t\t>This warning can be muted "   \
+                        "or turned into an error by "       \
+                        "changing the option "              \
+                        "hmpdf_warn_is_err.\n");            \
+        fflush(stderr);                                     \
+    }                                                       \
+//}}}
+
 int ispwr2(int N, int *k);
 
 void linspace(int N, double xmin, double xmax, double *x);

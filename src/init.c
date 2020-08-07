@@ -128,6 +128,8 @@ init_params(hmpdf_obj *d, param *p)
              d->Ncores, int_type, def.Ncores)
     INIT_P(hmpdf_verbosity,
            d->verbosity, int_type, def.verbosity)
+    INIT_P(hmpdf_warn_is_err,
+           d->warn_is_err, int_type, def.warn_is_err)
     INIT_P(hmpdf_class_pre,
            d->cls->class_pre, str_type, def.class_pre)
     INIT_P_B(hmpdf_N_z,
@@ -217,39 +219,56 @@ init_params(hmpdf_obj *d, param *p)
 // assign parameter to value passed by user,
 //     check for validity if bounds are present
 //ASSIGN_SET{{{
-#define ASSIGN_SET(dt)                                     \
-        *((dt*)(p->target)) = va_arg(*valist, dt);         \
-        if (comparable)                                    \
-        {                                                  \
-            if (p->lo != NULL)                             \
-            {                                              \
-                if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
-                {                                          \
-                    *invalid_param = 1;                    \
-                }                                          \
-            }                                              \
-            if (p->hi != NULL)                             \
-            {                                              \
-                if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
-                {                                          \
-                    *invalid_param = 1;                    \
-                }                                          \
-            }                                              \
-        }                                                  \
+#define ASSIGN_SET(dt)                                 \
+    *((dt*)(p->target)) = va_arg(*valist, dt);         \
 //}}}
 
 static int 
-assign_set(param *p, va_list *valist, int *invalid_param)
+assign_set(param *p, va_list *valist)
 {//{{{
     STARTFCT
 
-    int comparable = (p->dt < end_comparable_dtypes) ? 1 : 0;
     DT_DEP_ACTION(p->dt, ASSIGN_SET)
 
     ENDFCT
 }//}}}
 
 #undef ASSIGN_SET
+
+// check if user setting is reasonable
+//CHECK_VALIDITY{{{
+#define CHECK_VALIDITY(dt)                             \
+    if (comparable)                                    \
+    {                                                  \
+        if (p->lo != NULL)                             \
+        {                                              \
+            if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
+            {                                          \
+                *invalid_param = 1;                    \
+            }                                          \
+        }                                              \
+        if (p->hi != NULL)                             \
+        {                                              \
+            if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
+            {                                          \
+                *invalid_param = 1;                    \
+            }                                          \
+        }                                              \
+    }                                                  \
+//}}}
+
+static int
+check_validity(param *p, int *invalid_param)
+{//{{{
+    STARTFCT
+
+    int comparable = (p->dt < end_comparable_dtypes) ? 1 : 0;
+    DT_DEP_ACTION(p->dt, CHECK_VALIDITY)
+
+    ENDFCT
+}//}}}
+
+#undef CHECK_VALIDITY
 
 // assign parameter to default value
 //ASSIGN_DEF{{{
@@ -283,12 +302,12 @@ assign_def(param *p)
     : (dt==kf_type) ? "%p"     \
     : "%d"                     \
 
-#define PRINTVAL(dt1)                    \
-    fprintf(f, FMT(dt), *((dt1*)(val))); \
+#define PRINTVAL(dt1)                                \
+    *printed += sprintf(f, FMT(dt), *((dt1*)(val))); \
 //}}}
 
 static int
-printval(FILE *f, void *val, dtype dt)
+printval(char *f, void *val, dtype dt, int *printed)
 {//{{{
     STARTFCT
 
@@ -302,23 +321,24 @@ printval(FILE *f, void *val, dtype dt)
 #undef DT_DEP_ACTION
 
 static int
-invalid_param_error(param *p)
+invalid_param_warn(hmpdf_obj *d, param *p)
 {//{{{
     STARTFCT
 
-    fprintf(stderr, "***Warning: option passed for %s "
-                    "is out of recommended bounds:\n"
-                    "you passed ", p->name);
-    SAFEHMPDF(printval(stderr, p->target, p->dt))
-    fprintf(stderr, " which is outside the bounds ( ");
-    SAFEHMPDF(printval(stderr, p->lo, p->dt))
-    fprintf(stderr, " , ");
-    SAFEHMPDF(printval(stderr, p->hi, p->dt))
-    fprintf(stderr, " )\n");
-    fprintf(stderr, "But will continue execution, " 
-                    "in case you really wanted this.\n");
-    fflush(stderr);
-    ERRLOC
+    char msg[512];
+    int printed = 0;
+    printed += sprintf(msg+printed,
+                       "option passed for %s "
+                       "is out of recommended bounds:\n"
+                       "\tyou passed ", p->name);
+    SAFEHMPDF(printval(msg+printed, p->target, p->dt, &printed))
+    printed += sprintf(msg+printed,
+                       " which is outside the bounds ( ");
+    SAFEHMPDF(printval(msg+printed, p->lo, p->dt, &printed))
+    printed += sprintf(msg+printed, " , ");
+    SAFEHMPDF(printval(msg+printed, p->hi, p->dt, &printed))
+    printed += sprintf(msg+printed, " )\n");
+    HMPDFWARN("%s", msg);
 
     ENDFCT
 }//}}}
@@ -382,6 +402,11 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
 
+    // this one is special because we need to have it set
+    //     definitely when we want to check the validity
+    //     of user inputs
+    d->warn_is_err = def.warn_is_err;
+
     va_list valist;
     va_start(valist, stype);
 
@@ -393,7 +418,7 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     SAFEALLOC(param *, p, malloc((int)(hmpdf_end_configs) * sizeof(param)))
     SAFEHMPDF(init_params(d, p))
 
-    int invalid_param = 0;
+    int read = 0;
     for (;;)
     {
         hmpdf_configs_e c = va_arg(valist, hmpdf_configs_e);
@@ -401,14 +426,16 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
         {
             break;
         }
-        SAFEHMPDF(assign_set(p+(int)c, &valist, &invalid_param))
-        if (invalid_param)
-        {
-            invalid_param_error(p+(int)c);
-            invalid_param = 0;
-            hmpdf_status = 1;
-        }
+        SAFEHMPDF(assign_set(p+(int)c, &valist))
         p[c].set = 1;
+
+        ++read;
+        if (read > hmpdf_end_configs)
+        {
+            HMPDFERR("You likely forgot to end the variable argument list "
+                     "with the mandatory argument hmpdf_end_configs, "
+                     "or you passed options twice.");
+        }
     }
 
     va_end(valist);
@@ -417,9 +444,17 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
     {
         if (p[ii].set)
         {
-            continue;
+            int invalid_param = 0;
+            SAFEHMPDF(check_validity(p+ii, &invalid_param))
+            if (invalid_param)
+            {
+                SAFEHMPDF(invalid_param_warn(d, p+ii))
+            }
         }
-        SAFEHMPDF(assign_def(p+ii))
+        else
+        {
+            SAFEHMPDF(assign_def(p+ii))
+        }
     }
 
     free(p);

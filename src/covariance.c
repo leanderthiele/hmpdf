@@ -334,7 +334,7 @@ corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
 }//}}}
 
 static int
-status_update(time_t t0, int done, int tot)
+status_update(hmpdf_obj *d, time_t t0, int done, int tot)
 {//{{{
     STARTFCT
 
@@ -345,9 +345,8 @@ status_update(time_t t0, int done, int tot)
     int hrs = (int)floor(remains/60.0/60.0);
     int min = (int)round(remains/60.0 - 60.0*(double)(hrs));
     int done_perc = (int)round(100.0*(double)(done)/(double)(tot));
-    fprintf(stdout, "\t\t%3d %% done, %.2d hrs %.2d min remaining "
-                    "in create_cov.\n", done_perc, hrs, min);
-    fflush(stdout);
+    HMPDFPRINT(1, "\t\t%3d %% done, %.2d hrs %.2d min remaining "
+                  "in create_cov.\n", done_perc, hrs, min)
 
     ENDFCT
 }//}}}
@@ -462,7 +461,7 @@ create_cov(hmpdf_obj *d)
             ++Nstatus;
             if ((Nstatus%COV_STATUS_PERIOD == 0) && (d->verbosity > 0))
             {
-                SAFEHMPDF_NORETURN(status_update(start_time, Nstatus, d->n->Nphi))
+                SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi))
             }
         }
         if (hmpdf_status) { continue; }

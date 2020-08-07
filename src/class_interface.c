@@ -49,8 +49,8 @@ run_class(hmpdf_obj *d)
     // check if user passed curved geometry
     if (ba->sgnK)
     {
-        HMPDFERR("The code does not reliably support non-flat universes "
-                 "at the moment.")
+        HMPDFWARN("The code does not reliably support non-flat universes "
+                  "at the moment.")
     }
 
     HMPDFPRINT(3, "\t\tthermodynamics\n")
@@ -62,14 +62,14 @@ run_class(hmpdf_obj *d)
     // check if user passed a correct CLASS .ini file
     if (pt->has_pk_matter != _TRUE_)
     {
-        HMPDFERR("You have to set output=mPk in the CLASS .ini file.")
+        HMPDFWARN("You should set output=mPk in the CLASS .ini file.")
     }
 
     // check if user passed large enough k_max
     if (pt->k_max_for_pk < 1.0)
     {
-        HMPDFERR("You have to set P_k_max_h/Mpc or P_k_max_1/Mpc "
-                 "to > 1 h/Mpc in the CLASS .ini file.")
+        HMPDFWARN("You should set P_k_max_h/Mpc or P_k_max_1/Mpc "
+                  "to > 1 h/Mpc in the CLASS .ini file.")
     }
     
     HMPDFPRINT(3, "\t\tprimordial\n")
