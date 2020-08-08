@@ -145,10 +145,11 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Python wrapper around <a class="el" href="a00020.html">hmpdf.h</a>. </p>
 <p>The general interface is very similar to the C one, so please read the documentation for this. The differences are:</p><ul>
-<li>all names have the hmpdf_ prefix removed, enums are replaced by strings</li>
+<li>all names have the hmpdf_ prefix removed</li>
+<li>enums are replaced by strings</li>
 <li>the function signatures are a bit different</li>
-<li>the argument list to <a class="el" href="a00052.html#adb5e935d4db82659c8f35a4024c34e94" title="Initializes the object [calls hmpdf_init()].">init()</a> is not ended with <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></li>
-<li>you have the option to let the object do the error handling</li>
+<li>the argument list to <a class="el" href="a00052.html#adb5e935d4db82659c8f35a4024c34e94" title="Initializes the object [calls hmpdf_init()].">init()</a> is implemented with the **kwargs syntax and not ended with <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></li>
+<li>you have the option to let the object do the error code checking</li>
 <li>passing custom ell- and k-space filters works differently, see the <a class="el" href="index.html#examples">Examples</a>. The options <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a> and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a> are not supported.</li>
 </ul>
 <p>Best used in a context manager. </p>

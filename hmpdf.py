@@ -72,7 +72,8 @@ _corr_types = ['onehalo', 'twohalo', 'total']
 
 class _Configs(object) :
 #{{{
-    configs = ['N_threads', c_int, 'verbosity', c_int, 'class_pre', _C(), 
+    configs = ['N_threads', c_int, 'verbosity', c_int, 'warn_is_err': c_int,
+               'class_pre', _C(), 
                'N_z', c_int, 'z_min', c_double, 'z_max', c_double,
                'N_M', c_int, 'M_min', c_double, 'M_max', c_double,
                'N_signal', c_int, 'signal_min', c_double, 'signal_max', c_double,
@@ -112,11 +113,12 @@ class _Configs(object) :
 #  The general interface is very similar to the C one,
 #  so please read the documentation for this.
 #  The differences are:
-#       + all names have the hmpdf_ prefix removed,
-#         enums are replaced by strings
+#       + all names have the hmpdf_ prefix removed
+#       + enums are replaced by strings
 #       + the function signatures are a bit different
-#       + the argument list to init() is not ended with #hmpdf_end_configs
-#       + you have the option to let the object do the error handling
+#       + the argument list to init() is implemented with the **kwargs syntax
+#         and not ended with #hmpdf_end_configs
+#       + you have the option to let the object do the error code checking
 #       + passing custom ell- and k-space filters works differently,
 #         see the \ref examples. The options #hmpdf_custom_ell_filter_params
 #         and #hmpdf_custom_k_filter_params are not supported.
