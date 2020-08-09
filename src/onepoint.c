@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <complex.h>
+
 #include <fftw3.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -41,7 +42,7 @@ reset_onepoint(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_onepoint\n")
+    HMPDFPRINT(2, "\treset_onepoint\n");
 
     if (d->op->PDFu != NULL) { fftw_free(d->op->PDFu); }
     if (d->op->PDFc != NULL) { fftw_free(d->op->PDFc); }
@@ -82,7 +83,7 @@ op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
          segment++)
     {
         batch_t bt;
-        SAFEHMPDF(inv_profile(d, z_index, M_index, segment, dtsq_of_s, &bt))
+        SAFEHMPDF(inv_profile(d, z_index, M_index, segment, dtsq_of_s, &bt));
         for (int signalindex=bt.start, ii=0;
              ii < bt.len;
              signalindex += bt.incr, ii++)
@@ -107,7 +108,7 @@ op_Mint(hmpdf_obj *d, int z_index, double *au, double *ac)
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
-        SAFEHMPDF(op_segmentsum(d, z_index, M_index, au, ac))
+        SAFEHMPDF(op_segmentsum(d, z_index, M_index, au, ac));
     }
 
     ENDFCT
@@ -118,9 +119,11 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
 {//{{{
     STARTFCT
 
-    SAFEALLOC(double *, ac_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)))
+    double *ac_real;
+    SAFEALLOC(ac_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)));
     double complex *ac_comp = (double complex *)ac_real;
-    SAFEALLOC(double *, au_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)))
+    double *au_real;
+    SAFEALLOC(au_real, fftw_malloc((d->n->Nsignal+2) * sizeof(double)));
     double complex *au_comp = (double complex *)au_real;
     fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->Nsignal, au_real, au_comp, FFTW_MEASURE);
     fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, ac_real, ac_comp, FFTW_MEASURE);
@@ -140,13 +143,13 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
             au_comp[ii] = ac_comp[ii] = 0.0;
         }
 
-        SAFEHMPDF(op_Mint(d, z_index, au_real, ac_real))
+        SAFEHMPDF(op_Mint(d, z_index, au_real, ac_real));
         // perform FFTs real -> double complex
         fftw_execute(plan_u);
         fftw_execute(plan_c);
         // correct phases
-        SAFEHMPDF(correct_phase1d(d, au_comp, 1, 1))
-        SAFEHMPDF(correct_phase1d(d, ac_comp, 1, 1))
+        SAFEHMPDF(correct_phase1d(d, au_comp, 1, 1));
+        SAFEHMPDF(correct_phase1d(d, ac_comp, 1, 1));
 
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -197,9 +200,9 @@ get_mean_signal(hmpdf_obj *d)
     STARTFCT
 
     SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
-                    d->op->PDFu, &(d->op->signalmeanu)))
+                    d->op->PDFu, &(d->op->signalmeanu)));
     SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
-                    d->op->PDFc, &(d->op->signalmeanc)))
+                    d->op->PDFc, &(d->op->signalmeanc)));
 
     ENDFCT
 }//}}}
@@ -212,14 +215,14 @@ create_noisy_op(hmpdf_obj *d)
 
     if (d->op->created_noisy_op) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_noisy_op\n")
+    HMPDFPRINT(2, "\tcreate_noisy_op\n");
 
     double *in[] = {d->op->PDFu, d->op->PDFc};
     double **out[] = {&d->op->PDFu_noisy, &d->op->PDFc_noisy};
     for (int ii=0; ii<2; ii++)
     {
-        SAFEALLOC(, *out[ii], malloc(d->n->Nsignal_noisy * sizeof(double)))
-        SAFEHMPDF(noise_vect(d, in[ii], *out[ii]))
+        SAFEALLOC(*out[ii], malloc(d->n->Nsignal_noisy * sizeof(double)));
+        SAFEHMPDF(noise_vect(d, in[ii], *out[ii]));
     }
 
     d->op->created_noisy_op = 1;
@@ -234,10 +237,10 @@ create_op(hmpdf_obj *d)
 
     if (d->op->created_op) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_op\n")
+    HMPDFPRINT(2, "\tcreate_op\n");
     
-    SAFEALLOC(, d->op->PDFu, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
-    SAFEALLOC(, d->op->PDFc, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)))
+    SAFEALLOC(d->op->PDFu, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)));
+    SAFEALLOC(d->op->PDFc, fftw_malloc((d->n->Nsignal + 2) * sizeof(double)));
     double complex *PDFu_comp = (double complex *)d->op->PDFu;
     double complex *PDFc_comp = (double complex *)d->op->PDFc;
 
@@ -245,7 +248,7 @@ create_op(hmpdf_obj *d)
     fftw_plan plan_c = fftw_plan_dft_c2r_1d(d->n->Nsignal, PDFc_comp, d->op->PDFc, FFTW_ESTIMATE);
 
     // perform redshift integration
-    SAFEHMPDF(op_zint(d, PDFu_comp, PDFc_comp))
+    SAFEHMPDF(op_zint(d, PDFu_comp, PDFc_comp));
 
     // take exponential and normalize
     for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
@@ -255,8 +258,8 @@ create_op(hmpdf_obj *d)
     }
 
     // correct phases
-    SAFEHMPDF(correct_phase1d(d, PDFu_comp, 1, -1))
-    SAFEHMPDF(correct_phase1d(d, PDFc_comp, 1, -1))
+    SAFEHMPDF(correct_phase1d(d, PDFu_comp, 1, -1));
+    SAFEHMPDF(correct_phase1d(d, PDFc_comp, 1, -1));
     // transform back to real space
     fftw_execute(plan_u);
     fftw_execute(plan_c);
@@ -264,7 +267,7 @@ create_op(hmpdf_obj *d)
     fftw_destroy_plan(plan_c);
 
     // compute the mean of the distributions
-    SAFEHMPDF(get_mean_signal(d))
+    SAFEHMPDF(get_mean_signal(d));
 
     d->op->created_op = 1;
 
@@ -277,19 +280,19 @@ prepare_op(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "prepare_op\n")
+    HMPDFPRINT(1, "prepare_op\n");
 
     if (d->f->Nfilters > 0)
     {
-        SAFEHMPDF(create_conj_profiles(d))
-        SAFEHMPDF(create_filtered_profiles(d))
+        SAFEHMPDF(create_conj_profiles(d));
+        SAFEHMPDF(create_filtered_profiles(d));
     }
-    SAFEHMPDF(create_segments(d))
-    SAFEHMPDF(create_op(d))
+    SAFEHMPDF(create_segments(d));
+    SAFEHMPDF(create_op(d));
     if (d->ns->noise > 0.0)
     // include gaussian noise
     {
-        SAFEHMPDF(create_noisy_op(d))
+        SAFEHMPDF(create_noisy_op(d));
     }
 
     ENDFCT
@@ -302,15 +305,15 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
 
     if (noisy && d->ns->noise<0.0)
     {
-        HMPDFERR("noisy pdf requested but no/invalid noise level passed.")
+        HMPDFERR("noisy pdf requested but no/invalid noise level passed.");
     }
 
     if (not_monotonic(Nbins+1, binedges, 1))
     {
-        HMPDFERR("binedges not monotonically increasing.")
+        HMPDFERR("binedges not monotonically increasing.");
     }
 
-    SAFEHMPDF(prepare_op(d))
+    SAFEHMPDF(prepare_op(d));
     
     double _binedges[Nbins+1];
     memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
@@ -326,7 +329,7 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? ((incl_2h) ? d->op->PDFc_noisy : d->op->PDFu_noisy)
                      : ((incl_2h) ? d->op->PDFc : d->op->PDFu),
-                     Nbins, _binedges, op, OPINTERP_TYPE))
+                     Nbins, _binedges, op, OPINTERP_TYPE));
 
     ENDFCT
 }//}}}

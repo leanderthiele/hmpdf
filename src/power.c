@@ -34,7 +34,7 @@ reset_power(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_power\n")
+    HMPDFPRINT(2, "\treset_power\n");
 
     if (d->pwr->ssq != NULL)
     {
@@ -85,7 +85,7 @@ Pk_linear(hmpdf_obj *d, double k, double *out)
                                           pk_linear, k, 0.0,
                                           nl->index_pk_total,
                                           out, NULL),
-                  nl->error_message)
+                  nl->error_message);
     }
 
     ENDFCT
@@ -147,12 +147,12 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
     double kmax = exp(nl->ln_k[nl->k_size-1]);
     #endif
 
-    SAFEALLOC(gsl_integration_workspace *, ws,
-              gsl_integration_workspace_alloc(PKINTEGR_LIMIT))
+    gsl_integration_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_workspace_alloc(PKINTEGR_LIMIT));
     SAFEGSL(gsl_integration_qag(&integrand, kmin, kmax,
                                 PKINTEGR_EPSABS, PKINTEGR_EPSREL,
                                 PKINTEGR_LIMIT,  PKINTEGR_KEY,
-                                ws, out, &err))
+                                ws, out, &err));
     gsl_integration_workspace_free(ws);
 
     hmpdf_status |= p->hmpdf_status;
@@ -196,11 +196,11 @@ _ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
     p.F.params = &R;
     // cmpute derivative d sigma^2 / dlogM
     p.F.function = tophat_Wsqprime;
-    SAFEHMPDF(power_integral(d, &p, dssq))
+    SAFEHMPDF(power_integral(d, &p, dssq));
     *dssq *= (R/3.0);
     // compute sigma^2(M)
     p.F.function = tophat_Wsq;
-    SAFEHMPDF(power_integral(d, &p, ssq))
+    SAFEHMPDF(power_integral(d, &p, ssq));
 
     ENDFCT
 }//}}}
@@ -210,15 +210,15 @@ create_ssq(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_ssq\n")
+    HMPDFPRINT(2, "\tcreate_ssq\n");
 
-    SAFEALLOC(, d->pwr->ssq, malloc(d->n->NM * sizeof(double*)))
+    SAFEALLOC(d->pwr->ssq, malloc(d->n->NM * sizeof(double*)));
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
-        SAFEALLOC(, d->pwr->ssq[M_index], malloc(2 * sizeof(double)))
+        SAFEALLOC(d->pwr->ssq[M_index], malloc(2 * sizeof(double)));
         SAFEHMPDF(_ssq(d, d->n->Mgrid[M_index],
                        d->pwr->ssq[M_index]+0,
-                       d->pwr->ssq[M_index]+1))
+                       d->pwr->ssq[M_index]+1));
     }
 
     ENDFCT
@@ -243,7 +243,7 @@ _autocorr(hmpdf_obj *d, double *out)
     p.d = d;
     p.F.params = NULL;
     p.F.function = autocorr_kernel;
-    SAFEHMPDF(power_integral(d, &p, out))
+    SAFEHMPDF(power_integral(d, &p, out));
 
     ENDFCT
 }//}}}
@@ -253,9 +253,9 @@ create_autocorr(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_autocorr\n")
+    HMPDFPRINT(2, "\tcreate_autocorr\n");
 
-    SAFEHMPDF(_autocorr(d, &(d->pwr->autocorr)))
+    SAFEHMPDF(_autocorr(d, &(d->pwr->autocorr)));
 
     ENDFCT
 }//}}}
@@ -268,13 +268,16 @@ create_corr(hmpdf_obj *d)
 
     if (d->pwr->created_corr) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_corr_interp\n")
+    HMPDFPRINT(2, "\tcreate_corr_interp\n");
     
     d->pwr->corr_rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
     gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, d->pwr->corr_rmax);
-    SAFEALLOC(double *, Pk,   malloc(CORRINTERP_N     * sizeof(double)))
-    SAFEALLOC(double *, r,    malloc((CORRINTERP_N+1) * sizeof(double)))
-    SAFEALLOC(double *, zeta, malloc((CORRINTERP_N+1) * sizeof(double)))
+    double *Pk;
+    double *r;
+    double *zeta;
+    SAFEALLOC(Pk,   malloc(CORRINTERP_N     * sizeof(double)));
+    SAFEALLOC(r,    malloc((CORRINTERP_N+1) * sizeof(double)));
+    SAFEALLOC(zeta, malloc((CORRINTERP_N+1) * sizeof(double)));
     r[0] = 0.0;
     zeta[0] = d->pwr->autocorr;
 
@@ -287,10 +290,10 @@ create_corr(hmpdf_obj *d)
         #else
         double k = gsl_dht_k_sample(t, ii);
         #endif
-        SAFEHMPDF(Pk_linear(d, k, Pk+ii))
+        SAFEHMPDF(Pk_linear(d, k, Pk+ii));
         r[ii+1] = gsl_dht_x_sample(t, ii);
     }
-    SAFEGSL(gsl_dht_apply(t, Pk, zeta+1))
+    SAFEGSL(gsl_dht_apply(t, Pk, zeta+1));
     gsl_dht_free(t);
     free(Pk);
 
@@ -300,17 +303,17 @@ create_corr(hmpdf_obj *d)
         zeta[ii] *= 0.5 * M_1_PI * hankel_norm;
     }
 
-    SAFEALLOC(, d->pwr->corr_interp,
-              gsl_spline_alloc(gsl_interp_cspline, CORRINTERP_N+1))
+    SAFEALLOC(d->pwr->corr_interp,
+              gsl_spline_alloc(gsl_interp_cspline, CORRINTERP_N+1));
     d->pwr->Ncorr_accel = d->Ncores;
-    SAFEALLOC(, d->pwr->corr_accel,
-              malloc(d->pwr->Ncorr_accel * sizeof(gsl_interp_accel *)))
+    SAFEALLOC(d->pwr->corr_accel,
+              malloc(d->pwr->Ncorr_accel * sizeof(gsl_interp_accel *)));
     for (int ii=0; ii<d->pwr->Ncorr_accel; ii++)
     {
-        SAFEALLOC(, d->pwr->corr_accel[ii], gsl_interp_accel_alloc())
+        SAFEALLOC(d->pwr->corr_accel[ii], gsl_interp_accel_alloc());
     }
     SAFEGSL(gsl_spline_init(d->pwr->corr_interp, r,
-                            zeta, CORRINTERP_N+1))
+                            zeta, CORRINTERP_N+1));
     free(r);
     free(zeta);
 
@@ -329,11 +332,11 @@ corr(hmpdf_obj *d, int z_index, double phi, double *out)
     {
         HMPDFERR("phi value out of interpolation range.\n"
                  "\tIt is suggested you increase hmpdf_phimax\n"
-                 "\tor check the units.")
+                 "\tor check the units.");
     }
     SAFEGSL(gsl_spline_eval_e(d->pwr->corr_interp, r,
                               d->pwr->corr_accel[this_core()],
-                              out))
+                              out));
     *out *= d->c->Dsq[z_index];
     
     ENDFCT
@@ -344,10 +347,10 @@ init_power(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "init_power\n")
+    HMPDFPRINT(1, "init_power\n");
 
-    SAFEHMPDF(create_ssq(d))
-    SAFEHMPDF(create_autocorr(d))
+    SAFEHMPDF(create_ssq(d));
+    SAFEHMPDF(create_autocorr(d));
 
     ENDFCT
 }//}}}

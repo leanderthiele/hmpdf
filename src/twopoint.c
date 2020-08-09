@@ -39,7 +39,7 @@ reset_twopoint(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_twopoint\n")
+    HMPDFPRINT(2, "\treset_twopoint\n");
 
     if (d->tp->dtsq != NULL)
     {
@@ -127,14 +127,14 @@ correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
         // correct rows
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
-            correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
-                            1, sgn);
+            SAFEHMPDF(correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
+                                      1, sgn));
         }
         // correct cols
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
-            correct_phase1d(d, x+ii,
-                            d->n->Nsignal/2+1, sgn);
+            SAFEHMPDF(correct_phase1d(d, x+ii,
+                                      d->n->Nsignal/2+1, sgn));
         }
     }
 
@@ -149,15 +149,16 @@ create_phi_indep(hmpdf_obj *d)
 
     if (d->tp->created_phi_indep) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_phi_indep\n")
+    HMPDFPRINT(2, "\tcreate_phi_indep\n");
     
-    SAFEALLOC(, d->tp->dtsq, malloc(d->n->Nz * sizeof(batch_t **)))
-    SAFEALLOC(, d->tp->t,    malloc(d->n->Nz * sizeof(batch_t **)))
-    SAFEALLOC(, d->tp->ac,   malloc(d->n->Nz * sizeof(double complex *)))
-    SAFEALLOC(, d->tp->au,   fftw_malloc((d->n->Nsignal/2+1) * sizeof(double complex)))
+    SAFEALLOC(d->tp->dtsq, malloc(d->n->Nz * sizeof(batch_t **)));
+    SAFEALLOC(d->tp->t,    malloc(d->n->Nz * sizeof(batch_t **)));
+    SAFEALLOC(d->tp->ac,   malloc(d->n->Nz * sizeof(double complex *)));
+    SAFEALLOC(d->tp->au,   fftw_malloc((d->n->Nsignal/2+1) * sizeof(double complex)));
     double *au_real = (double *)(d->tp->au);
 
-    SAFEALLOC(double *, tempc_real, fftw_malloc((d->n->Nsignal+2)*sizeof(double)))
+    double *tempc_real;
+    SAFEALLOC(tempc_real, fftw_malloc((d->n->Nsignal+2)*sizeof(double)));
     double complex *tempc_comp = (double complex *)tempc_real;
     fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, tempc_real,
                                             tempc_comp, FFTW_MEASURE);
@@ -171,9 +172,9 @@ create_phi_indep(hmpdf_obj *d)
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->tp->dtsq[z_index], malloc(d->n->NM * sizeof(batch_t *)))
-        SAFEALLOC(, d->tp->t[z_index],    malloc(d->n->NM * sizeof(batch_t *)))
-        SAFEALLOC(, d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(double complex)))
+        SAFEALLOC(d->tp->dtsq[z_index], malloc(d->n->NM * sizeof(batch_t *)));
+        SAFEALLOC(d->tp->t[z_index],    malloc(d->n->NM * sizeof(batch_t *)));
+        SAFEALLOC(d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(double complex)));
         // null the FFT array
         for (int ii=0; ii<d->n->Nsignal+2; ii++)
         {
@@ -186,21 +187,21 @@ create_phi_indep(hmpdf_obj *d)
             double n = d->h->hmf[z_index][M_index];
             double b = d->h->bias[z_index][M_index];
 
-            SAFEALLOC(, d->tp->dtsq[z_index][M_index],
+            SAFEALLOC(d->tp->dtsq[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(batch_t)))
-            SAFEALLOC(, d->tp->t[z_index][M_index],
+                             * sizeof(batch_t)));
+            SAFEALLOC(d->tp->t[z_index][M_index],
                       malloc(d->p->segment_boundaries[z_index][M_index][0]
-                             * sizeof(batch_t)))
+                             * sizeof(batch_t)));
 
             for (int segment=0;
                  segment<d->p->segment_boundaries[z_index][M_index][0];
                  segment++)
             {
                 SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
-                                      dtsq_of_s, d->tp->dtsq[z_index][M_index]+segment))
+                                      dtsq_of_s, d->tp->dtsq[z_index][M_index]+segment));
                 SAFEHMPDF(inv_profile(d, z_index, M_index, segment,
-                                      t_of_s, d->tp->t[z_index][M_index]+segment))
+                                      t_of_s, d->tp->t[z_index][M_index]+segment));
 
                 // sanity check
                 // TODO can remove this later for performance?
@@ -210,7 +211,7 @@ create_phi_indep(hmpdf_obj *d)
                 {
                     HMPDFERR("theta values not monotonically decreasing in "
                              "z = %d, M = %d, segment = %d",
-                             z_index, M_index, segment)
+                             z_index, M_index, segment);
                 }
 
                 for (int signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
@@ -231,7 +232,7 @@ create_phi_indep(hmpdf_obj *d)
         // perform FFT for clustered term
         fftw_execute(plan_c);
         // correct phases
-        SAFEHMPDF(correct_phase1d(d, tempc_comp, 1, 1))
+        SAFEHMPDF(correct_phase1d(d, tempc_comp, 1, 1));
         // write into the output array, subtracting the zero mode
         for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -241,7 +242,7 @@ create_phi_indep(hmpdf_obj *d)
     // perform FFT for unclustered term
     fftw_execute(plan_u);
     // correct phases
-    SAFEHMPDF(correct_phase1d(d, d->tp->au, 1, 1))
+    SAFEHMPDF(correct_phase1d(d, d->tp->au, 1, 1));
     // subtract zero mode of unclustered contribution
     for (int ii=d->n->Nsignal/2; ii>=0; ii--)
     {
@@ -349,7 +350,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
-        tp_segmentsum(d, z_index, M_index, phi, ws);
+        SAFEHMPDF(tp_segmentsum(d, z_index, M_index, phi, ws));
     }
 
     ENDFCT
@@ -390,8 +391,8 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
                 - b12[i1*(d->n->Nsignal/2+1)]
                 - b12[i2] + b12[0];
     double corr1, corr2;
-    SAFEHMPDF(corr(d, z_index, phi, &corr1))
-    SAFEHMPDF(corr(d, z_index, 0.5*phi, &corr2))
+    SAFEHMPDF(corr(d, z_index, phi, &corr1));
+    SAFEHMPDF(corr(d, z_index, 0.5*phi, &corr2));
     *out = 0.5 * (a1*a1 + a2*a2 + b*b) * d->c->Dsq[z_index] * d->pwr->autocorr
            + a1*a2 * corr1
            + b*(a1 + a2) * corr2;
@@ -419,7 +420,7 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         // perform mass integration
-        SAFEHMPDF(tp_Mint(d, z_index, phi, ws))
+        SAFEHMPDF(tp_Mint(d, z_index, phi, ws));
 
         // symmetrize the clustered beta matrix
         for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -433,7 +434,7 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         // perform the FFT on the clustered part tempc_real -> tempc_comp
         fftw_execute(ws->pc_r2c);
         // correct phases
-        SAFEHMPDF(correct_phase2d(d, ws->tempc_comp, 1))
+        SAFEHMPDF(correct_phase2d(d, ws->tempc_comp, 1));
 
         // add to the clustered output
         for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -443,10 +444,10 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
             // loop over the short direction
             {
                 double complex clterm;
-                SAFEHMPDF(clustered_term(d, z_index, phi, ii, jj, ws->tempc_comp, &clterm))
+                SAFEHMPDF(clustered_term(d, z_index, phi, ii, jj, ws->tempc_comp, &clterm));
                 double complex temp = clterm
-                               * gsl_pow_4(d->c->comoving[z_index])
-                               / d->c->hubble[z_index];
+                                      * gsl_pow_4(d->c->comoving[z_index])
+                                      / d->c->hubble[z_index];
                 ws->bc[ii*(d->n->Nsignal/2+1)+jj] += temp * d->n->zweights[z_index];
             }
         }
@@ -462,7 +463,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     STARTFCT
 
     // perform the redshift integration
-    SAFEHMPDF(tp_zint(d, phi, ws))
+    SAFEHMPDF(tp_zint(d, phi, ws));
 
     // symmetrize the unclustered part
     for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -477,7 +478,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     // perform the FFT on the unclustered part pdf_real -> pdf_comp
     fftw_execute(ws->pu_r2c);
     // correct phases
-    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, 1))
+    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, 1));
 
     // add the clustering contribution,
     // subtract the zero modes in the unclustered part,
@@ -499,7 +500,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     }
 
     // correct phases
-    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, -1))
+    SAFEHMPDF(correct_phase2d(d, ws->pdf_comp, -1));
     // perform backward FFT pdf_comp -> pdf_real
     fftw_execute(ws->ppdf_c2r);
 
@@ -513,13 +514,13 @@ create_noisy_tp(hmpdf_obj *d)
 
     if (d->tp->pdf_noisy == NULL)
     {
-        SAFEALLOC(, d->tp->pdf_noisy,
+        SAFEALLOC(d->tp->pdf_noisy,
                   malloc(d->n->Nsignal_noisy
                          * d->n->Nsignal_noisy
-                         * sizeof(double)))
+                         * sizeof(double)));
     }
 
-    SAFEHMPDF(noise_matr(d, d->tp->pdf, d->tp->pdf_noisy))
+    SAFEHMPDF(noise_matr(d, d->tp->pdf, d->tp->pdf_noisy));
 
     ENDFCT
 }//}}}
@@ -529,10 +530,10 @@ new_tp_ws(int N, twopoint_workspace **out)
 {//{{{
     STARTFCT
 
-    SAFEALLOC(, *out, malloc(sizeof(twopoint_workspace)))
+    SAFEALLOC(*out, malloc(sizeof(twopoint_workspace)));
     twopoint_workspace *ws = *out; // for convenience
 
-    SAFEALLOC_NORETURN(, ws->pdf_real, fftw_malloc(N * (N+2) * sizeof(double)))
+    SAFEALLOC_NORETURN(ws->pdf_real, fftw_malloc(N * (N+2) * sizeof(double)));
     if (hmpdf_status)
     {//{{{
         free(*out);
@@ -544,7 +545,7 @@ new_tp_ws(int N, twopoint_workspace **out)
     ws->ppdf_c2r = fftw_plan_dft_c2r_2d(N, N, ws->pdf_comp,
                                         ws->pdf_real, PPDF_C2R_MODE);
     
-    SAFEALLOC_NORETURN(, ws->bc, malloc(N * (N/2+1) * sizeof(double complex)))
+    SAFEALLOC_NORETURN(ws->bc, malloc(N * (N/2+1) * sizeof(double complex)));
     if (hmpdf_status)
     {//{{{
         fftw_destroy_plan(ws->ppdf_c2r);
@@ -554,7 +555,7 @@ new_tp_ws(int N, twopoint_workspace **out)
         return hmpdf_status;
     }//}}}
 
-    SAFEALLOC_NORETURN(, ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)))
+    SAFEALLOC_NORETURN(ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)));
     if (hmpdf_status)
     {//{{{
         free(ws->bc);
@@ -575,36 +576,36 @@ prepare_tp(hmpdf_obj *d, double phi)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "prepare_tp\n")
+    HMPDFPRINT(1, "prepare_tp\n");
 
     // run necessary code from other modules
-    SAFEHMPDF(create_corr(d))
+    SAFEHMPDF(create_corr(d));
     if (d->f->Nfilters > 0)
     {
-        SAFEHMPDF(create_conj_profiles(d))
-        SAFEHMPDF(create_filtered_profiles(d))
+        SAFEHMPDF(create_conj_profiles(d));
+        SAFEHMPDF(create_filtered_profiles(d));
     }
-    SAFEHMPDF(create_segments(d))
-    SAFEHMPDF(create_phi_indep(d))
-    SAFEHMPDF(create_op(d))
+    SAFEHMPDF(create_segments(d));
+    SAFEHMPDF(create_phi_indep(d));
+    SAFEHMPDF(create_op(d));
 
     if (d->tp->ws == NULL)
     {
-        SAFEHMPDF(new_tp_ws(d->n->Nsignal, &(d->tp->ws)))
+        SAFEHMPDF(new_tp_ws(d->n->Nsignal, &(d->tp->ws)));
         if (d->tp->ws == NULL)
         {
-            HMPDFERR("OOM.")
+            HMPDFERR("OOM.");
         }
     }
 
     // convert from arcmin to radians
     phi *= M_PI/60.0/180.0;
-    SAFEHMPDF(create_tp(d, phi, d->tp->ws))
+    SAFEHMPDF(create_tp(d, phi, d->tp->ws));
     
     // copy PDF into contiguous array (tp->pdf_real has padding from the FFTs)
     if (d->tp->pdf == NULL)
     {
-        SAFEALLOC(, d->tp->pdf, malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double)))
+        SAFEALLOC(d->tp->pdf, malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double)));
     }
     for (int ii=0; ii<d->n->Nsignal; ii++)
     {
@@ -615,7 +616,7 @@ prepare_tp(hmpdf_obj *d, double phi)
 
     if (d->ns->noise > 0.0)
     {
-        SAFEHMPDF(create_noisy_tp(d))
+        SAFEHMPDF(create_noisy_tp(d));
     }
 
     ENDFCT
@@ -628,18 +629,18 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
 
     if (noisy && d->ns->noise<0.0)
     {
-        HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.")
+        HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.");
     }
 
     if (not_monotonic(Nbins+1, binedges, 1))
     {
-        HMPDFERR("binedges not monotonically increasing.")
+        HMPDFERR("binedges not monotonically increasing.");
     }
 
     // perform computation if necessary
     if (fabs(1.0 - d->tp->last_phi/phi) > TP_PHI_EQ_TOL)
     {
-        SAFEHMPDF(prepare_tp(d, phi))
+        SAFEHMPDF(prepare_tp(d, phi));
     }
     d->tp->last_phi = phi;
 
@@ -654,11 +655,11 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
         }
     }
 
-    HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n")
+    HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n");
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->tp->pdf_noisy : d->tp->pdf,
-                     TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE))
+                     TPINTEGR_N, Nbins, _binedges, tp, TPINTERP_TYPE));
 
     ENDFCT
 }//}}}

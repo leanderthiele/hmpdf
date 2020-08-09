@@ -35,7 +35,7 @@ reset_filters(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_filters\n")
+    HMPDFPRINT(2, "\treset_filters\n");
 
     if (d->f->z_dependent != NULL) { free(d->f->z_dependent); }
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
@@ -105,8 +105,10 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
     STARTFCT
 
     int Nell = PRWINDOW_INTERP_NELL;
-    SAFEALLOC(double *, ell, malloc(Nell * sizeof(double)))
-    SAFEALLOC(double *, Well, malloc(Nell * sizeof(double)))
+    double *ell;
+    double *Well;
+    SAFEALLOC(ell,  malloc(Nell * sizeof(double)));
+    SAFEALLOC(Well, malloc(Nell * sizeof(double)));
 
     #ifdef LOGELL
     linspace(Nell, log(PRWINDOW_INTERP_ELLMIN), log(PRWINDOW_INTERP_ELLMAX), ell);
@@ -115,8 +117,8 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
     #endif
     gsl_function integrand;
     integrand.function = Bell[mode];
-    SAFEALLOC(gsl_integration_workspace *, ws,
-              gsl_integration_workspace_alloc(PRWINDOW_INTEGR_LIMIT))
+    gsl_integration_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_workspace_alloc(PRWINDOW_INTEGR_LIMIT));
     for (int ii=0; ii<Nell; ii++)
     {
         integrand.params = ell+ii;
@@ -126,22 +128,22 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
                                     PRWINDOW_INTEGR_EPSREL,
                                     PRWINDOW_INTEGR_LIMIT,
                                     PRWINDOW_INTEGR_KEY,
-                                    ws, Well+ii, &err))
+                                    ws, Well+ii, &err));
         Well[ii] *= 4.0 * M_1_PI;
     }
     gsl_integration_workspace_free(ws);
 
-    SAFEALLOC(, d->f->quadraticpixel_interp[mode],
-              gsl_spline_alloc(gsl_interp_cspline, Nell))
-    SAFEALLOC(, d->f->quadraticpixel_accel[mode],
-              malloc(d->Ncores * sizeof(gsl_interp_accel *)))
+    SAFEALLOC(d->f->quadraticpixel_interp[mode],
+              gsl_spline_alloc(gsl_interp_cspline, Nell));
+    SAFEALLOC(d->f->quadraticpixel_accel[mode],
+              malloc(d->Ncores * sizeof(gsl_interp_accel *)));
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEALLOC(, d->f->quadraticpixel_accel[mode][ii],
-                  gsl_interp_accel_alloc())
+        SAFEALLOC(d->f->quadraticpixel_accel[mode][ii],
+                  gsl_interp_accel_alloc());
     }
     SAFEGSL(gsl_spline_init(d->f->quadraticpixel_interp[mode],
-                            ell, Well, Nell))
+                            ell, Well, Nell));
 
     #ifdef LOGELL
     d->f->quadraticpixel_ellmin[mode] = exp(ell[0]);
@@ -165,7 +167,7 @@ _tophat(double x, double *out)
     if (x > 1e-4)
     {
         gsl_sf_result result;
-        SAFEGSL(gsl_sf_bessel_J1_e(x, &result))
+        SAFEGSL(gsl_sf_bessel_J1_e(x, &result));
         *out = 2.0 * result.val / x;
     }
     else if (x > 0.0)
@@ -175,7 +177,7 @@ _tophat(double x, double *out)
     else
     {
         *out = 0.0;
-        HMPDFERR("argument negative")
+        HMPDFERR("argument negative");
     }
 
     ENDFCT
@@ -189,7 +191,7 @@ _tophatsq(double x, double *out)
     if (x > 1e-4)
     {
         gsl_sf_result result;
-        SAFEGSL(gsl_sf_bessel_J1_e(x, &result))
+        SAFEGSL(gsl_sf_bessel_J1_e(x, &result));
         *out = 4.0 * gsl_pow_2(result.val / x);
     }
     else if (x > 0.0)
@@ -199,7 +201,7 @@ _tophatsq(double x, double *out)
     else
     {
         *out = 0.0;
-        HMPDFERR("argument negative")
+        HMPDFERR("argument negative");
     }
 
     ENDFCT
@@ -229,7 +231,7 @@ filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard, double *
         #endif
         SAFEGSL(gsl_spline_eval_e(_d->f->quadraticpixel_interp[m], ell,
                                   _d->f->quadraticpixel_accel[m][this_core()],
-                                  out))
+                                  out));
     }
 
     ENDFCT
@@ -250,7 +252,7 @@ filter_tophat(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : SAFEHMPDF(_tophatsq(ell, out));
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized 
-                          HMPDFERR("unknown filter mode.")
+                          HMPDFERR("unknown filter mode.");
     }
 
     ENDFCT
@@ -271,7 +273,7 @@ filter_gaussian(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : *out = exp(-ell*ell);
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          HMPDFERR("Unknown filter mode.")
+                          HMPDFERR("Unknown filter mode.");
     }
 
     ENDFCT
@@ -291,7 +293,7 @@ filter_custom_ell(void *d, double ell, filter_mode m, int *discard, double *out)
         case filter_ps  : *out = w*w;
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          HMPDFERR("Unkown filter mode.")
+                          HMPDFERR("Unkown filter mode.");
     }
 
     ENDFCT
@@ -313,7 +315,7 @@ filter_custom_k(void *d, double ell, filter_mode m, int *z_index, double *out)
         case filter_ps  : *out = w*w;
                           break;
         default         : *out = 0.0; // to avoid maybe-uninitialized
-                          HMPDFERR("Unknown filter mode.")
+                          HMPDFERR("Unknown filter mode.");
     }
 
     ENDFCT
@@ -346,7 +348,7 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
             for (int jj=0; jj<N; jj++)
             {
                 double temp;
-                SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], mode, z_index, &temp))
+                SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], mode, z_index, &temp));
                 out[jj*stride] *= temp;
             }
         }
@@ -362,33 +364,33 @@ init_filters(hmpdf_obj *d)
 
     if (d->f->inited_filters) { return hmpdf_status; }
 
-    HMPDFPRINT(1, "init_filters\n")
+    HMPDFPRINT(1, "init_filters\n");
 
-    SAFEALLOC(, d->f->ffilters, malloc(10 * sizeof(filter_fct)))
-    SAFEALLOC(, d->f->z_dependent, malloc(10 * sizeof(int)))
+    SAFEALLOC(d->f->ffilters,    malloc(10 * sizeof(filter_fct)));
+    SAFEALLOC(d->f->z_dependent, malloc(10 * sizeof(int)));
     d->f->Nfilters = 0;
 
     if (d->f->pixelside > 0.0)
     {//{{{
-        HMPDFPRINT(2, "\twill apply pixel filter\n")
+        HMPDFPRINT(2, "\twill apply pixel filter\n");
 
-        SAFEALLOC(, d->f->quadraticpixel_interp,
-                  malloc(2 * sizeof(gsl_spline *)))
-        SAFEALLOC(, d->f->quadraticpixel_accel,
-                  malloc(2 * sizeof(gsl_interp_accel **)))
-        SAFEALLOC(, d->f->quadraticpixel_ellmin,
-                  malloc(2 * sizeof(double)))
-        SAFEALLOC(, d->f->quadraticpixel_ellmax,
-                  malloc(2 * sizeof(double)))
-        SAFEHMPDF(_quadraticpixelinterp(d, filter_pdf))
-        SAFEHMPDF(_quadraticpixelinterp(d, filter_ps))
+        SAFEALLOC(d->f->quadraticpixel_interp,
+                  malloc(2 * sizeof(gsl_spline *)));
+        SAFEALLOC(d->f->quadraticpixel_accel,
+                  malloc(2 * sizeof(gsl_interp_accel **)));
+        SAFEALLOC(d->f->quadraticpixel_ellmin,
+                  malloc(2 * sizeof(double)));
+        SAFEALLOC(d->f->quadraticpixel_ellmax,
+                  malloc(2 * sizeof(double)));
+        SAFEHMPDF(_quadraticpixelinterp(d, filter_pdf));
+        SAFEHMPDF(_quadraticpixelinterp(d, filter_ps));
         d->f->ffilters[d->f->Nfilters] = &filter_quadraticpixel;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->tophat_radius > 0.0)
     {//{{{
-        HMPDFPRINT(2, "\twill apply tophat filter\n")
+        HMPDFPRINT(2, "\twill apply tophat filter\n");
 
         d->f->ffilters[d->f->Nfilters] = &filter_tophat;
         d->f->z_dependent[d->f->Nfilters] = 0;
@@ -396,7 +398,7 @@ init_filters(hmpdf_obj *d)
     }//}}}
     if (d->f->gaussian_sigma > 0.0)
     {//{{{
-        HMPDFPRINT(2, "\twill apply gaussian filter\n")
+        HMPDFPRINT(2, "\twill apply gaussian filter\n");
 
         d->f->ffilters[d->f->Nfilters] = &filter_gaussian;
         d->f->z_dependent[d->f->Nfilters] = 0;
@@ -404,7 +406,7 @@ init_filters(hmpdf_obj *d)
     }//}}}
     if (d->f->custom_ell != NULL)
     {//{{{
-        HMPDFPRINT(2, "\twill apply user-supplied ell-space filter\n")
+        HMPDFPRINT(2, "\twill apply user-supplied ell-space filter\n");
 
         d->f->ffilters[d->f->Nfilters] = &filter_custom_ell;
         d->f->z_dependent[d->f->Nfilters] = 0;
@@ -412,7 +414,7 @@ init_filters(hmpdf_obj *d)
     }//}}}
     if (d->f->custom_k != NULL)
     {//{{{
-        HMPDFPRINT(2, "\twill apply user-supplied k-space filter\n")
+        HMPDFPRINT(2, "\twill apply user-supplied k-space filter\n");
 
         d->f->ffilters[d->f->Nfilters] = &filter_custom_k;
         d->f->z_dependent[d->f->Nfilters] = 1;

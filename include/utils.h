@@ -17,15 +17,16 @@
 #define MELECTRON    4.58110e-61 // Msun
 
 // branch prediction macros for some obvious cases
-//     (check if those are available)
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 //ERRLOC{{{
 #define ERRLOC                                     \
+    do {                                           \
     fprintf(stderr, "Error in %s (%s; line %d) "   \
                     "(see upward for cause) \n",   \
                     __FILE__, __func__, __LINE__); \
+    } while (0)                                    \
 //}}}
 
 // when calling external code (CLASS, GSL) we set errno=0 afterwards
@@ -34,16 +35,18 @@
 
 //SAFECLASS{{{
 #define SAFECLASS(expr, errmsg)                 \
+    do {                                        \
     if (UNLIKELY(expr==_FAILURE_))              \
     {                                           \
         fprintf(stderr, "***CLASS error: %s\n", \
                         errmsg);                \
         fflush(stderr);                         \
-        ERRLOC                                  \
+        ERRLOC;                                 \
         hmpdf_status = 1;                       \
         return hmpdf_status;                    \
     }                                           \
     errno = 0;                                  \
+    } while (0)                                 \
 //}}}
 
 int hmpdf_status_update(int *status, int result);
@@ -53,74 +56,87 @@ void new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEGSL{{{
 #define SAFEGSL(expr)                                \
+    do {                                             \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                                      expr)))         \
     {                                                \
         fprintf(stderr, "***GSL error: %s\n",        \
                         gsl_strerror(hmpdf_status)); \
         fflush(stderr);                              \
-        ERRLOC                                       \
+        ERRLOC;                                      \
         return hmpdf_status;                         \
     }                                                \
     errno = 0;                                       \
+    } while (0)                                      \
 //}}}
 
 //SAFEGSL_NORETURN{{{
 #define SAFEGSL_NORETURN(expr)                       \
+    do {                                             \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                             expr)))                  \
     {                                                \
         fprintf(stderr, "***GSL error: %s\n",        \
                         gsl_strerror(hmpdf_status)); \
         fflush(stderr);                              \
-        ERRLOC                                       \
+        ERRLOC;                                      \
     }                                                \
     errno = 0;                                       \
+    } while (0)                                      \
 //}}}
 
 //SAFEHMPDF{{{
 #define SAFEHMPDF(expr)                             \
+    do {                                            \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                      expr)))        \
     {                                               \
-        ERRLOC                                      \
+        ERRLOC;                                     \
         return 1;                                   \
     }                                               \
+    } while (0)                                     \
 //}}}
 
 //SAFEHMPDF_NORETURN{{{
 #define SAFEHMPDF_NORETURN(expr)                    \
+    do {                                            \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                      expr)))        \
     {                                               \
-        ERRLOC                                      \
+        ERRLOC;                                     \
     }                                               \
+    } while (0)                                     \
 //}}}
 
 //SAFEALLOC{{{
-#define SAFEALLOC(dt,var,expr)             \
-    dt var = expr;                         \
+#define SAFEALLOC(var,expr)                \
+    do {                                   \
+    var = expr;                            \
     if (UNLIKELY(!(var)))                  \
     {                                      \
         fprintf(stderr, "***OOM error\n"); \
         fflush(stderr);                    \
     }                                      \
-    SAFEHMPDF(!(var))                      \
+    SAFEHMPDF(!(var));                     \
+    } while (0)                            \
 //}}}
 
 //SAFEALLOC_NORETURN{{{
-#define SAFEALLOC_NORETURN(dt,var,expr)    \
-    dt var = expr;                         \
+#define SAFEALLOC_NORETURN(var,expr)       \
+    do {                                   \
+    var = expr;                            \
     if (UNLIKELY(!(var)))                  \
     {                                      \
         fprintf(stderr, "***OOM error\n"); \
         fflush(stderr);                    \
     }                                      \
-    SAFEHMPDF_NORETURN(!(var))             \
+    SAFEHMPDF_NORETURN(!(var));            \
+    } while (0)                            \
 //}}}
 
 //CHECKERR{{{
 #define CHECKERR                                    \
+    do {                                            \
     if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                      errno)))       \
     {                                               \
@@ -128,8 +144,9 @@ void new_gsl_error_handler(const char *reason, const char *file,
                "description)");                     \
         fprintf(stderr, "%s\n", strerror(errno));   \
         fflush(stderr);                             \
-        ERRLOC                                      \
+        ERRLOC;                                     \
     }                                               \
+    } while (0)                                     \
 //}}}
 
 //STARTFCT{{{
@@ -140,40 +157,45 @@ void new_gsl_error_handler(const char *reason, const char *file,
 
 //ENDFCT{{{
 #define ENDFCT           \
-    CHECKERR             \
+    CHECKERR;            \
     return hmpdf_status; \
 //}}}
 
 //HMPDFERR_NORETURN{{{
 #define HMPDFERR_NORETURN(...)           \
+    do {                                 \
     fprintf(stderr, "***hmpdf error: "); \
     fprintf(stderr, __VA_ARGS__);        \
     fprintf(stderr, "\n");               \
     fflush(stderr);                      \
-    ERRLOC                               \
+    ERRLOC;                              \
     hmpdf_status = 1;                    \
+    } while (0)                          \
 //}}}
 
 //HMPDFERR{{{
-#define HMPDFERR(...)              \
-    HMPDFERR_NORETURN(__VA_ARGS__) \
-    return hmpdf_status;           \
+#define HMPDFERR(...)               \
+    HMPDFERR_NORETURN(__VA_ARGS__); \
+    return hmpdf_status;            \
 //}}}
 
 //HMPDFPRINT{{{
 #define HMPDFPRINT(level, ...)        \
+    do {                              \
     if (level <= d->verbosity)        \
     {                                 \
         fprintf(stdout, __VA_ARGS__); \
         fflush(stdout);               \
     }                                 \
+    } while (0)                       \
 //}}}
 
 //HMPDFWARN{{{
 #define HMPDFWARN(...)                                      \
+    do {                                                    \
     if (d->warn_is_err > 0)                                 \
     {                                                       \
-        HMPDFERR_NORETURN(__VA_ARGS__)                      \
+        HMPDFERR_NORETURN(__VA_ARGS__);                     \
         fprintf(stderr, "\t\t>This error can be suppressed "\
                         "by changing the option "           \
                         "hmpdf_warn_is_err, "               \
@@ -192,6 +214,7 @@ void new_gsl_error_handler(const char *reason, const char *file,
                         "hmpdf_warn_is_err.\n");            \
         fflush(stderr);                                     \
     }                                                       \
+    } while (0)                                             \
 //}}}
 
 int ispwr2(int N, int *k);

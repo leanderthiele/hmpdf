@@ -30,7 +30,7 @@ reset_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_halo_model\n")
+    HMPDFPRINT(2, "\treset_halo_model\n");
 
     if (d->h->hmf != NULL)
     {
@@ -91,7 +91,7 @@ density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef, double *out)
         case hmpdf_mdef_m : *out = 200.0 * d->c->rho_m[z_index];
                             break;
         default           : *out = 0.0; // to avoid maybe-uninitialized
-                            HMPDFERR("Unknown mass definition.")
+                            HMPDFERR("Unknown mass definition.");
     }
 
     ENDFCT
@@ -103,7 +103,7 @@ RofM(hmpdf_obj *d, int z_index, int M_index, double *out)
     STARTFCT
 
     double dt;
-    SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt))
+    SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt));
     *out = cbrt(3.0*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
 
     ENDFCT
@@ -146,7 +146,7 @@ NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs
     STARTFCT
 
     double c = c_Duffy08(d, z_index, M_index);
-    SAFEHMPDF(RofM(d, z_index, M_index, rs))
+    SAFEHMPDF(RofM(d, z_index, M_index, rs));
     *rs /= c;
     *rhos = d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
             / (log1p(c)-c/(1.0+c));
@@ -159,10 +159,12 @@ create_c_of_y(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_c_of_y\n")
+    HMPDFPRINT(2, "\tcreate_c_of_y\n");
 
-    SAFEALLOC(double *, logc_grid, malloc(CINTERP_NC * sizeof(double)))
-    SAFEALLOC(double *, logy_grid, malloc(CINTERP_NC * sizeof(double)))
+    double *logc_grid;
+    double *logy_grid;
+    SAFEALLOC(logc_grid, malloc(CINTERP_NC * sizeof(double)));
+    SAFEALLOC(logy_grid, malloc(CINTERP_NC * sizeof(double)));
     for (int ii=0; ii<CINTERP_NC; ii++)
     {
         logc_grid[ii] = log(CINTERP_CMAX)
@@ -170,13 +172,13 @@ create_c_of_y(hmpdf_obj *d)
         double _c = exp(logc_grid[ii]);
         logy_grid[ii] = log(3.0) - 3.0*logc_grid[ii] + log(log1p(_c) - _c/(1.0+_c));
     }
-    SAFEALLOC(, d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC))
-    SAFEALLOC(, d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)))
+    SAFEALLOC(d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC));
+    SAFEALLOC(d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)));
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEALLOC(, d->h->c_accel[ii], gsl_interp_accel_alloc())
+        SAFEALLOC(d->h->c_accel[ii], gsl_interp_accel_alloc());
     }
-    SAFEGSL(gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC))
+    SAFEGSL(gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC));
     free(logc_grid);
     free(logy_grid);
 
@@ -191,7 +193,7 @@ c_of_y(hmpdf_obj *d, double y, double *out)
     STARTFCT
 
     SAFEGSL(gsl_spline_eval_e(d->h->c_interp, log(y),
-                              d->h->c_accel[this_core()], out))
+                              d->h->c_accel[this_core()], out));
     *out = exp(*out);
 
     ENDFCT
@@ -206,12 +208,12 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     STARTFCT
 
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs))
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
     double dt;
-    SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt))
-    SAFEHMPDF(c_of_y(d, dt/rhos, c))
+    SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt));
+    SAFEHMPDF(c_of_y(d, dt/rhos, c));
     *R = rs * *c;
-    SAFEHMPDF(MofR(d, z_index, *R, mdef_out, M))
+    SAFEHMPDF(MofR(d, z_index, *R, mdef_out, M));
 
     ENDFCT
 }//}}}
@@ -271,19 +273,19 @@ create_dndlogM(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_dndlogM\n")
+    HMPDFPRINT(2, "\tcreate_dndlogM\n");
 
-    SAFEALLOC(, d->h->hmf,  malloc(d->n->Nz * sizeof(double *)))
-    SAFEALLOC(, d->h->bias, malloc(d->n->Nz * sizeof(double *)))
+    SAFEALLOC(d->h->hmf,  malloc(d->n->Nz * sizeof(double *)));
+    SAFEALLOC(d->h->bias, malloc(d->n->Nz * sizeof(double *)));
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)))
-        SAFEALLOC(, d->h->bias[z_index], malloc(d->n->NM * sizeof(double)))
+        SAFEALLOC(d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)));
+        SAFEALLOC(d->h->bias[z_index], malloc(d->n->NM * sizeof(double)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             SAFEHMPDF(_dndlogM(d, z_index, M_index,
                                d->h->hmf[z_index]+M_index,
-                               d->h->bias[z_index]+M_index))
+                               d->h->bias[z_index]+M_index));
         }
     }
 
@@ -297,10 +299,10 @@ init_halo_model(hmpdf_obj *d)
 
     if (d->h->inited_halo) { return hmpdf_status; }
 
-    HMPDFPRINT(1, "init_halo_model\n")
+    HMPDFPRINT(1, "init_halo_model\n");
 
-    SAFEHMPDF(create_c_of_y(d))
-    SAFEHMPDF(create_dndlogM(d))
+    SAFEHMPDF(create_c_of_y(d));
+    SAFEHMPDF(create_dndlogM(d));
     d->h->inited_halo = 1;
 
     ENDFCT

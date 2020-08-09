@@ -427,7 +427,8 @@ interp1d_s
     double yhi;
 };//}}}
 
-const gsl_interp_type *interp1d_type(interp_mode m)
+const gsl_interp_type *
+interp1d_type(interp_mode m)
 {//{{{
     switch (m)
     {
@@ -449,17 +450,17 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
     STARTFCT
 
     const gsl_interp_type *T = interp1d_type(m);
-    SAFEALLOC(, *out, malloc(sizeof(interp1d)))
+    SAFEALLOC(*out, malloc(sizeof(interp1d)));
     (*out)->N = N;
     (*out)->x = x;
     (*out)->y = y;
     (*out)->ylo = ylo;
     (*out)->yhi = yhi;
-    SAFEALLOC(, (*out)->i, gsl_interp_alloc(T, (*out)->N))
+    SAFEALLOC((*out)->i, gsl_interp_alloc(T, (*out)->N));
     if (a == NULL)
     {
         (*out)->alloced_accel = 1;
-        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
+        SAFEALLOC((*out)->a, gsl_interp_accel_alloc());
     }
     else
     {
@@ -467,7 +468,7 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
         (*out)->a = a;
     }
     
-    SAFEGSL(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N))
+    SAFEGSL(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N));
 
     ENDFCT
 }//}}}
@@ -499,7 +500,7 @@ interp1d_eval(interp1d *interp, double x, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
-                                  interp->a, out))
+                                  interp->a, out));
     }
 
     ENDFCT
@@ -524,7 +525,7 @@ interp1d_eval1(interp1d *interp, double x, int *inrange, double *out)
     {
         *inrange = 1;
         SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
-                                  interp->a, out))
+                                  interp->a, out));
     }
 
     ENDFCT
@@ -546,7 +547,7 @@ interp1d_eval_deriv(interp1d *interp, double x, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
-                                        interp->a, out))
+                                        interp->a, out));
     }
 
     ENDFCT
@@ -571,7 +572,7 @@ interp1d_eval_deriv1(interp1d *interp, double x, int *inrange, double *out)
     {
         *inrange = 1;
         SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
-                                        interp->a, out))
+                                        interp->a, out));
     }
 
     ENDFCT
@@ -591,7 +592,7 @@ interp1d_eval_integ(interp1d *interp, double a, double b, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_integ_e(interp->i, interp->x, interp->y,
-                                        _a, _b, interp->a, out))
+                                        _a, _b, interp->a, out));
         *out += (_a - a) * interp->ylo + (b - _b) * interp->yhi;
     }
 
@@ -627,19 +628,19 @@ new_interp2d(int N, double *x, double *z,
         case interp2d_bicubic  : T = gsl_interp2d_bicubic;
                                  break;
         default                : T = NULL;
-                                 HMPDFERR("Unkown interpolation type.")
+                                 HMPDFERR("Unkown interpolation type.");
     }
-    SAFEALLOC(, *out, malloc(sizeof(interp2d)))
+    SAFEALLOC(*out, malloc(sizeof(interp2d)));
     (*out)->N = N;
     (*out)->x = x;
     (*out)->z = z;
     (*out)->zlo = zlo;
     (*out)->zhi = zhi;
-    SAFEALLOC(, (*out)->i, gsl_interp2d_alloc(T, (*out)->N, (*out)->N))
+    SAFEALLOC((*out)->i, gsl_interp2d_alloc(T, (*out)->N, (*out)->N));
     if (a == NULL)
     {
         (*out)->alloced_accel = 1;
-        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
+        SAFEALLOC((*out)->a, gsl_interp_accel_alloc());
     }
     else
     {
@@ -647,7 +648,7 @@ new_interp2d(int N, double *x, double *z,
         (*out)->a = a;
     }
     SAFEGSL(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
-                              (*out)->z, (*out)->N, (*out)->N))
+                              (*out)->z, (*out)->N, (*out)->N));
 
     ENDFCT
 }//}}}
@@ -679,7 +680,7 @@ interp2d_eval(interp2d *interp, double x, double y, double *out)
     else
     {
         SAFEGSL(gsl_interp2d_eval_e(interp->i, interp->x, interp->x, interp->z,
-                                    x, y, interp->a, interp->a, out))
+                                    x, y, interp->a, interp->a, out));
     }
 
     ENDFCT
@@ -696,10 +697,10 @@ bin_1d(int N, double *x, double *y,
     STARTFCT
 
     interp1d *interp;
-    SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp))
+    SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp));
     for (int ii=0; ii<Nbins; ii++)
     {
-        SAFEHMPDF(interp1d_eval_integ(interp, binedges[ii], binedges[ii+1], out+ii))
+        SAFEHMPDF(interp1d_eval_integ(interp, binedges[ii], binedges[ii+1], out+ii));
         out[ii] /= (x[1] - x[0]);
     }
     delete_interp1d(interp);
@@ -714,9 +715,9 @@ bin_2d(int N, double *x, double *z, int Nsample,
     STARTFCT
 
     interp2d *interp;
-    SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp))
-    SAFEALLOC(gsl_integration_glfixed_table *, t,
-              gsl_integration_glfixed_table_alloc(Nsample))
+    SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp));
+    gsl_integration_glfixed_table *t;
+    SAFEALLOC(t, gsl_integration_glfixed_table_alloc(Nsample));
 
     for (int ii=0; ii<Nbins; ii++)
     {
@@ -735,9 +736,9 @@ bin_2d(int N, double *x, double *z, int Nsample,
                 {
                     double node_j, weight_j, temp;
                     SAFEGSL(gsl_integration_glfixed_point(binedges[jj], binedges[jj+1],
-                                                          ll, &node_j, &weight_j, t))
+                                                          ll, &node_j, &weight_j, t));
 
-                    SAFEHMPDF(interp2d_eval(interp, node_i, node_j, &temp))
+                    SAFEHMPDF(interp2d_eval(interp, node_i, node_j, &temp));
                     *res += weight_i * weight_j * temp
                             / gsl_pow_2(x[1] - x[0]);
                 }

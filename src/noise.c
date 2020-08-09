@@ -28,7 +28,7 @@ reset_noise(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_noise\n")
+    HMPDFPRINT(2, "\treset_noise\n");
 
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
 
@@ -40,14 +40,14 @@ create_noisy_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_noisy_grids\n")
+    HMPDFPRINT(2, "\tcreate_noisy_grids\n");
 
     // can in principle make this a user setting
     d->ns->len_kernel = d->n->Nsignal;
     // construct the new signal grid
     d->n->Nsignal_noisy = d->n->Nsignal+2*d->ns->len_kernel;
-    SAFEALLOC(, d->n->signalgrid_noisy, malloc(d->n->Nsignal_noisy
-                                               * sizeof(double)))
+    SAFEALLOC(d->n->signalgrid_noisy, malloc(d->n->Nsignal_noisy
+                                             * sizeof(double)));
     double extra_signal = (double)(d->ns->len_kernel)/(double)(d->n->Nsignal-1)
                           *(d->n->signalmax - d->n->signalmin);
     double smin = d->n->signalmin - extra_signal;
@@ -63,10 +63,10 @@ create_toepl(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_toepl\n")
+    HMPDFPRINT(2, "\tcreate_toepl\n");
 
-    SAFEALLOC(, d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                     * sizeof(double)))
+    SAFEALLOC(d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
+                                     * sizeof(double)));
     zero_real(d->n->Nsignal*d->n->Nsignal_noisy, d->ns->toepl);
     double sigma = d->ns->noise
                    / (d->n->signalgrid[1] - d->n->signalgrid[0]);
@@ -94,7 +94,7 @@ noise_vect(hmpdf_obj *d, double *in, double *out)
 
     if (d->ns->toepl == NULL)
     {
-        HMPDFERR("Toeplitz matrix not computed.")
+        HMPDFERR("Toeplitz matrix not computed.");
     }
 
     cblas_dgemv(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
@@ -114,12 +114,13 @@ noise_matr(hmpdf_obj *d, double *in, double *out)
 
     if (d->ns->toepl == NULL)
     {
-        HMPDFERR("Toeplitz matrix not computed.")
+        HMPDFERR("Toeplitz matrix not computed.");
     }
 
     // no aliasing allowed, so we need intermediate storage
-    SAFEALLOC(double *, temp, malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                     * sizeof(double)))
+    double *temp;
+    SAFEALLOC(temp, malloc(d->n->Nsignal * d->n->Nsignal_noisy
+                                     * sizeof(double)));
 
     // multiply from the left with Toeplitz matrix
     cblas_dgemm(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
@@ -150,10 +151,10 @@ init_noise(hmpdf_obj *d)
 
     if (d->ns->noise > 0.0)
     {
-        HMPDFPRINT(1, "init_noise\n")
+        HMPDFPRINT(1, "init_noise\n");
 
-        SAFEHMPDF(create_noisy_grids(d))
-        SAFEHMPDF(create_toepl(d))
+        SAFEHMPDF(create_noisy_grids(d));
+        SAFEHMPDF(create_toepl(d));
     }
 
     ENDFCT

@@ -37,7 +37,7 @@ reset_numerics(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_numerics\n")
+    HMPDFPRINT(2, "\treset_numerics\n");
 
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
@@ -71,7 +71,7 @@ weight_fct(hmpdf_integr_mode_e m,
         case hmpdf_rational    : *out = pow(x-a, alpha) * pow(x+b, beta); break;
         case hmpdf_chebyshev2  : *out = sqrt((b-x)*(x-a)); break;
         default                : *out = 0.0; // to avoid maybe-unitialized
-                                 HMPDFERR("Unknown integration mode.")
+                                 HMPDFERR("Unknown integration mode.");
     }
 
     ENDFCT
@@ -100,8 +100,8 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         default                : T = NULL;
                                  HMPDFERR("Unknown integration mode.")
     }
-    SAFEALLOC(gsl_integration_fixed_workspace *, ws,
-              gsl_integration_fixed_alloc(T, N, a, b, alpha, beta))
+    gsl_integration_fixed_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_fixed_alloc(T, N, a, b, alpha, beta));
     double *_nodes = gsl_integration_fixed_nodes(ws);
     double *_weights = gsl_integration_fixed_weights(ws);
     for (int ii=0; ii<N; ii++)
@@ -110,7 +110,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         if (neutralize_weights)
         {
             double temp;
-            SAFEHMPDF(weight_fct(m, a, b, alpha, beta, nodes[ii], &temp))
+            SAFEHMPDF(weight_fct(m, a, b, alpha, beta, nodes[ii], &temp));
             weights[ii] = _weights[ii] / temp;
         }
         else
@@ -154,38 +154,38 @@ create_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_grids\n")
+    HMPDFPRINT(2, "\tcreate_grids\n");
 
-    SAFEALLOC(, d->n->zgrid,    malloc(d->n->Nz * sizeof(double)))
-    SAFEALLOC(, d->n->zweights, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(d->n->zgrid,    malloc(d->n->Nz * sizeof(double)));
+    SAFEALLOC(d->n->zweights, malloc(d->n->Nz * sizeof(double)));
     SAFEHMPDF(gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
                                 d->n->zmin, d->n->zmax,
                                 d->n->zintegr_alpha,
                                 d->n->zintegr_beta,
                                 d->n->zgrid, d->n->zweights,
-                                1/*neutralize weights*/))
+                                1/*neutralize weights*/));
 
-    SAFEALLOC(, d->n->Mgrid,    malloc(d->n->NM * sizeof(double)))
-    SAFEALLOC(, d->n->Mweights, malloc(d->n->NM * sizeof(double)))
+    SAFEALLOC(d->n->Mgrid,    malloc(d->n->NM * sizeof(double)));
+    SAFEALLOC(d->n->Mweights, malloc(d->n->NM * sizeof(double)));
     SAFEHMPDF(gauss_fixed_point(d->n->Mintegr_type, d->n->NM,
                                 log(d->n->Mmin), log(d->n->Mmax),
                                 d->n->Mintegr_alpha,
                                 d->n->Mintegr_beta,
                                 d->n->Mgrid, d->n->Mweights,
-                                1/*neutralize weights*/))
+                                1/*neutralize weights*/));
 
     for (int ii=0; ii<d->n->NM; ii++)
     {
         d->n->Mgrid[ii] = exp(d->n->Mgrid[ii]);
     }
 
-    SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
+    SAFEALLOC(d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)));
     SAFEHMPDF(construct_signalgrid(d->n->Nsignal,
                                    &(d->n->Nsignal_negative),
                                    &(d->n->signalmin), &(d->n->signalmax),
-                                   d->n->signalgrid))
+                                   d->n->signalgrid));
     
-    SAFEALLOC(, d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)))
+    SAFEALLOC(d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)));
     linspace(d->n->Nsignal/2+1,
              0.0, M_PI/(d->n->signalgrid[1] - d->n->signalgrid[0]),
              d->n->lambdagrid);
@@ -322,9 +322,9 @@ init_numerics(hmpdf_obj *d)
 
     if (d->n->inited_numerics) { return hmpdf_status; }
 
-    HMPDFPRINT(1, "init_numerics\n")
+    HMPDFPRINT(1, "init_numerics\n");
 
-    SAFEHMPDF(create_grids(d))
+    SAFEHMPDF(create_grids(d));
 
     d->n->inited_numerics = 1;
 

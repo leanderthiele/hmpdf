@@ -46,7 +46,7 @@ reset_covariance(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_covariance\n")
+    HMPDFPRINT(2, "\treset_covariance\n");
 
     if (d->cov->Cov != NULL) { free(d->cov->Cov); }
     if (d->cov->Cov_noisy != NULL) { free(d->cov->Cov_noisy); }
@@ -101,14 +101,17 @@ create_phigrid(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phigrid\n");
 
-    SAFEALLOC(double *, _phigrid,    malloc(2 * d->n->Nphi * sizeof(double)))
-    SAFEALLOC(double *, _phiweights, malloc(2 * d->n->Nphi * sizeof(double)))
+    double *_phigrid;
+    double *_phiweights;
+    SAFEALLOC(_phigrid,    malloc(2 * d->n->Nphi * sizeof(double)));
+    SAFEALLOC(_phiweights, malloc(2 * d->n->Nphi * sizeof(double)));
     // allocate twice as much as we probably need to be safe,
     // the continuum integral adds a bit of noise
 
     // first treat the exact pixelization part
-    SAFEALLOC(int *, _rsq, malloc(d->n->pixelexactmax * d->n->pixelexactmax
-                                  * sizeof(int)))
+    int *_rsq;
+    SAFEALLOC(_rsq, malloc(d->n->pixelexactmax * d->n->pixelexactmax
+                           * sizeof(int)));
     int N = 0; // counts possibly repeated sums of two squares
     // loop over one quadrant
     for (int ii=0; ii<=d->n->pixelexactmax; ii++)
@@ -134,7 +137,7 @@ create_phigrid(hmpdf_obj *d)
             HMPDFERR("N_phi = %d too small.", d->n->Nphi)
         }
         _phigrid[Nexact] = sqrt((double)(_rsq[ii]))
-                                    * d->f->pixelside;
+                           * d->f->pixelside;
         _phiweights[Nexact++] = (double)(4 * ctr);
         ii = jj;
     }
@@ -201,13 +204,14 @@ create_phigrid(hmpdf_obj *d)
     double lo = pow((double)(d->n->pixelexactmax) * d->f->pixelside,
                     1.0/d->n->phipwr);
     double hi = pow(d->n->phimax, 1.0/d->n->phipwr);
-    gsl_integration_fixed_workspace *t =
-        gsl_integration_fixed_alloc(gsl_integration_fixed_legendre, d->n->Nphi-Nexact,
-                                    lo, hi, 0.0, 0.0);
+    gsl_integration_fixed_workspace *t;
+    SAFEALLOC(t, gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
+                                             d->n->Nphi-Nexact,
+                                             lo, hi, 0.0, 0.0));
     double *nodes = gsl_integration_fixed_nodes(t);
     double *weights = gsl_integration_fixed_weights(t);
     int nn = Nexact;
-    for (int ii=0; ii<gsl_integration_fixed_n(t); ii++)
+    for (int ii=0; ii<(int)gsl_integration_fixed_n(t); ii++)
     {
         if (nodes[ii] < lo)
         {
@@ -233,15 +237,16 @@ create_phigrid(hmpdf_obj *d)
     }
     d->n->Nphi = nn;
     
-    HMPDFPRINT(4, "\t\t\tNphi = %d, Nexact = %d\n", d->n->Nphi, Nexact)
+    HMPDFPRINT(4, "\t\t\tNphi = %d, Nexact = %d\n", d->n->Nphi, Nexact);
 
     gsl_integration_fixed_free(t);
 
     // now copy into the main grids
     // including shuffling to make parallel execution more efficient
-    SAFEALLOC(, d->n->phigrid,    malloc(d->n->Nphi * sizeof(double)))
-    SAFEALLOC(, d->n->phiweights, malloc(d->n->Nphi * sizeof(double)))
-    SAFEALLOC(int *, _indices, malloc(d->n->Nphi * sizeof(int)))
+    SAFEALLOC(d->n->phigrid,    malloc(d->n->Nphi * sizeof(double)));
+    SAFEALLOC(d->n->phiweights, malloc(d->n->Nphi * sizeof(double)));
+    int *_indices;
+    SAFEALLOC(_indices, malloc(d->n->Nphi * sizeof(int)));
     for (int ii=0; ii<d->n->Nphi; ii++)
     {
         _indices[ii] = ii;
@@ -271,15 +276,15 @@ create_tp_ws(hmpdf_obj *d)
 
     if (d->cov->created_tp_ws) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_tp_ws\n")
-    HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d threads.\n", d->Ncores)
+    HMPDFPRINT(2, "\tcreate_tp_ws\n");
+    HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d threads.\n", d->Ncores);
     
-    SAFEALLOC(, d->cov->ws, malloc(d->Ncores * sizeof(twopoint_workspace *)))
+    SAFEALLOC(d->cov->ws, malloc(d->Ncores * sizeof(twopoint_workspace *)));
     d->cov->Nws = 0;
     // allocate workspaces until we run out of memory
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEHMPDF_NORETURN(new_tp_ws(d->n->Nsignal, d->cov->ws+ii))
+        SAFEHMPDF_NORETURN(new_tp_ws(d->n->Nsignal, d->cov->ws+ii));
         if (hmpdf_status) // failure to allocate a work space is not considered
                           // a critical error
         {
@@ -305,7 +310,7 @@ create_tp_ws(hmpdf_obj *d)
 
     if (d->cov->Nws < 1)
     {
-        HMPDFERR("Failed to allocate any workspaces.")
+        HMPDFERR("Failed to allocate any workspaces.");
     }
 
     d->cov->created_tp_ws = 1;
@@ -346,7 +351,7 @@ status_update(hmpdf_obj *d, time_t t0, int done, int tot)
     int min = (int)round(remains/60.0 - 60.0*(double)(hrs));
     int done_perc = (int)round(100.0*(double)(done)/(double)(tot));
     HMPDFPRINT(1, "\t\t%3d %% done, %.2d hrs %.2d min remaining "
-                  "in create_cov.\n", done_perc, hrs, min)
+                  "in create_cov.\n", done_perc, hrs, min);
 
     ENDFCT
 }//}}}
@@ -386,12 +391,12 @@ create_noisy_cov(hmpdf_obj *d)
 
     if (d->cov->created_noisy_cov) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_noisy_cov\n")
+    HMPDFPRINT(2, "\tcreate_noisy_cov\n");
 
-    SAFEALLOC(, d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
-                                          * d->n->Nsignal_noisy
-                                          * sizeof(double)))
-    SAFEHMPDF(noise_matr(d, d->cov->Cov, d->cov->Cov_noisy))
+    SAFEALLOC(d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
+                                        * d->n->Nsignal_noisy
+                                        * sizeof(double)));
+    SAFEHMPDF(noise_matr(d, d->cov->Cov, d->cov->Cov_noisy));
 
     d->cov->created_noisy_cov = 1;
 
@@ -405,12 +410,12 @@ create_cov(hmpdf_obj *d)
 
     if (d->cov->created_cov) { return hmpdf_status; }
 
-    HMPDFPRINT(2, "\tcreate_cov\n")
+    HMPDFPRINT(2, "\tcreate_cov\n");
 
     // allocate storage
-    SAFEALLOC(, d->cov->Cov, malloc(d->n->Nsignal * d->n->Nsignal
-                                    * sizeof(double)))
-    SAFEALLOC(, d->cov->corr_diagn, malloc(d->n->Nphi * sizeof(double)))
+    SAFEALLOC(d->cov->Cov, malloc(d->n->Nsignal * d->n->Nsignal
+                                  * sizeof(double)));
+    SAFEALLOC(d->cov->corr_diagn, malloc(d->n->Nphi * sizeof(double)));
 
     // zero covariance
     zero_real(d->n->Nsignal * d->n->Nsignal, d->cov->Cov);
@@ -429,12 +434,12 @@ create_cov(hmpdf_obj *d)
 
         // create twopoint at this phi
         SAFEHMPDF_NORETURN(create_tp(d, d->n->phigrid[pp],
-                                     d->cov->ws[this_core()]))
+                                     d->cov->ws[this_core()]));
 
         if (hmpdf_status) { continue; }
         // compute the correlation function
         SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[this_core()],
-                                      d->cov->corr_diagn+pp))
+                                      d->cov->corr_diagn+pp));
 
         if (hmpdf_status) { continue; }
         
@@ -461,7 +466,7 @@ create_cov(hmpdf_obj *d)
             ++Nstatus;
             if ((Nstatus%COV_STATUS_PERIOD == 0) && (d->verbosity > 0))
             {
-                SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi))
+                SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi));
             }
         }
         if (hmpdf_status) { continue; }
@@ -493,34 +498,34 @@ prepare_cov(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(1, "prepare_cov\n")
+    HMPDFPRINT(1, "prepare_cov\n");
 
     // run necessary code from other modules
     if (d->f->Nfilters > 0)
     {
-        SAFEHMPDF(create_conj_profiles(d))
-        SAFEHMPDF(create_filtered_profiles(d))
+        SAFEHMPDF(create_conj_profiles(d));
+        SAFEHMPDF(create_filtered_profiles(d));
     }
-    SAFEHMPDF(create_segments(d))
-    SAFEHMPDF(create_op(d))
+    SAFEHMPDF(create_segments(d));
+    SAFEHMPDF(create_op(d));
 
-    SAFEHMPDF(create_corr(d))
+    SAFEHMPDF(create_corr(d));
 
-    SAFEHMPDF(create_phi_indep(d))
+    SAFEHMPDF(create_phi_indep(d));
     
     // create phi grid
-    SAFEHMPDF(create_phigrid(d))
+    SAFEHMPDF(create_phigrid(d));
     
     // allocate the workspaces
-    SAFEHMPDF(create_tp_ws(d))
+    SAFEHMPDF(create_tp_ws(d));
     
     // create covariance matrix
-    SAFEHMPDF(create_cov(d))
+    SAFEHMPDF(create_cov(d));
 
     // create noisy covariance matrix
     if (d->ns->noise > 0.0)
     {
-        SAFEHMPDF(create_noisy_cov(d))
+        SAFEHMPDF(create_noisy_cov(d));
     }
 
     ENDFCT
@@ -533,12 +538,12 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
 
     if (noisy && d->ns->noise<0.0)
     {
-        HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.")
+        HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.");
     }
 
     if (not_monotonic(Nbins+1, binedges, 1))
     {
-        HMPDFERR("binedges not monotonically increasing.")
+        HMPDFERR("binedges not monotonically increasing.");
     }
 
     if (d->f->pixelside < 0.0)
@@ -547,7 +552,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     }
 
     // perform the computation
-    SAFEHMPDF(prepare_cov(d))
+    SAFEHMPDF(prepare_cov(d));
 
     // if kappa, adjust the bins
     double _binedges[Nbins+1];
@@ -561,20 +566,21 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     }
 
     // perform the binning
-    HMPDFPRINT(3, "\t\tbinning the covariance matrix\n")
+    HMPDFPRINT(3, "\t\tbinning the covariance matrix\n");
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,
                      (noisy) ? d->cov->Cov_noisy : d->cov->Cov,
-                     COVINTEGR_N, Nbins, _binedges, cov, TPINTERP_TYPE))
+                     COVINTEGR_N, Nbins, _binedges, cov, TPINTERP_TYPE));
 
     // compute the shot noise term
-    SAFEALLOC(double *, temp, malloc(Nbins * sizeof(double)))
-    SAFEHMPDF(hmpdf_get_op(d, Nbins, binedges, temp, 1, noisy))
-    SAFEHMPDF(add_shotnoise_diag(Nbins, cov, temp))
+    double *temp;
+    SAFEALLOC(temp, malloc(Nbins * sizeof(double)));
+    SAFEHMPDF(hmpdf_get_op(d, Nbins, binedges, temp, 1, noisy));
+    SAFEHMPDF(add_shotnoise_diag(Nbins, cov, temp));
     free(temp);
 
     // normalize properly
-    SAFEHMPDF(rescale_to_fsky1(d, Nbins, cov))
+    SAFEHMPDF(rescale_to_fsky1(d, Nbins, cov));
 
     ENDFCT
 }//}}}
@@ -617,26 +623,26 @@ hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiwei
     STARTFCT
 
     // perform the computation
-    SAFEHMPDF(prepare_cov(d))
+    SAFEHMPDF(prepare_cov(d));
 
     if (Nphi != NULL)
     {
-        SAFEHMPDF(_get_Nphi(d, Nphi))
+        SAFEHMPDF(_get_Nphi(d, Nphi));
     }
     if (phi != NULL)
     {
-        SAFEALLOC(, *phi, malloc(d->n->Nphi * sizeof(double)))
-        SAFEHMPDF(_get_phi(d, *phi))
+        SAFEALLOC(*phi, malloc(d->n->Nphi * sizeof(double)));
+        SAFEHMPDF(_get_phi(d, *phi));
     }
     if (phiweights != NULL)
     {
-        SAFEALLOC(, *phiweights, malloc(d->n->Nphi * sizeof(double)))
-        SAFEHMPDF(_get_phiweights(d, *phiweights))
+        SAFEALLOC(*phiweights, malloc(d->n->Nphi * sizeof(double)));
+        SAFEHMPDF(_get_phiweights(d, *phiweights));
     }
     if (corr_diagn != NULL)
     {
-        SAFEALLOC(, *corr_diagn, malloc(d->n->Nphi * sizeof(double)))
-        SAFEHMPDF(_get_corr_diagn(d, *corr_diagn))
+        SAFEALLOC(*corr_diagn, malloc(d->n->Nphi * sizeof(double)));
+        SAFEHMPDF(_get_corr_diagn(d, *corr_diagn));
     }
 
     ENDFCT
@@ -647,19 +653,19 @@ hmpdf_get_cov_diagnostics1(hmpdf_obj *d, double *phi, double *phiweights, double
 {//{{{
     STARTFCT
 
-    SAFEHMPDF(prepare_cov(d))
+    SAFEHMPDF(prepare_cov(d));
 
     if (phi != NULL)
     {
-        SAFEHMPDF(_get_phi(d, phi))
+        SAFEHMPDF(_get_phi(d, phi));
     }
     if (phiweights != NULL)
     {
-        SAFEHMPDF(_get_phiweights(d, phiweights))
+        SAFEHMPDF(_get_phiweights(d, phiweights));
     }
     if (corr_diagn != NULL)
     {
-        SAFEHMPDF(_get_corr_diagn(d, corr_diagn))
+        SAFEHMPDF(_get_corr_diagn(d, corr_diagn));
     }
     
     ENDFCT

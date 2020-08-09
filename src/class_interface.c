@@ -15,16 +15,16 @@ alloc_class(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    SAFEALLOC(, d->cls->pr, malloc(sizeof(struct precision)))
-    SAFEALLOC(, d->cls->ba, malloc(sizeof(struct background)))
-    SAFEALLOC(, d->cls->th, malloc(sizeof(struct thermo)))
-    SAFEALLOC(, d->cls->pt, malloc(sizeof(struct perturbs)))
-    SAFEALLOC(, d->cls->tr, malloc(sizeof(struct transfers)))
-    SAFEALLOC(, d->cls->pm, malloc(sizeof(struct primordial)))
-    SAFEALLOC(, d->cls->sp, malloc(sizeof(struct spectra)))
-    SAFEALLOC(, d->cls->nl, malloc(sizeof(struct nonlinear)))
-    SAFEALLOC(, d->cls->le, malloc(sizeof(struct lensing)))
-    SAFEALLOC(, d->cls->op, malloc(sizeof(struct output)))
+    SAFEALLOC(d->cls->pr, malloc(sizeof(struct precision)));
+    SAFEALLOC(d->cls->ba, malloc(sizeof(struct background)));
+    SAFEALLOC(d->cls->th, malloc(sizeof(struct thermo)));
+    SAFEALLOC(d->cls->pt, malloc(sizeof(struct perturbs)));
+    SAFEALLOC(d->cls->tr, malloc(sizeof(struct transfers)));
+    SAFEALLOC(d->cls->pm, malloc(sizeof(struct primordial)));
+    SAFEALLOC(d->cls->sp, malloc(sizeof(struct spectra)));
+    SAFEALLOC(d->cls->nl, malloc(sizeof(struct nonlinear)));
+    SAFEALLOC(d->cls->le, malloc(sizeof(struct lensing)));
+    SAFEALLOC(d->cls->op, malloc(sizeof(struct output)));
 
     ENDFCT
 }//}}}
@@ -34,7 +34,7 @@ run_class(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\trun_class\n")
+    HMPDFPRINT(2, "\trun_class\n");
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
@@ -43,40 +43,40 @@ run_class(hmpdf_obj *d)
     struct primordial *pm = (struct primordial *)d->cls->pm;
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
-    HMPDFPRINT(3, "\t\tbackground\n")
-    SAFECLASS(background_init(pr, ba), ba->error_message)
+    HMPDFPRINT(3, "\t\tbackground\n");
+    SAFECLASS(background_init(pr, ba), ba->error_message);
 
     // check if user passed curved geometry
     if (ba->sgnK)
     {
         HMPDFWARN("The code does not reliably support non-flat universes "
-                  "at the moment.")
+                  "at the moment.");
     }
 
-    HMPDFPRINT(3, "\t\tthermodynamics\n")
-    SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message)
+    HMPDFPRINT(3, "\t\tthermodynamics\n");
+    SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message);
     
-    HMPDFPRINT(3, "\t\tperturbs\n")
-    SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message)
+    HMPDFPRINT(3, "\t\tperturbs\n");
+    SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message);
 
     // check if user passed a correct CLASS .ini file
     if (pt->has_pk_matter != _TRUE_)
     {
-        HMPDFWARN("You should set output=mPk in the CLASS .ini file.")
+        HMPDFWARN("You should set output=mPk in the CLASS .ini file.");
     }
 
     // check if user passed large enough k_max
     if (pt->k_max_for_pk < 1.0)
     {
         HMPDFWARN("You should set P_k_max_h/Mpc or P_k_max_1/Mpc "
-                  "to > 1 h/Mpc in the CLASS .ini file.")
+                  "to > 1 h/Mpc in the CLASS .ini file.");
     }
     
-    HMPDFPRINT(3, "\t\tprimordial\n")
-    SAFECLASS(primordial_init(pr, pt, pm), pm->error_message)
+    HMPDFPRINT(3, "\t\tprimordial\n");
+    SAFECLASS(primordial_init(pr, pt, pm), pm->error_message);
 
-    HMPDFPRINT(3, "\t\tnonlinear\n")
-    SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message)
+    HMPDFPRINT(3, "\t\tnonlinear\n");
+    SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message);
 
     ENDFCT
 }//}}}
@@ -86,9 +86,10 @@ init_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tinit_class_interface\n")
+    HMPDFPRINT(2, "\tinit_class_interface\n");
 
-    SAFEALLOC(char **, argv, malloc(3 * sizeof(char *)))
+    char **argv;
+    SAFEALLOC(argv, malloc(3 * sizeof(char *)));
     argv[1] = d->cls->class_ini;
     argv[2] = d->cls->class_pre;
 
@@ -111,9 +112,9 @@ init_class_interface(hmpdf_obj *d)
     SAFECLASS(input_init_from_arguments(argc, argv, pr, ba, th,
                                        pt, tr, pm, sp,
                                        nl, le, op, errmsg),
-              errmsg)
+              errmsg);
 
-    SAFEHMPDF(run_class(d))
+    SAFEHMPDF(run_class(d));
 
     free(argv);
 
@@ -144,7 +145,7 @@ reset_class_interface(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_class_interface\n")
+    HMPDFPRINT(2, "\treset_class_interface\n");
 
     struct nonlinear *nl;
     struct perturbs *pt;
@@ -160,35 +161,35 @@ reset_class_interface(hmpdf_obj *d)
     { 
         nl = (struct nonlinear *)d->cls->nl;
         SAFECLASS(nonlinear_free(nl),
-                  nl->error_message)
+                  nl->error_message);
         free(d->cls->nl);
     }
     if (d->cls->pt != NULL)
     {
         pt = (struct perturbs *)d->cls->pt;
         SAFECLASS(perturb_free(pt),
-                  pt->error_message)
+                  pt->error_message);
         free(d->cls->pt);
     }
     if (d->cls->pm != NULL)
     {
         pm = (struct primordial *)d->cls->pm;
         SAFECLASS(primordial_free(pm),
-                  pm->error_message)
+                  pm->error_message);
         free(d->cls->pm);
     }
     if (d->cls->th != NULL)
     {
         th = (struct thermo *)d->cls->th;
         SAFECLASS(thermodynamics_free(th),
-                  th->error_message)
+                  th->error_message);
         free(d->cls->th);
     }
     if (d->cls->ba != NULL)
     {
         ba = (struct background *)d->cls->ba;
         SAFECLASS(background_free(ba),
-                  ba->error_message)
+                  ba->error_message);
         free(d->cls->ba); }
     if (d->cls->pr != NULL) { free(d->cls->pr); }
 
