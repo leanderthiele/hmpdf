@@ -123,7 +123,8 @@ phigrid_exact_part_centers(hmpdf_obj *d, double **grid, double **weights, int *b
         {
             ctr += 1;
         }
-        if (*Nexact >= *buflen)
+
+        while (UNLIKELY(*Nexact >= *buflen))
         {
             *buflen *= 2;
             SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
@@ -135,6 +136,7 @@ phigrid_exact_part_centers(hmpdf_obj *d, double **grid, double **weights, int *b
                          "expanded buffer too often");
             }
         }
+
         *grid[*Nexact] = sqrt((double)(_rsq[ii]))
                               * d->f->pixelside;
         *weights[(*Nexact)++] = (double)(4 * ctr);
@@ -189,7 +191,7 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
 
         *weights[ii] /= (double)(Nphi_here+1);
 
-        if (end+Nphi_here-1 >= *buflen)
+        while (UNLIKELY(end+Nphi_here-1 >= *buflen))
         {
             *buflen *= 2;
             SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
@@ -254,7 +256,7 @@ phigrid_approx_part(hmpdf_obj *d, int Nexact, double **grid, double **weights, i
         }
         else
         {
-            if (Nexact + *Napprox >= *buflen)
+            while (UNLIKELY(Nexact + *Napprox >= *buflen))
             {
                 *buflen *= 2;
                 SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
