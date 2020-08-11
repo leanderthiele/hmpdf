@@ -93,22 +93,10 @@ comp_int(const void *a, const void *b)
 }//}}}
 
 static int
-create_phigrid(hmpdf_obj *d)
+phigrid_exact_part_centers(hmpdf_obj *d, double *grid, double *weights, int *Nexact)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_phigrid) { return hmpdf_status; }
-
-    HMPDFPRINT(2, "\tcreate_phigrid\n");
-
-    double *_phigrid;
-    double *_phiweights;
-    SAFEALLOC(_phigrid,    malloc(2 * d->n->Nphi * sizeof(double)));
-    SAFEALLOC(_phiweights, malloc(2 * d->n->Nphi * sizeof(double)));
-    // allocate twice as much as we probably need to be safe,
-    // the continuum integral adds a bit of noise
-
-    // first treat the exact pixelization part
     int *_rsq;
     SAFEALLOC(_rsq, malloc(d->n->pixelexactmax * d->n->pixelexactmax
                            * sizeof(int)));
@@ -116,14 +104,16 @@ create_phigrid(hmpdf_obj *d)
     // loop over one quadrant
     for (int ii=0; ii<=d->n->pixelexactmax; ii++)
     {
-        for (int jj=1; jj*jj<=d->n->pixelexactmax * d->n->pixelexactmax - ii*ii; jj++)
+        for (int jj=1;
+             jj*jj <= d->n->pixelexactmax * d->n->pixelexactmax - ii*ii;
+             jj++)
         {
-            _rsq[N++] = ii*ii+jj*jj;
+            _rsq[N++] = ii*ii + jj*jj;
         }
     }
     // sort and identify unique values
     qsort(_rsq, N, sizeof(int), comp_int);
-    int Nexact = 0; // counts number of phi-values for which exact treatment is needed
+    *Nexact = 0; // counts number of phi-values for which exact treatment is needed
     for (int ii=0; ii<N;)
     {
         int ctr = 0;
@@ -132,17 +122,25 @@ create_phigrid(hmpdf_obj *d)
         {
             ctr += 1;
         }
-        if (Nexact >= d->n->Nphi)
+        if (*Nexact >= d->n->Nphi)
         {
             HMPDFERR("N_phi = %d too small.", d->n->Nphi)
         }
-        _phigrid[Nexact] = sqrt((double)(_rsq[ii]))
-                           * d->f->pixelside;
-        _phiweights[Nexact++] = (double)(4 * ctr);
+        grid[*Nexact] = sqrt((double)(_rsq[ii]))
+                             * d->f->pixelside;
+        weights[(*Nexact)++] = (double)(4 * ctr);
         ii = jj;
     }
     free(_rsq);
 
+    ENDFCT
+}//}}}
+
+static int
+phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexact)
+{//{{{
+    STARTFCT
+    //
     // use a falling density of sample points
     // we transform phi = x^phipwr and sample uniformly in x
     // then the "density of states" is
@@ -152,44 +150,155 @@ create_phigrid(hmpdf_obj *d)
                       * (pow(d->n->phimax, 1.0/d->n->phipwr)
                          - pow(d->f->pixelside, 1.0/d->n->phipwr));
     double rho0 = (double)(d->n->Nphi) / integral;
-    int end = Nexact; // index of the first free element in phigrid
-    for (int ii=0; ii<Nexact; ii++)
+    int end = *Nexact; // index of the first free element in phigrid
+    for (int ii=0; ii<*Nexact; ii++)
     {
         double deltaphi;
         if (ii == 0)
         {
-            deltaphi = _phigrid[1] - _phigrid[0];
+            deltaphi = grid[1] - grid[0];
         }
-        else if (ii == Nexact-1)
+        else if (ii == *Nexact-1)
         {
-            deltaphi = _phigrid[Nexact-1] - _phigrid[Nexact-2];
+            deltaphi = grid[*Nexact-1] - grid[*Nexact-2];
         }
         else
         {
-            deltaphi = 0.5 * (_phigrid[ii+1] - _phigrid[ii-1]);
+            deltaphi = 0.5 * (grid[ii+1] - grid[ii-1]);
         }
-        double rho_here = pow(_phigrid[ii], 1.0/d->n->phipwr-1.0);
+        double rho_here = pow(grid[ii], 1.0/d->n->phipwr-1.0);
+        
         int Nphi_here = (int)(ceil(deltaphi * rho0 * rho_here)) - 1;
+
         if (Nphi_here%2)
         // want Nphi_here to be even for convenience
         // also this averages out the ceil
         {
             --Nphi_here;
         }
-        _phiweights[ii] /= (double)(Nphi_here+1);
+
+        weights[ii] /= (double)(Nphi_here+1);
         for (int jj=1; jj<=Nphi_here/2; jj++)
         {
-            _phigrid[end+2*jj-2] = _phigrid[ii]
+            grid[end+2*jj-2] = grid[ii]
                                    + deltaphi * d->n->phijitter
                                      * (double)(jj) / (double)(Nphi_here/2);
-            _phigrid[end+2*jj-1] = _phigrid[ii]
+            grid[end+2*jj-1] = grid[ii]
                                    - deltaphi * d->n->phijitter
                                      * (double)(jj) / (double)(Nphi_here/2);
-            _phiweights[end+2*jj-2] = _phiweights[end+2*jj-1] = _phiweights[ii];
+            weights[end+2*jj-2] = weights[end+2*jj-1] = weights[ii];
         }
         end += Nphi_here;
     }
-    Nexact = end; // Nphi - Nexact is the number of continuum phi values
+    *Nexact = end; // Nphi - Nexact is the number of continuum phi values
+
+    ENDFCT
+}//}}}
+
+static int
+phigrid_approx_part(hmpdf_obj *d, int Nexact, double *grid, double *weights, int *Napprox)
+{//{{{
+    STARTFCT
+
+    // fill the rest of the phi-grid
+    // the continuum version is
+    //      \int_lo^\phi_max d\phi 2\pi\phi/(pixel sidelength)^2 * integrand
+    double lo = pow((double)(d->n->pixelexactmax) * d->f->pixelside,
+                    1.0/d->n->phipwr);
+    double hi = pow(d->n->phimax, 1.0/d->n->phipwr);
+
+    gsl_integration_fixed_workspace *t;
+    SAFEALLOC(t, gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
+                                             d->n->Nphi-Nexact,
+                                             lo, hi, 0.0, 0.0));
+    
+    double *x = gsl_integration_fixed_nodes(t);
+    double *w = gsl_integration_fixed_weights(t);
+    
+    *Napprox = 0;
+    for (int ii=0; ii<(int)gsl_integration_fixed_n(t); ii++)
+    {
+        if (x[ii] < lo)
+        {
+            continue;
+        }
+        else if (x[ii] > hi)
+        // nodes are sorted
+        {
+            break;
+        }
+        else
+        {
+            grid[*Napprox] = pow(x[ii], d->n->phipwr);
+            // fix the normalization
+            weights[*Napprox] = w[ii]
+                                * 2.0 * M_PI * grid[*Napprox]          
+                                / gsl_pow_2(d->f->pixelside)                 
+                                // Jacobian of the transformation            
+                                * d->n->phipwr                               
+                                * pow(x[ii], d->n->phipwr-1.0);          
+            ++(*Napprox);
+        }
+    }
+
+    gsl_integration_fixed_free(t);
+
+    ENDFCT
+}//}}}
+
+static int
+phigrid_shuffle_and_copy(hmpdf_obj *d, double *grid, double *weights)
+{//{{{
+    STARTFCT
+
+    int *indices;
+    SAFEALLOC(indices, malloc(d->n->Nphi * sizeof(int)));
+
+    for (int ii=0; ii<d->n->Nphi; ii++)
+    {
+        indices[ii] = ii;
+    }
+
+    gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
+    gsl_rng_set(r, time(NULL));
+    gsl_ran_shuffle(r, indices, d->n->Nphi, sizeof(int));
+    gsl_rng_free(r);
+    
+    for (int ii=0; ii<d->n->Nphi; ii++)
+    {
+        d->n->phigrid[ii]    = grid[indices[ii]];
+        d->n->phiweights[ii] = weights[indices[ii]];
+    }
+
+    free(indices);
+
+    ENDFCT
+}//}}}
+
+static int
+create_phigrid(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if (d->cov->created_phigrid) { return hmpdf_status; }
+
+    HMPDFPRINT(2, "\tcreate_phigrid\n");
+
+    // allocate twice as much as we probably need to be safe,
+    // the continuum integral adds a bit of noise
+    double *_phigrid;
+    double *_phiweights;
+    SAFEALLOC(_phigrid,    malloc(2 * d->n->Nphi * sizeof(double)));
+    SAFEALLOC(_phiweights, malloc(2 * d->n->Nphi * sizeof(double)));
+
+    // first treat the exact pixelization part
+    int Nexact;
+    
+    // find the exact pixel separations
+    SAFEHMPDF(phigrid_exact_part_centers(d, _phigrid, _phiweights, &Nexact));
+
+    // add the jittered part for numerical stability
+    SAFEHMPDF(phigrid_exact_part_jitter(d, _phigrid, _phiweights, &Nexact));
 
     if (Nexact > d->n->Nphi)
     {
@@ -198,71 +307,24 @@ create_phigrid(hmpdf_obj *d)
                  d->n->Nphi, 2*Nexact)
     }
 
-    // now fill the rest of the phi-grid
-    // the continuum version is
-    //      \int_lo^\phi_max d\phi 2\pi\phi/(pixel sidelength)^2 * integrand
-    double lo = pow((double)(d->n->pixelexactmax) * d->f->pixelside,
-                    1.0/d->n->phipwr);
-    double hi = pow(d->n->phimax, 1.0/d->n->phipwr);
-    gsl_integration_fixed_workspace *t;
-    SAFEALLOC(t, gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-                                             d->n->Nphi-Nexact,
-                                             lo, hi, 0.0, 0.0));
-    double *nodes = gsl_integration_fixed_nodes(t);
-    double *weights = gsl_integration_fixed_weights(t);
-    int nn = Nexact;
-    for (int ii=0; ii<(int)gsl_integration_fixed_n(t); ii++)
-    {
-        if (nodes[ii] < lo)
-        {
-            continue;
-        }
-        else if (nodes[ii] > hi)
-        // nodes are sorted
-        {
-            break;
-        }
-        else
-        {
-            _phigrid[nn] = pow(nodes[ii], d->n->phipwr);
-            // fix the normalization
-            _phiweights[nn] = weights[ii]
-                              * 2.0 * M_PI * _phigrid[nn]          
-                              / gsl_pow_2(d->f->pixelside)                 
-                              // Jacobian of the transformation            
-                              * d->n->phipwr                               
-                              * pow(nodes[ii], d->n->phipwr-1.0);          
-            ++nn;
-        }
-    }
-    d->n->Nphi = nn;
+    // now do the integral version for high pixel separations
+    int Napprox;
+    SAFEHMPDF(phigrid_approx_part(d, Nexact, _phigrid+Nexact, _phiweights+Nexact, &Napprox));
+
+    // set Nphi to correct value
+    d->n->Nphi = Nexact + Napprox;
     
     HMPDFPRINT(4, "\t\t\tNphi = %d, Nexact = %d\n", d->n->Nphi, Nexact);
-
-    gsl_integration_fixed_free(t);
 
     // now copy into the main grids
     // including shuffling to make parallel execution more efficient
     SAFEALLOC(d->n->phigrid,    malloc(d->n->Nphi * sizeof(double)));
     SAFEALLOC(d->n->phiweights, malloc(d->n->Nphi * sizeof(double)));
-    int *_indices;
-    SAFEALLOC(_indices, malloc(d->n->Nphi * sizeof(int)));
-    for (int ii=0; ii<d->n->Nphi; ii++)
-    {
-        _indices[ii] = ii;
-    }
-    gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
-    gsl_rng_set(r, time(NULL));
-    gsl_ran_shuffle(r, _indices, d->n->Nphi, sizeof(int));
-    gsl_rng_free(r);
-    for (int ii=0; ii<d->n->Nphi; ii++)
-    {
-        d->n->phigrid[ii]    = _phigrid[_indices[ii]];
-        d->n->phiweights[ii] = _phiweights[_indices[ii]];
-    }
+
+    SAFEHMPDF(phigrid_shuffle_and_copy(d, _phigrid, _phiweights));
+
     free(_phigrid);
     free(_phiweights);
-    free(_indices);
 
     d->cov->created_phigrid = 1;
 
