@@ -93,7 +93,7 @@ comp_int(const void *a, const void *b)
 }//}}}
 
 static int
-phigrid_exact_part_centers(hmpdf_obj *d, double *grid, double *weights, int *Nexact)
+phigrid_exact_part_centers(hmpdf_obj *d, double **grid, double **weights, int *buflen, int *Nexact)
 {//{{{
     STARTFCT
 
@@ -114,6 +114,7 @@ phigrid_exact_part_centers(hmpdf_obj *d, double *grid, double *weights, int *Nex
     // sort and identify unique values
     qsort(_rsq, N, sizeof(int), comp_int);
     *Nexact = 0; // counts number of phi-values for which exact treatment is needed
+    int realloced = 0;
     for (int ii=0; ii<N;)
     {
         int ctr = 0;
@@ -122,13 +123,21 @@ phigrid_exact_part_centers(hmpdf_obj *d, double *grid, double *weights, int *Nex
         {
             ctr += 1;
         }
-        if (*Nexact >= d->n->Nphi)
+        if (*Nexact >= *buflen)
         {
-            HMPDFERR("N_phi = %d too small.", d->n->Nphi)
+            *buflen *= 2;
+            SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
+            SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
+            ++realloced;
+            if (realloced > 2)
+            {
+                HMPDFERR("Failed to create phigrid, "
+                         "expanded buffer too often");
+            }
         }
-        grid[*Nexact] = sqrt((double)(_rsq[ii]))
-                             * d->f->pixelside;
-        weights[(*Nexact)++] = (double)(4 * ctr);
+        *grid[*Nexact] = sqrt((double)(_rsq[ii]))
+                              * d->f->pixelside;
+        *weights[(*Nexact)++] = (double)(4 * ctr);
         ii = jj;
     }
     free(_rsq);
@@ -137,7 +146,7 @@ phigrid_exact_part_centers(hmpdf_obj *d, double *grid, double *weights, int *Nex
 }//}}}
 
 static int
-phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexact)
+phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *buflen, int *Nexact)
 {//{{{
     STARTFCT
     //
@@ -151,6 +160,7 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexa
                          - pow(d->f->pixelside, 1.0/d->n->phipwr));
     double rho0 = (double)(d->n->Nphi) / integral;
     int end = *Nexact; // index of the first free element in phigrid
+    int realloced = 0;
     for (int ii=0; ii<*Nexact; ii++)
     {
         double deltaphi;
@@ -166,7 +176,7 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexa
         {
             deltaphi = 0.5 * (grid[ii+1] - grid[ii-1]);
         }
-        double rho_here = pow(grid[ii], 1.0/d->n->phipwr-1.0);
+        double rho_here = pow(*grid[ii], 1.0/d->n->phipwr-1.0);
         
         int Nphi_here = (int)(ceil(deltaphi * rho0 * rho_here)) - 1;
 
@@ -177,16 +187,30 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexa
             --Nphi_here;
         }
 
-        weights[ii] /= (double)(Nphi_here+1);
+        *weights[ii] /= (double)(Nphi_here+1);
+
+        if (end+Nphi_here-1 >= *buflen)
+        {
+            *buflen *= 2;
+            SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
+            SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
+            ++realloced;
+            if (realloced > 2)
+            {
+                HMPDFERR("Failed to create phigrid, "
+                         "expanded buffer too often.")
+            }
+        }
+
         for (int jj=1; jj<=Nphi_here/2; jj++)
         {
-            grid[end+2*jj-2] = grid[ii]
-                                   + deltaphi * d->n->phijitter
-                                     * (double)(jj) / (double)(Nphi_here/2);
-            grid[end+2*jj-1] = grid[ii]
-                                   - deltaphi * d->n->phijitter
-                                     * (double)(jj) / (double)(Nphi_here/2);
-            weights[end+2*jj-2] = weights[end+2*jj-1] = weights[ii];
+            *grid[end+2*jj-2] = *grid[ii]
+                                + deltaphi * d->n->phijitter
+                                  * (double)(jj) / (double)(Nphi_here/2);
+            *grid[end+2*jj-1] = *grid[ii]
+                                - deltaphi * d->n->phijitter
+                                  * (double)(jj) / (double)(Nphi_here/2);
+            *weights[end+2*jj-2] = *weights[end+2*jj-1] = *weights[ii];
         }
         end += Nphi_here;
     }
@@ -196,7 +220,7 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double *grid, double *weights, int *Nexa
 }//}}}
 
 static int
-phigrid_approx_part(hmpdf_obj *d, int Nexact, double *grid, double *weights, int *Napprox)
+phigrid_approx_part(hmpdf_obj *d, int Nexact, double **grid, double **weights, int *buflen, int *Napprox)
 {//{{{
     STARTFCT
 
@@ -216,6 +240,7 @@ phigrid_approx_part(hmpdf_obj *d, int Nexact, double *grid, double *weights, int
     double *w = gsl_integration_fixed_weights(t);
     
     *Napprox = 0;
+    int realloced = 0;
     for (int ii=0; ii<(int)gsl_integration_fixed_n(t); ii++)
     {
         if (x[ii] < lo)
@@ -229,14 +254,26 @@ phigrid_approx_part(hmpdf_obj *d, int Nexact, double *grid, double *weights, int
         }
         else
         {
-            grid[*Napprox] = pow(x[ii], d->n->phipwr);
+            if (Nexact + *Napprox >= *buflen)
+            {
+                *buflen *= 2;
+                SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
+                SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
+                if (realloced > 2)
+                {
+                    HMPDFERR("Failed to create phigrid, "
+                             "expanded buffer too often.");
+                }
+            }
+
+            *grid[Nexact + *Napprox] = pow(x[ii], d->n->phipwr);
             // fix the normalization
-            weights[*Napprox] = w[ii]
-                                * 2.0 * M_PI * grid[*Napprox]          
-                                / gsl_pow_2(d->f->pixelside)                 
-                                // Jacobian of the transformation            
-                                * d->n->phipwr                               
-                                * pow(x[ii], d->n->phipwr-1.0);          
+            *weights[Nexact + *Napprox] = w[ii]
+                                          * 2.0 * M_PI * *grid[Nexact + *Napprox]          
+                                          / gsl_pow_2(d->f->pixelside)                 
+                                          // Jacobian of the transformation            
+                                          * d->n->phipwr                               
+                                          * pow(x[ii], d->n->phipwr-1.0);          
             ++(*Napprox);
         }
     }
@@ -288,17 +325,18 @@ create_phigrid(hmpdf_obj *d)
     // the continuum integral adds a bit of noise
     double *_phigrid;
     double *_phiweights;
-    SAFEALLOC(_phigrid,    malloc(2 * d->n->Nphi * sizeof(double)));
-    SAFEALLOC(_phiweights, malloc(2 * d->n->Nphi * sizeof(double)));
+    int buflen = 2 * d->n->Nphi;
+    SAFEALLOC(_phigrid,    malloc(buflen * sizeof(double)));
+    SAFEALLOC(_phiweights, malloc(buflen * sizeof(double)));
 
     // first treat the exact pixelization part
     int Nexact;
     
     // find the exact pixel separations
-    SAFEHMPDF(phigrid_exact_part_centers(d, _phigrid, _phiweights, &Nexact));
+    SAFEHMPDF(phigrid_exact_part_centers(d, &_phigrid, &_phiweights, &buflen, &Nexact));
 
     // add the jittered part for numerical stability
-    SAFEHMPDF(phigrid_exact_part_jitter(d, _phigrid, _phiweights, &Nexact));
+    SAFEHMPDF(phigrid_exact_part_jitter(d, &_phigrid, &_phiweights, &buflen, &Nexact));
 
     if (Nexact > d->n->Nphi)
     {
@@ -309,7 +347,7 @@ create_phigrid(hmpdf_obj *d)
 
     // now do the integral version for high pixel separations
     int Napprox;
-    SAFEHMPDF(phigrid_approx_part(d, Nexact, _phigrid+Nexact, _phiweights+Nexact, &Napprox));
+    SAFEHMPDF(phigrid_approx_part(d, Nexact, &_phigrid, &_phiweights, &buflen, &Napprox));
 
     // set Nphi to correct value
     d->n->Nphi = Nexact + Napprox;
