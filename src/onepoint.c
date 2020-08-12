@@ -299,19 +299,29 @@ prepare_op(hmpdf_obj *d)
 }//}}}
 
 int
-hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)
+pdf_check_user_input(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], int noisy)
 {//{{{
     STARTFCT
 
     if (noisy && d->ns->noise<0.0)
     {
-        HMPDFERR("noisy pdf requested but no/invalid noise level passed.");
+        HMPDFERR("noisy output requested but no/invalid noise level passed.");
     }
 
     if (not_monotonic(Nbins+1, binedges, 1))
     {
         HMPDFERR("binedges not monotonically increasing.");
     }
+
+    ENDFCT
+}//}}}
+
+int
+hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)
+{//{{{
+    STARTFCT
+
+    SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
 
     SAFEHMPDF(prepare_op(d));
     

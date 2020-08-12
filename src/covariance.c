@@ -323,7 +323,21 @@ create_phigrid(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_phigrid\n");
 
-    // allocate twice as much as we probably need to be safe,
+    // sanity checks
+    if (d->n->pixelexactmax <= 0)
+    {
+        HMPDFERR("You set hmpdf_pixelexact_max=%d "
+                 "(or did not set at all, "
+                 "must be strictly positive.", d->n->pixelexactmax);
+    }
+    if (d->f->pixelside <= 0.0)
+    {
+        HMPDFERR("You set hmpdf_pixel_side=%.4e "
+                 "(or did not set at all), "
+                 "must be strictly positive.", d->f->pixelside);
+    }
+
+    // allocate twice as much as we probably need,
     // the continuum integral adds a bit of noise
     double *_phigrid;
     double *_phiweights;
@@ -332,7 +346,7 @@ create_phigrid(hmpdf_obj *d)
     SAFEALLOC(_phiweights, malloc(buflen * sizeof(double)));
 
     // first treat the exact pixelization part
-    int Nexact;
+    int Nexact = 0; // to avoid maybe-uninitialized
     
     // find the exact pixel separations
     SAFEHMPDF(phigrid_exact_part_centers(d, &_phigrid, &_phiweights, &buflen, &Nexact));
@@ -342,13 +356,13 @@ create_phigrid(hmpdf_obj *d)
 
     if (Nexact > d->n->Nphi)
     {
-        HMPDFERR("N_phi = %d too small "
-                 "(suggested increase at least to %d)",
-                 d->n->Nphi, 2*Nexact)
+        HMPDFWARN("N_phi = %d is quite small "
+                  "(suggested increase at least to %d)",
+                  d->n->Nphi, 2*Nexact);
     }
 
     // now do the integral version for high pixel separations
-    int Napprox;
+    int Napprox = 0; // to avoid maybe-uninitialized
     SAFEHMPDF(phigrid_approx_part(d, Nexact, &_phigrid, &_phiweights, &buflen, &Napprox));
 
     // set Nphi to correct value
@@ -638,15 +652,7 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
 {//{{{
     STARTFCT
 
-    if (noisy && d->ns->noise<0.0)
-    {
-        HMPDFERR("noisy cov-matrix requested but no/invalid noise level passed.");
-    }
-
-    if (not_monotonic(Nbins+1, binedges, 1))
-    {
-        HMPDFERR("binedges not monotonically increasing.");
-    }
+    SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
 
     if (d->f->pixelside < 0.0)
     {

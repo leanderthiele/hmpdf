@@ -24,6 +24,7 @@ int null_onepoint(hmpdf_obj *d);
 int reset_onepoint(hmpdf_obj *d);
 int correct_phase1d(hmpdf_obj *d, double complex *x, int stride, int sgn);
 int create_op(hmpdf_obj *d);
+int pdf_check_user_input(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], int noisy);
 int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy);
 
 #endif

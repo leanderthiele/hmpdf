@@ -627,15 +627,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
 {//{{{
     STARTFCT
 
-    if (noisy && d->ns->noise<0.0)
-    {
-        HMPDFERR("noisy twopoint pdf requested but no/invalid noise level passed.");
-    }
-
-    if (not_monotonic(Nbins+1, binedges, 1))
-    {
-        HMPDFERR("binedges not monotonically increasing.");
-    }
+    SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
 
     // perform computation if necessary
     if (fabs(1.0 - d->tp->last_phi/phi) > TP_PHI_EQ_TOL)
