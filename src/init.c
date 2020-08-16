@@ -50,8 +50,7 @@ dtype;
         case (vptr_type) : expr(void *); break;                \
         case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
         case (kf_type) : expr(hmpdf_k_filter_f); break;        \
-        default : fprintf(stderr, "Error : Unknown dtype.\n"); \
-                  fflush(stderr);                              \
+        default : HMPDFERR("Unknown dtype.");                  \
                   break;                                       \
     }                                                          \
     } while (0)                                                \
