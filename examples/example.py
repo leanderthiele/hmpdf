@@ -8,7 +8,7 @@ from hmpdf import HMPDF
 def example_kappa_onepoint() :
     binedges = np.linspace(0.0, 0.3, num=101)
     with HMPDF() as d :
-        d.init('example.ini', 'kappa', 1.0)
+        d.init('example.ini', 'kappa', 1.0, verbosity=5)
         op = d.get_op(binedges)
     # do something with the one-point PDF ...
 ## [example_kappa_onepoint]

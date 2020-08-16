@@ -196,7 +196,7 @@ Examples</h1>
 </div><!-- fragment --><p> The same thing using the python wrapper is really easy: </p><div class="fragment"><div class="line">def example_kappa_onepoint() :</div>
 <div class="line">    binedges = np.linspace(0.0, 0.3, num=101)</div>
 <div class="line">    <span class="keyword">with</span> HMPDF() <span class="keyword">as</span> d :</div>
-<div class="line">        d.init(<span class="stringliteral">&#39;example.ini&#39;</span>, <span class="stringliteral">&#39;kappa&#39;</span>, 1.0)</div>
+<div class="line">        d.init(<span class="stringliteral">&#39;example.ini&#39;</span>, <span class="stringliteral">&#39;kappa&#39;</span>, 1.0, verbosity=5)</div>
 <div class="line">        op = d.get_op(binedges)</div>
 <div class="line">    <span class="comment"># do something with the one-point PDF ...</span></div>
 </div><!-- fragment --><p> Including the effect of an ell-space filter would look like this: </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> example_ell_filter_use(<span class="keywordtype">void</span>)</div>

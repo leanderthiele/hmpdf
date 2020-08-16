@@ -262,15 +262,12 @@ class HMPDF(object) :
 
     ## Get the one-point PDF [calls hmpdf_get_op()]
     #
-    #  \param binedges      a 1d numpy array
-    #  \param **kwargs      to pass optional arguments:
-    #                           + incl_2h: default True
-    #                           + noisy: default False
+    #  \param binedges      1d numpy array
+    #  \param incl_2h       bool, default: True
+    #  \param noisy         bool, default: False
     #  \return the binned PDF (1d numpy array)
-    def get_op(self, binedges, **kwargs) :
+    def get_op(self, binedges, incl_2h=True, noisy=False) :
     #{{{
-        incl_2h = kwargs['incl_2h'] if 'incl_2h' in kwargs else True
-        noisy = kwargs['noisy'] if 'noisy' in kwargs else False
         out = np.empty(len(binedges)-1)
         err = HMPDF.__get_op(self.d, len(binedges)-1, binedges, out,
                              incl_2h, noisy)
@@ -279,14 +276,12 @@ class HMPDF(object) :
 
     ## Get the two-point PDF [calls hmpdf_get_tp()]
     #
-    #  \param binedges      a 1d numpy array
-    #  \param phi           a float
-    #  \param **kwargs      to pass optional arguments:
-    #                           + noisy: default False
+    #  \param binedges      1d numpy array
+    #  \param phi           float
+    #  \param noisy         bool, default; False
     #  \return the binned PDF (2d numpy array)
-    def get_tp(self, phi, binedges, **kwargs) :
+    def get_tp(self, phi, binedges, noisy=False) :
     #{{{
-        noisy = kwargs['noisy'] if 'noisy' in kwargs else False
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
         HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
         out = out.reshape((len(binedges)-1, len(binedges)-1))
@@ -295,13 +290,11 @@ class HMPDF(object) :
 
     ## Get the covariance matrix of the one-point PDF [calls hmpdf_get_cov()]
     #
-    #  \param binedges      a 1d numpy array
-    #  \param **kwargs      to pass optional arguments:
-    #                           + noisy: default False
+    #  \param binedges      1d numpy array
+    #  \param noisy         bool, default: False
     #  \return the binned covariance matrix (2d numpy array)
-    def get_cov(self, binedges, **kwargs) :
+    def get_cov(self, binedges, noisy=False) :
     #{{{
-        noisy = kwargs['noisy'] if 'noisy' in kwargs else False
         Nbins = len(binedges) - 1
         out = np.empty(Nbins*Nbins)
         err = HMPDF.__get_cov(self.d, Nbins, binedges, out, fname)
@@ -311,13 +304,11 @@ class HMPDF(object) :
 
     ## Get the angular power spectrum [calls hmpdf_get_Cell()]
     #
-    #  \param ell           a 1d numpy array
-    #  \param **kwargs      to pass optional arguments
-    #                           + mode: default total
+    #  \param ell           1d numpy array
+    #  \param mode          string ("onehalo", "twohalo", "total"), default: "total"
     #  \return the power spectrum at ell (1d numpy array)
-    def get_Cell(self, ell, **kwargs) :
+    def get_Cell(self, ell, mode='total') :
     #{{{
-        mode = kwargs['mode'] if 'mode' in kwargs else 'total'
         out = np.empty(len(ell))
         err = HMPDF.__get_Cell(self.d, len(ell), ell, out,
                                _E(_corr_types)(mode))
@@ -326,13 +317,11 @@ class HMPDF(object) :
 
     ## Get the angular correlation function [calls hmpdf_get_Cphi()]
     #
-    #  \param phi           a 1d numpy array
-    #  \param **kwargs      to pass optional arguments
-    #                           + mode: default total
+    #  \param phi           1d numpy array
+    #  \param mode          string ("onehalo", "twohalo", "total"), default: "total"
     #  \return the correlation function at phi (1d numpy array)
-    def get_Cphi(self, phi, **kwargs) :
+    def get_Cphi(self, phi, mode='total') :
     #{{{
-        mode = kwargs['mode'] if 'mode' in kwargs else 'total'
         out = np.empty(len(phi))
         err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
                                _E(_corr_types)(mode))
