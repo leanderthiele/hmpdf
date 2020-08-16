@@ -72,7 +72,7 @@ _corr_types = ['onehalo', 'twohalo', 'total']
 
 class _Configs(object) :
 #{{{
-    configs = ['N_threads', c_int, 'verbosity', c_int, 'warn_is_err': c_int,
+    configs = ['N_threads', c_int, 'verbosity', c_int, 'warn_is_err', c_int,
                'class_pre', _C(), 
                'N_z', c_int, 'z_min', c_double, 'z_max', c_double,
                'N_M', c_int, 'M_min', c_double, 'M_max', c_double,
