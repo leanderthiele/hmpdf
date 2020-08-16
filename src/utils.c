@@ -22,15 +22,9 @@
 
 #include "utils.h"
 
-int
-hmpdf_status_update(int *status, int result)
-{//{{{
-    *status = result;
-    return result;
-}//}}}
-
 void
-new_gsl_error_handler(const char *reason, const char *file, int line, int gsl_errno)
+new_gsl_error_handler(const char *reason, const char *file,
+                      int line, int gsl_errno)
 {//{{{
     fprintf(stderr, "***GSL error: %s in %s line %d\n", reason, file, line);
     fflush(stderr);

@@ -16,6 +16,17 @@
 #define SIGMATHOMSON 6.98684e-74 // Mpc^2
 #define MELECTRON    4.58110e-61 // Msun
 
+static inline int
+hmpdf_status_update(int *status, int result)
+{//{{{
+    *status = result;
+    return result;
+}//}}}
+
+void
+new_gsl_error_handler(const char *reason, const char *file,
+                      int line, int gsl_errno);
+
 // branch prediction macros for some obvious cases
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -48,11 +59,6 @@
     errno = 0;                                  \
     } while (0)                                 \
 //}}}
-
-int hmpdf_status_update(int *status, int result);
-
-void new_gsl_error_handler(const char *reason, const char *file,
-                           int line, int gsl_errno);
 
 //SAFEGSL{{{
 #define SAFEGSL(expr)                                \

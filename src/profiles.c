@@ -699,7 +699,10 @@ delete_batch(batch_t *b)
 int
 inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
             inv_profile_e mode, batch_t *b)
-// write dtheta^2(signal)/dsignal*dsignal into return values
+// Depending on mode = { dtsq_of_s , t_of_s },
+// write dtheta^2(signal)/dsignal*dsignal,
+//    or theta(signal)
+// into return value
 {//{{{
     STARTFCT
 

@@ -24,7 +24,8 @@ null_data(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-hmpdf_obj *hmpdf_new(void)
+hmpdf_obj *
+hmpdf_new(void)
 {//{{{
     STARTFCT
 
