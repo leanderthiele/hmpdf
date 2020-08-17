@@ -37,7 +37,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     fprintf(stderr, "Error in %s (%s; line %d) "   \
                     "(see upward for cause) \n",   \
                     __FILE__, __func__, __LINE__); \
-    } while (0)                                    \
+    } while (0)
 //}}}
 
 // when calling external code (CLASS, GSL) we set errno=0 afterwards
@@ -57,7 +57,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         return hmpdf_status;                    \
     }                                           \
     errno = 0;                                  \
-    } while (0)                                 \
+    } while (0)
 //}}}
 
 //SAFEGSL{{{
@@ -73,7 +73,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         return hmpdf_status;                         \
     }                                                \
     errno = 0;                                       \
-    } while (0)                                      \
+    } while (0)
 //}}}
 
 //SAFEGSL_NORETURN{{{
@@ -88,7 +88,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         ERRLOC;                                      \
     }                                                \
     errno = 0;                                       \
-    } while (0)                                      \
+    } while (0)
 //}}}
 
 //SAFEHMPDF{{{
@@ -100,7 +100,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         ERRLOC;                                     \
         return 1;                                   \
     }                                               \
-    } while (0)                                     \
+    } while (0)
 //}}}
 
 //SAFEHMPDF_NORETURN{{{
@@ -111,7 +111,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     {                                               \
         ERRLOC;                                     \
     }                                               \
-    } while (0)                                     \
+    } while (0)
 //}}}
 
 //SAFEALLOC{{{
@@ -124,7 +124,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         fflush(stderr);                    \
     }                                      \
     SAFEHMPDF(!(var));                     \
-    } while (0)                            \
+    } while (0)
 //}}}
 
 //SAFEALLOC_NORETURN{{{
@@ -137,7 +137,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         fflush(stderr);                    \
     }                                      \
     SAFEHMPDF_NORETURN(!(var));            \
-    } while (0)                            \
+    } while (0)
 //}}}
 
 //CHECKERR{{{
@@ -152,19 +152,19 @@ new_gsl_error_handler(const char *reason, const char *file,
         fflush(stderr);                             \
         ERRLOC;                                     \
     }                                               \
-    } while (0)                                     \
+    } while (0)
 //}}}
 
 //STARTFCT -- no semicolon!{{{
 #define STARTFCT          \
     int hmpdf_status = 0; \
-    errno = 0;            \
+    errno = 0;
 //}}}
 
 //ENDFCT -- no semicolon!{{{
 #define ENDFCT           \
     CHECKERR;            \
-    return hmpdf_status; \
+    return hmpdf_status;
 //}}}
 
 //HMPDFERR_NORETURN{{{
@@ -176,7 +176,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     fflush(stderr);                      \
     ERRLOC;                              \
     hmpdf_status = 1;                    \
-    } while (0)                          \
+    } while (0)
 //}}}
 
 //HMPDFERR{{{
@@ -184,7 +184,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     do {                            \
     HMPDFERR_NORETURN(__VA_ARGS__); \
     return hmpdf_status;            \
-    } while (0)                     \
+    } while (0)
 //}}}
 
 //HMPDFCHECK_NORETURN{{{
@@ -194,7 +194,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     {                                   \
         HMPDFERR_NORETURN(__VA_ARGS__); \
     }                                   \
-    } while (0)                         \
+    } while (0)
 //}}}
 
 //HMPDFCHECK{{{
@@ -204,7 +204,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     {                          \
         HMPDFERR(__VA_ARGS__); \
     }                          \
-    } while (0)                \
+    } while (0)
 //}}}
 
 //HMPDFPRINT{{{
@@ -215,7 +215,7 @@ new_gsl_error_handler(const char *reason, const char *file,
         fprintf(stdout, __VA_ARGS__); \
         fflush(stdout);               \
     }                                 \
-    } while (0)                       \
+    } while (0)
 //}}}
 
 //HMPDFWARN{{{
@@ -242,7 +242,7 @@ new_gsl_error_handler(const char *reason, const char *file,
                         "hmpdf_warn_is_err.\n");            \
         fflush(stderr);                                     \
     }                                                       \
-    } while (0)                                             \
+    } while (0)
 //}}}
 
 //CONTINUE_IF_ERR -- no semicolon!{{{
@@ -250,7 +250,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     if (UNLIKELY(hmpdf_status)) \
     {                           \
         continue;               \
-    }                           \
+    }
 //}}}
 
 int ispwr2(int N, int *k);

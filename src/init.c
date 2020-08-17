@@ -53,7 +53,7 @@ dtype;
         default : HMPDFERR("Unknown dtype.");                  \
                   break;                                       \
     }                                                          \
-    } while (0)                                                \
+    } while (0)
 //}}}
 
 typedef struct
@@ -87,13 +87,13 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
     do {                                                   \
     init_p(p+indx, #indx, &(targ), dt, &(df), NULL, NULL); \
     ++ctr;                                                 \
-    } while (0)                                            \
+    } while (0)
 
 #define INIT_P_B(indx, targ, dt, df)                                  \
     do {                                                              \
     init_p(p+indx, #indx, &(targ), dt, &(df[0]), &(df[1]), &(df[2])); \
     ++ctr;                                                            \
-    } while (0)                                                       \
+    } while (0)
 
 #define INIT_P2(indx, targ, dt, dfk, dft)                \
     do {                                                 \
@@ -101,7 +101,7 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
            (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft), \
            NULL, NULL);                                  \
     ++ctr;                                               \
-    } while (0)                                          \
+    } while (0)
 
 #define INIT_P2_BK(indx, targ, dt, dfk, dft)                \
     do {                                                    \
@@ -110,7 +110,7 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
            (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : NULL,   \
            (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : NULL);  \
     ++ctr;                                                  \
-    } while (0)                                             \
+    } while (0)
 
 #define INIT_P2_BT(indx, targ, dt, dfk, dft)                 \
     do {                                                     \
@@ -119,7 +119,7 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
            (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[1]),  \
            (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[2])); \
     ++ctr;                                                   \
-    } while (0)                                              \
+    } while (0)
 
 #define INIT_P2_BKT(indx, targ, dt, dfk, dft)                   \
     do {                                                        \
@@ -128,7 +128,7 @@ init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *
            (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : &(dft[1]),  \
            (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : &(dft[2])); \
     ++ctr;                                                      \
-    } while (0)                                                 \
+    } while (0)
 //}}}
 
 static int 
@@ -232,7 +232,7 @@ init_params(hmpdf_obj *d, param *p)
 #define ASSIGN_SET(dt)                         \
     do {                                       \
     *((dt*)(p->target)) = va_arg(*valist, dt); \
-    } while (0)                                \
+    } while (0)
 //}}}
 
 static int 
@@ -268,7 +268,7 @@ assign_set(param *p, va_list *valist)
             }                                          \
         }                                              \
     }                                                  \
-    } while (0)                                        \
+    } while (0)
 //}}}
 
 static int
@@ -289,7 +289,7 @@ check_validity(param *p, int *invalid_param)
 #define ASSIGN_DEF(dt)                      \
     do {                                    \
     *((dt*)(p->target)) = *((dt*)(p->def)); \
-    } while (0)                             \
+    } while (0)
 //}}}
 
 static int
@@ -316,12 +316,12 @@ assign_def(param *p)
     : (dt==vptr_type) ? "%p"   \
     : (dt==lf_type) ? "%p"     \
     : (dt==kf_type) ? "%p"     \
-    : "%d"                     \
+    : "%d"
 
 #define PRINTVAL(dt1)                                \
     do {                                             \
     *printed += sprintf(f, FMT(dt), *((dt1*)(val))); \
-    } while (0)                                      \
+    } while (0)
 //}}}
 
 static int
