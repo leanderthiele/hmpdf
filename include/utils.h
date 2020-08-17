@@ -181,8 +181,30 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //HMPDFERR{{{
 #define HMPDFERR(...)               \
+    do {                            \
     HMPDFERR_NORETURN(__VA_ARGS__); \
     return hmpdf_status;            \
+    } while (0)                     \
+//}}}
+
+//HMPDFCHECK_NORETURN{{{
+#define HMPDFCHECK_NORETURN(expr, ...)  \
+    do {                                \
+    if (UNLIKELY(expr))                 \
+    {                                   \
+        HMPDFERR_NORETURN(__VA_ARGS__); \
+    }                                   \
+    } while (0)                         \
+//}}}
+
+//HMPDFCHECK{{{
+#define HMPDFCHECK(expr, ...)  \
+    do {                       \
+    if (UNLIKELY(expr))        \
+    {                          \
+        HMPDFERR(__VA_ARGS__); \
+    }                          \
+    } while (0)                \
 //}}}
 
 //HMPDFPRINT{{{

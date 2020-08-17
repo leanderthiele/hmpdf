@@ -396,10 +396,25 @@ sanity_checks(hmpdf_obj *d)
     #ifndef _OPENMP
     if (d->Ncores > 1)
     {
-        HMPDFWARN("You specified hmpdf_N_threads = %d, "
-                  "but code is compiled without OpenMP.", d->Ncores);
+        HMPDFERR("You specified hmpdf_N_threads = %d, "
+                 "but code is compiled without OpenMP.", d->Ncores);
     }
     #endif
+
+    if (d->n->signalmin >= d->n->signalmax)
+    {
+        HMPDFERR("hmpdf_signal_min must be less than hmpdf_signal_max.");
+    }
+
+    if (d->n->zmin >= d->n->zmax)
+    {
+        HMPDFERR("hmpdf_z_min must be less than hmpdf_z_max.");
+    }
+
+    if (d->n->Mmin >= d->n->Mmax)
+    {
+        HMPDFERR("hmpdf_M_min must be less than hmpdf_M_max.");
+    }
 
 
     ENDFCT
@@ -442,6 +457,9 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     if (d->p->stype == hmpdf_kappa)
     {
+        // zmax will be set to this value,
+        // unless chosen differently.
+        // Thus, do not move this past the init_params() call!
         d->n->zsource = va_arg(valist, double);
     }
 
