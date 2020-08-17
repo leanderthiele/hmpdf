@@ -141,7 +141,7 @@ construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
     {
         *smin = 0.0;
     }
-    linspace(N, *smin, *smax, grid);
+    SAFEHMPDF(linspace(N, *smin, *smax, grid));
 
     // guard against small numerical instabilities
     grid[*N1] = 0.0;
@@ -186,9 +186,9 @@ create_grids(hmpdf_obj *d)
                                    d->n->signalgrid));
     
     SAFEALLOC(d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)));
-    linspace(d->n->Nsignal/2+1,
+    SAFEHMPDF(linspace(d->n->Nsignal/2+1,
              0.0, M_PI/(d->n->signalgrid[1] - d->n->signalgrid[0]),
-             d->n->lambdagrid);
+             d->n->lambdagrid));
 
     ENDFCT
 }//}}}

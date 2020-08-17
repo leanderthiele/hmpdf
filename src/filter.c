@@ -111,9 +111,9 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
     SAFEALLOC(Well, malloc(Nell * sizeof(double)));
 
     #ifdef LOGELL
-    linspace(Nell, log(PRWINDOW_INTERP_ELLMIN), log(PRWINDOW_INTERP_ELLMAX), ell);
+    SAFEHMPDF(linspace(Nell, log(PRWINDOW_INTERP_ELLMIN), log(PRWINDOW_INTERP_ELLMAX), ell));
     #else
-    linspace(Nell, PRWINDOW_INTERP_ELLMIN, PRWINDOW_INTERP_ELLMAX, ell);
+    SAFEHMPDF(linspace(Nell, PRWINDOW_INTERP_ELLMIN, PRWINDOW_INTERP_ELLMAX, ell));
     #endif
     gsl_function integrand;
     integrand.function = Bell[mode];

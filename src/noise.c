@@ -52,7 +52,7 @@ create_noisy_grids(hmpdf_obj *d)
                           *(d->n->signalmax - d->n->signalmin);
     double smin = d->n->signalmin - extra_signal;
     double smax = d->n->signalmax + extra_signal;
-    linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy);
+    SAFEHMPDF(linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy));
 
     ENDFCT
 }//}}}

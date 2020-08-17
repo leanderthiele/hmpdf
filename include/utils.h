@@ -155,13 +155,13 @@ new_gsl_error_handler(const char *reason, const char *file,
     } while (0)                                     \
 //}}}
 
-//STARTFCT{{{
+//STARTFCT -- no semicolon!{{{
 #define STARTFCT          \
     int hmpdf_status = 0; \
     errno = 0;            \
 //}}}
 
-//ENDFCT{{{
+//ENDFCT -- no semicolon!{{{
 #define ENDFCT           \
     CHECKERR;            \
     return hmpdf_status; \
@@ -245,7 +245,7 @@ new_gsl_error_handler(const char *reason, const char *file,
     } while (0)                                             \
 //}}}
 
-//CONTINUE_IF_ERR{{{
+//CONTINUE_IF_ERR -- no semicolon!{{{
 #define CONTINUE_IF_ERR         \
     if (UNLIKELY(hmpdf_status)) \
     {                           \
@@ -255,8 +255,8 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 int ispwr2(int N, int *k);
 
-void linspace(int N, double xmin, double xmax, double *x);
-void logspace(int N, double xmin, double xmax, double *x);
+int linspace(int N, double xmin, double xmax, double *x);
+int logspace(int N, double xmin, double xmax, double *x);
 void zero_real(int N, double *x);
 void zero_comp(int N, double complex *x);
 void reverse(int N, double *in, double *out);

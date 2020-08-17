@@ -45,22 +45,45 @@ ispwr2(int N, int *k)
     return ((temp == N) ? 1 : 0);
 }//}}}
 
-void
+static int 
+linlogspace_sanity_checks(int N, double xmin, double xmax)
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(N<=0, "N must be strictly positive.");
+    HMPDFCHECK(xmin>=xmax, "xmin must be less than xmax.");
+
+    ENDFCT
+}//}}}
+
+int
 linspace(int N, double xmin, double xmax, double *x)
 {//{{{
+    STARTFCT
+    
+    SAFEHMPDF(linlogspace_sanity_checks(N, xmin, xmax));
+
     for (int ii=0; ii<N; ii++)
     {
         x[ii] = xmin + (double)(ii)*(xmax-xmin)/(double)(N-1);
     }
+
+    ENDFCT
 }//}}}
 
-void
+int
 logspace(int N, double xmin, double xmax, double *x)
 {//{{{
+    STARTFCT
+
+    SAFEHMPDF(linlogspace_sanity_checks(N, xmin, xmax));
+
     for (int ii=0; ii<N; ii++)
     {
         x[ii] = exp(log(xmin) + (double)(ii)*log(xmax/xmin)/(double)(N-1));
     }
+
+    ENDFCT
 }//}}}
 
 void

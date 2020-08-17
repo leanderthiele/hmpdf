@@ -196,7 +196,7 @@ create_Cell(hmpdf_obj *d)
     
     d->ps->Nell = PS_NELL;
     SAFEALLOC(d->ps->ell, malloc(d->ps->Nell * sizeof(double)));
-    logspace(d->ps->Nell, PS_ELLMIN, PS_ELLMAX, d->ps->ell);
+    SAFEHMPDF(logspace(d->ps->Nell, PS_ELLMIN, PS_ELLMAX, d->ps->ell));
     SAFEALLOC(d->ps->Cell_1h,  malloc(d->ps->Nell * sizeof(double)));
     SAFEALLOC(d->ps->Cell_2h,  malloc(d->ps->Nell * sizeof(double)));
     SAFEALLOC(d->ps->Cell_tot, malloc(d->ps->Nell * sizeof(double)));
