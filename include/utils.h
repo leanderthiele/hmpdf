@@ -32,12 +32,14 @@ new_gsl_error_handler(const char *reason, const char *file,
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 //ERRLOC{{{
-#define ERRLOC                                     \
-    do {                                           \
-    fprintf(stderr, "Error in %s (%s; line %d) "   \
-                    "(see upward for cause) \n",   \
-                    __FILE__, __func__, __LINE__); \
-    } while (0)
+#ifdef DEBUG
+    #define ERRLOC                                         \
+        do {                                               \
+            fprintf(stderr, "Error in %s (%s; line %d) "   \
+                            "(see upward for cause) \n",   \
+                            __FILE__, __func__, __LINE__); \
+        } while (0)
+#endif
 //}}}
 
 // when calling external code (CLASS, GSL) we set errno=0 afterwards
@@ -45,212 +47,296 @@ new_gsl_error_handler(const char *reason, const char *file,
 //      consider important
 
 //SAFECLASS{{{
-#define SAFECLASS(expr, errmsg)                 \
-    do {                                        \
-    if (UNLIKELY(expr==_FAILURE_))              \
-    {                                           \
-        fprintf(stderr, "***CLASS error: %s\n", \
-                        errmsg);                \
-        fflush(stderr);                         \
-        ERRLOC;                                 \
-        hmpdf_status = 1;                       \
-        return hmpdf_status;                    \
-    }                                           \
-    errno = 0;                                  \
-    } while (0)
+#ifdef DEBUG
+    #define SAFECLASS(expr, errmsg)                     \
+        do {                                            \
+            if (UNLIKELY(expr==_FAILURE_))              \
+            {                                           \
+                fprintf(stderr, "***CLASS error: %s\n", \
+                                errmsg);                \
+                fflush(stderr);                         \
+                ERRLOC;                                 \
+                hmpdf_status = 1;                       \
+                return hmpdf_status;                    \
+            }                                           \
+            errno = 0;                                  \
+        } while (0)
+#else
+    #define SAFECLASS(expr, errmsg) \
+        do {                        \
+            expr;                   \
+            errno = 0;              \
+        } while (0)
+#endif
 //}}}
 
 //SAFEGSL{{{
-#define SAFEGSL(expr)                                \
-    do {                                             \
-    if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
-                                     expr)))         \
-    {                                                \
-        fprintf(stderr, "***GSL error: %s\n",        \
-                        gsl_strerror(hmpdf_status)); \
-        fflush(stderr);                              \
-        ERRLOC;                                      \
-        return hmpdf_status;                         \
-    }                                                \
-    errno = 0;                                       \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEGSL(expr)                                    \
+        do {                                                 \
+            if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
+                                             expr)))         \
+            {                                                \
+                fprintf(stderr, "***GSL error: %s\n",        \
+                                gsl_strerror(hmpdf_status)); \
+                fflush(stderr);                              \
+                ERRLOC;                                      \
+                return hmpdf_status;                         \
+            }                                                \
+            errno = 0;                                       \
+        } while (0)
+#else
+    #define SAFEGSL(expr) \
+        do {              \
+            expr;         \
+            errno = 0;    \
+        } while (0) 
+#endif
 //}}}
 
 //SAFEGSL_NORETURN{{{
-#define SAFEGSL_NORETURN(expr)                       \
-    do {                                             \
-    if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
-                            expr)))                  \
-    {                                                \
-        fprintf(stderr, "***GSL error: %s\n",        \
-                        gsl_strerror(hmpdf_status)); \
-        fflush(stderr);                              \
-        ERRLOC;                                      \
-    }                                                \
-    errno = 0;                                       \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEGSL_NORETURN(expr)                           \
+        do {                                                 \
+            if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
+                                    expr)))                  \
+            {                                                \
+                fprintf(stderr, "***GSL error: %s\n",        \
+                                gsl_strerror(hmpdf_status)); \
+                fflush(stderr);                              \
+                ERRLOC;                                      \
+            }                                                \
+            errno = 0;                                       \
+        } while (0)
+#else
+    #define SAFEGSL_NORETURN(expr) \
+        do {                       \
+            expr;                  \
+            errno = 0;             \
+        } while (0)
+#endif
 //}}}
 
 //SAFEHMPDF{{{
-#define SAFEHMPDF(expr)                             \
-    do {                                            \
-    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
-                                     expr)))        \
-    {                                               \
-        ERRLOC;                                     \
-        return 1;                                   \
-    }                                               \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEHMPDF(expr)                                 \
+        do {                                                \
+            if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                             expr)))        \
+            {                                               \
+                ERRLOC;                                     \
+                return 1;                                   \
+            }                                               \
+        } while (0)
+#else
+    #define SAFEHMPDF(expr) \
+        do {                \
+            expr;           \
+        } while (0)
+#endif
 //}}}
 
 //SAFEHMPDF_NORETURN{{{
-#define SAFEHMPDF_NORETURN(expr)                    \
-    do {                                            \
-    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
-                                     expr)))        \
-    {                                               \
-        ERRLOC;                                     \
-    }                                               \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEHMPDF_NORETURN(expr)                        \
+        do {                                                \
+            if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                             expr)))        \
+            {                                               \
+                ERRLOC;                                     \
+            }                                               \
+        } while (0)
+#else
+    #define SAFEHMPDF_NORETURN(expr) \
+        do {                         \
+            expr;                    \
+        } while (0)
+#endif
 //}}}
 
 //SAFEALLOC{{{
-#define SAFEALLOC(var,expr)                \
-    do {                                   \
-    var = expr;                            \
-    if (UNLIKELY(!(var)))                  \
-    {                                      \
-        fprintf(stderr, "***OOM error\n"); \
-        fflush(stderr);                    \
-    }                                      \
-    SAFEHMPDF(!(var));                     \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEALLOC(var,expr)                      \
+        do {                                         \
+            var = expr;                              \
+            HMPDFCHECK(!(var),                       \
+                       "memory allocation failed."); \
+        } while (0)
+#else
+    #define SAFEALLOC(var,expr) \
+        do {                    \
+            var = expr;         \
+        } while (0)
+#endif
 //}}}
 
 //SAFEALLOC_NORETURN{{{
-#define SAFEALLOC_NORETURN(var,expr)       \
-    do {                                   \
-    var = expr;                            \
-    if (UNLIKELY(!(var)))                  \
-    {                                      \
-        fprintf(stderr, "***OOM error\n"); \
-        fflush(stderr);                    \
-    }                                      \
-    SAFEHMPDF_NORETURN(!(var));            \
-    } while (0)
+#ifdef DEBUG
+    #define SAFEALLOC_NORETURN(var,expr)             \
+        do {                                         \
+            var = expr;                              \
+            HMPDFCHECK_NORETURN(!(var),              \
+                       "memory allocation failed."); \
+        } while (0)
+#else
+    #define SAFEALLOC_NORETURN(var,expr) \
+        do {                             \
+            var = expr;                  \
+        } while (0)
+#endif
 //}}}
 
 //CHECKERR{{{
-#define CHECKERR                                    \
-    do {                                            \
-    if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
-                                     errno)))       \
-    {                                               \
-        perror("***C error (likely wrong "          \
-               "description)");                     \
-        fprintf(stderr, "%s\n", strerror(errno));   \
-        fflush(stderr);                             \
-        ERRLOC;                                     \
-    }                                               \
-    } while (0)
+#ifdef DEBUG
+    #define CHECKERR                                        \
+        do {                                                \
+            if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
+                                             errno)))       \
+            {                                               \
+                perror("***C error (likely wrong "          \
+                       "description)");                     \
+                fprintf(stderr, "%s\n", strerror(errno));   \
+                fflush(stderr);                             \
+                ERRLOC;                                     \
+            }                                               \
+        } while (0)
+#endif
 //}}}
 
 //STARTFCT -- no semicolon!{{{
-#define STARTFCT          \
-    int hmpdf_status = 0; \
-    errno = 0;
+#ifdef DEBUG
+    #define STARTFCT          \
+        int hmpdf_status = 0; \
+        errno = 0;
+#else
+    #define STARTFCT
+#endif
 //}}}
 
 //ENDFCT -- no semicolon!{{{
-#define ENDFCT           \
-    CHECKERR;            \
-    return hmpdf_status;
+#ifdef DEBUG
+    #define ENDFCT           \
+        CHECKERR;            \
+        return hmpdf_status;
+#else
+    #define ENDFCT \
+        return 0;
+#endif
 //}}}
 
 //HMPDFERR_NORETURN{{{
-#define HMPDFERR_NORETURN(...)           \
-    do {                                 \
-    fprintf(stderr, "***hmpdf error: "); \
-    fprintf(stderr, __VA_ARGS__);        \
-    fprintf(stderr, "\n");               \
-    fflush(stderr);                      \
-    ERRLOC;                              \
-    hmpdf_status = 1;                    \
-    } while (0)
+#ifdef DEBUG
+    #define HMPDFERR_NORETURN(...)               \
+        do {                                     \
+            fprintf(stderr, "***hmpdf error: "); \
+            fprintf(stderr, __VA_ARGS__);        \
+            fprintf(stderr, "\n");               \
+            fflush(stderr);                      \
+            ERRLOC;                              \
+            hmpdf_status = 1;                    \
+        } while (0)
+#else
+    #define HMPDFERR_NORETURN(...) \
+        do { } while (0)
+#endif
 //}}}
 
 //HMPDFERR{{{
-#define HMPDFERR(...)               \
-    do {                            \
-    HMPDFERR_NORETURN(__VA_ARGS__); \
-    return hmpdf_status;            \
-    } while (0)
+#ifdef DEBUG
+    #define HMPDFERR(...)                   \
+        do {                                \
+            HMPDFERR_NORETURN(__VA_ARGS__); \
+            return hmpdf_status;            \
+        } while (0)
+#else
+    #define HMPDFERR(...) \
+        do { } while (0)
+#endif
 //}}}
 
 //HMPDFCHECK_NORETURN{{{
-#define HMPDFCHECK_NORETURN(expr, ...)  \
-    do {                                \
-    if (UNLIKELY(expr))                 \
-    {                                   \
-        HMPDFERR_NORETURN(__VA_ARGS__); \
-    }                                   \
-    } while (0)
+#ifdef DEBUG
+    #define HMPDFCHECK_NORETURN(expr, ...)      \
+        do {                                    \
+            if (UNLIKELY(expr))                 \
+            {                                   \
+                HMPDFERR_NORETURN(__VA_ARGS__); \
+            }                                   \
+        } while (0)
+#else
+    #define HMPDFCHECK_NORETURN(expr, ...) \
+        do { } while (0)
+#endif
 //}}}
 
 //HMPDFCHECK{{{
-#define HMPDFCHECK(expr, ...)  \
-    do {                       \
-    if (UNLIKELY(expr))        \
-    {                          \
-        HMPDFERR(__VA_ARGS__); \
-    }                          \
-    } while (0)
+#ifdef DEBUG
+    #define HMPDFCHECK(expr, ...)      \
+        do {                           \
+            if (UNLIKELY(expr))        \
+            {                          \
+                HMPDFERR(__VA_ARGS__); \
+            }                          \
+        } while (0)
+#else
+    #define HMPDFCHECK(expr, ...) \
+        do { } while (0)
+#endif
 //}}}
 
 //HMPDFPRINT{{{
-#define HMPDFPRINT(level, ...)        \
-    do {                              \
-    if (level <= d->verbosity)        \
-    {                                 \
-        fprintf(stdout, __VA_ARGS__); \
-        fflush(stdout);               \
-    }                                 \
+#define HMPDFPRINT(level, ...)            \
+    do {                                  \
+        if (level <= d->verbosity)        \
+        {                                 \
+            fprintf(stdout, __VA_ARGS__); \
+            fflush(stdout);               \
+        }                                 \
     } while (0)
 //}}}
 
 //HMPDFWARN{{{
-#define HMPDFWARN(...)                                      \
-    do {                                                    \
-    if (d->warn_is_err > 0)                                 \
-    {                                                       \
-        HMPDFERR_NORETURN(__VA_ARGS__);                     \
-        fprintf(stderr, "\t\t>This error can be suppressed "\
-                        "by changing the option "           \
-                        "hmpdf_warn_is_err, "               \
-                        "in case you know what you are "    \
-                        "doing.\n");                        \
-        fflush(stderr);                                     \
-        return hmpdf_status;                                \
-    }                                                       \
-    else if (d->warn_is_err == 0)                           \
-    {                                                       \
-        fprintf(stderr, "***hmpdf warning: ");              \
-        fprintf(stderr, __VA_ARGS__);                       \
-        fprintf(stderr, "\t\t>This warning can be muted "   \
-                        "or turned into an error by "       \
-                        "changing the option "              \
-                        "hmpdf_warn_is_err.\n");            \
-        fflush(stderr);                                     \
-    }                                                       \
-    } while (0)
+#ifdef DEBUG
+    #define HMPDFWARN(...)                                           \
+        do {                                                         \
+            if (d->warn_is_err > 0)                                  \
+            {                                                        \
+                HMPDFERR_NORETURN(__VA_ARGS__);                      \
+                fprintf(stderr, "\t\t>This error can be suppressed " \
+                                "by changing the option "            \
+                                "hmpdf_warn_is_err, "                \
+                                "in case you know what you are "     \
+                                "doing.\n");                         \
+                fflush(stderr);                                      \
+                return hmpdf_status;                                 \
+            }                                                        \
+            else if (d->warn_is_err == 0)                            \
+            {                                                        \
+                fprintf(stderr, "***hmpdf warning: ");               \
+                fprintf(stderr, __VA_ARGS__);                        \
+                fprintf(stderr, "\t\t>This warning can be muted "    \
+                                "or turned into an error by "        \
+                                "changing the option "               \
+                                "hmpdf_warn_is_err.\n");             \
+                fflush(stderr);                                      \
+            }                                                        \
+        } while (0)
+#else
+    #define HMPDFWARN(...) \
+        do { } while (0)
+#endif
 //}}}
 
 //CONTINUE_IF_ERR -- no semicolon!{{{
-#define CONTINUE_IF_ERR         \
-    if (UNLIKELY(hmpdf_status)) \
-    {                           \
-        continue;               \
-    }
+#ifdef DEBUG
+    #define CONTINUE_IF_ERR         \
+        if (UNLIKELY(hmpdf_status)) \
+        {                           \
+            continue;               \
+        }
+#else
+    #define CONTINUE_IF_ERR
+#endif
 //}}}
 
 int ispwr2(int N, int *k);

@@ -104,6 +104,9 @@
  *
  *  All functions [except hmpdf_new()] return a non-zero int if an error occured.
  *  A traceback will be printed to stderr.
+ *  You can remove the definition of the macro DEBUG in the Makefile,
+ *  in which case no error handling at all will be happening
+ *  (could give a marginal speed-up in some cases, but not recommended).
  *
  *  \section threads Thread safety
  *

@@ -152,7 +152,7 @@ Runtime</h1>
 <p>Other functions are fast in comparison to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>. <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> and <a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a> are parallelized in critical parts, while <a class="el" href="a00041.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a> does not get faster if <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a> is increased.</p>
 <h1><a class="anchor" id="errrors"></a>
 Error handling</h1>
-<p>All functions [except <a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>] return a non-zero int if an error occured. A traceback will be printed to stderr.</p>
+<p>All functions [except <a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>] return a non-zero int if an error occured. A traceback will be printed to stderr. You can remove the definition of the macro DEBUG in the Makefile, in which case no error handling at all will be happening (could give a marginal speed-up in some cases, but not recommended).</p>
 <h1><a class="anchor" id="threads"></a>
 Thread safety</h1>
 <p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour.</p>
