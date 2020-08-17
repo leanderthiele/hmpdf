@@ -115,10 +115,12 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
     #else
     SAFEHMPDF(linspace(Nell, PRWINDOW_INTERP_ELLMIN, PRWINDOW_INTERP_ELLMAX, ell));
     #endif
+
     gsl_function integrand;
     integrand.function = Bell[mode];
     gsl_integration_workspace *ws;
     SAFEALLOC(ws, gsl_integration_workspace_alloc(PRWINDOW_INTEGR_LIMIT));
+
     for (int ii=0; ii<Nell; ii++)
     {
         integrand.params = ell+ii;
@@ -131,6 +133,7 @@ _quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
                                     ws, Well+ii, &err));
         Well[ii] *= 4.0 * M_1_PI;
     }
+
     gsl_integration_workspace_free(ws);
 
     SAFEALLOC(d->f->quadraticpixel_interp[mode],

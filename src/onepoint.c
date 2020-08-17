@@ -129,19 +129,15 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
     fftw_plan plan_c = fftw_plan_dft_r2c_1d(d->n->Nsignal, ac_real, ac_comp, FFTW_MEASURE);
 
     // zero the output arrays
-    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
-    {
-        pu_comp[ii] = pc_comp[ii] = 0.0;
-    }
+    zero_comp(d->n->Nsignal/2+1, pu_comp);
+    zero_comp(d->n->Nsignal/2+1, pc_comp);
 
     // fill the z-integrand
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         // zero the arrays
-        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
-        {
-            au_comp[ii] = ac_comp[ii] = 0.0;
-        }
+        zero_comp(d->n->Nsignal/2+1, au_comp);
+        zero_comp(d->n->Nsignal/2+1, ac_comp);
 
         SAFEHMPDF(op_Mint(d, z_index, au_real, ac_real));
         // perform FFTs real -> double complex

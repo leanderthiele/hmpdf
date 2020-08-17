@@ -184,7 +184,7 @@ tophat_Wsqprime(double k, void *params)
 }//}}}
 
 static int 
-_ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
+ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
 // return sigma^2(M), write d sigma^2 / dlogM into return value
 {//{{{
     STARTFCT
@@ -216,9 +216,9 @@ create_ssq(hmpdf_obj *d)
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
         SAFEALLOC(d->pwr->ssq[M_index], malloc(2 * sizeof(double)));
-        SAFEHMPDF(_ssq(d, d->n->Mgrid[M_index],
-                       d->pwr->ssq[M_index]+0,
-                       d->pwr->ssq[M_index]+1));
+        SAFEHMPDF(ssq(d, d->n->Mgrid[M_index],
+                      d->pwr->ssq[M_index]+0,
+                      d->pwr->ssq[M_index]+1));
     }
 
     ENDFCT
@@ -235,7 +235,7 @@ autocorr_kernel(double k, void *params)
 }//}}}
 
 static int
-_autocorr(hmpdf_obj *d, double *out)
+autocorr(hmpdf_obj *d, double *out)
 {//{{{
     STARTFCT
 
@@ -255,7 +255,7 @@ create_autocorr(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_autocorr\n");
 
-    SAFEHMPDF(_autocorr(d, &(d->pwr->autocorr)));
+    SAFEHMPDF(autocorr(d, &(d->pwr->autocorr)));
 
     ENDFCT
 }//}}}

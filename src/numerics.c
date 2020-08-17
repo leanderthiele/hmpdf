@@ -85,6 +85,9 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
 {//{{{
     STARTFCT
 
+    HMPDFCHECK(N<=0, "N must be strictly positive.");
+    HMPDFCHECK(a>=b, "a must be less than b.");
+
     const gsl_integration_fixed_type *T;
     switch (m)
     {
@@ -129,6 +132,9 @@ construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
 {//{{{
     STARTFCT
 
+    HMPDFCHECK(N<=1, "N must be greater than 1.");
+    HMPDFCHECK(*smin>=*smax, "smin must be less than smax.");
+
     // find the index where we would like the signal to be
     //    exactly zero
     *N1 = (int)round(-*smin/(*smax-*smin)*(double)(N-1));
@@ -141,6 +147,7 @@ construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
     {
         *smin = 0.0;
     }
+
     SAFEHMPDF(linspace(N, *smin, *smax, grid));
 
     // guard against small numerical instabilities
@@ -192,6 +199,24 @@ create_grids(hmpdf_obj *d)
 
     ENDFCT
 }//}}}
+
+int
+init_numerics(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if (d->n->inited_numerics) { return hmpdf_status; }
+
+    HMPDFPRINT(1, "init_numerics\n");
+
+    SAFEHMPDF(create_grids(d));
+
+    d->n->inited_numerics = 1;
+
+    ENDFCT
+}//}}}
+
+/* DEPRECATED FUNCTIONS, FOR REFERENCE */
 
 static double
 simps_real(int N, double dx, int stride, double *f)
@@ -313,21 +338,5 @@ integr_comp(int N, double dx, int stride, double complex *f)
     {
         return simps_comp(N, dx, stride, f);
     }
-}//}}}
-
-int
-init_numerics(hmpdf_obj *d)
-{//{{{
-    STARTFCT
-
-    if (d->n->inited_numerics) { return hmpdf_status; }
-
-    HMPDFPRINT(1, "init_numerics\n");
-
-    SAFEHMPDF(create_grids(d));
-
-    d->n->inited_numerics = 1;
-
-    ENDFCT
 }//}}}
 

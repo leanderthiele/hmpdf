@@ -165,21 +165,18 @@ create_phi_indep(hmpdf_obj *d)
     fftw_plan plan_u = fftw_plan_dft_r2c_1d(d->n->Nsignal, au_real,
                                             d->tp->au, FFTW_MEASURE);
 
-    for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
-    {
-        d->tp->au[ii] = 0.0;
-    }
+    // zero the unclustered array
+    zero_comp(d->n->Nsignal/2+1, d->tp->au);
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         SAFEALLOC(d->tp->dtsq[z_index], malloc(d->n->NM * sizeof(batch_t *)));
         SAFEALLOC(d->tp->t[z_index],    malloc(d->n->NM * sizeof(batch_t *)));
         SAFEALLOC(d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(double complex)));
-        // null the FFT array
-        for (int ii=0; ii<d->n->Nsignal+2; ii++)
-        {
-            tempc_real[ii] = 0.0;
-        }
+
+        // zero the FFT array
+        zero_real(d->n->Nsignal+2, tempc_real);
+
         // integrate clustered contribution over mass;
         // and fill the theta(signal) dtheta^2/dsignal grids
         for (int M_index=0; M_index<d->n->NM; M_index++)
@@ -339,11 +336,8 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 {//{{{
     STARTFCT
 
-    // null tempc
-    for (int ii=0; ii<d->n->Nsignal*(d->n->Nsignal+2); ii++)
-    {
-        ws->tempc_real[ii] = 0.0;
-    }
+    // zero tempc
+    zero_real(d->n->Nsignal*(d->n->Nsignal+2), ws->tempc_real);
 
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
@@ -353,7 +347,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
     ENDFCT
 }//}}}
 
-static double complex
+static inline double complex
 redundant(int N, double complex *a, int ii)
 // extends the vector a[N/2+1] to N elements through conjugation
 // N is assumed even
@@ -405,14 +399,8 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     STARTFCT
 
     // zero the integrals
-    for (int ii=0; ii<d->n->Nsignal*(d->n->Nsignal+2); ii++)
-    {
-        ws->pdf_real[ii] = 0.0;
-    }
-    for (int ii=0; ii<d->n->Nsignal*(d->n->Nsignal/2+1); ii++)
-    {
-        ws->bc[ii] = 0.0;
-    }
+    zero_real(d->n->Nsignal*(d->n->Nsignal+2),   ws->pdf_real);
+    zero_comp(d->n->Nsignal*(d->n->Nsignal/2+1), ws->bc);
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -428,6 +416,7 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
                     = ws->tempc_real[ii*(d->n->Nsignal+2)+jj];
             }
         }
+
         // perform the FFT on the clustered part tempc_real -> tempc_comp
         fftw_execute(ws->pc_r2c);
         // correct phases

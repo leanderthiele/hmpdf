@@ -121,8 +121,8 @@ MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef, double *out)
     ENDFCT
 }//}}}
 
-static double
-_c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
+static inline double
+c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
 {//{{{
     // convert to Msun/h
     M *= d->c->h;
@@ -130,12 +130,12 @@ _c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
            * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
            * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
 }//}}}
-static double
+static inline double
 c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
 {//{{{
-    return _c_Duffy08(d, d->n->zgrid[z_index],
-                      d->n->Mgrid[M_index],
-                      MDEF_GLOBAL);
+    return c_Duffy08_1(d, d->n->zgrid[z_index],
+                       d->n->Mgrid[M_index],
+                       MDEF_GLOBAL);
 }//}}}
 
 int
@@ -218,8 +218,8 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     ENDFCT
 }//}}}
 
-static double
-_fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
+static inline double
+fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
 {//{{{
     return d->h->Tinker10_params[n*2]
            *pow(1.0+z, d->h->Tinker10_params[n*2 + 1]);
@@ -229,11 +229,11 @@ static double
 fnu_Tinker10(hmpdf_obj *d, double nu, double z)
 {//{{{
     z = (z<3.0) ? z : 3.0;
-    double beta  = _fnu_Tinker10_primitive(d, 0, z);
-    double phi   = _fnu_Tinker10_primitive(d, 1, z);
-    double eta   = _fnu_Tinker10_primitive(d, 2, z);
-    double gamma = _fnu_Tinker10_primitive(d, 3, z);
-    double alpha = _fnu_Tinker10_primitive(d, 4, z);
+    double beta  = fnu_Tinker10_primitive(d, 0, z);
+    double phi   = fnu_Tinker10_primitive(d, 1, z);
+    double eta   = fnu_Tinker10_primitive(d, 2, z);
+    double gamma = fnu_Tinker10_primitive(d, 3, z);
+    double alpha = fnu_Tinker10_primitive(d, 4, z);
     return nu * alpha*(1.0+pow(beta*nu, -2.0*phi))
            * pow(nu, 2.0*eta) * exp(-0.5*gamma*gsl_pow_2(nu));
 }//}}}
@@ -252,7 +252,7 @@ bnu_Tinker10(double nu)
 }//}}}
 
 static int
-_dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
+dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
 {//{{{
     STARTFCT
 
@@ -283,9 +283,9 @@ create_dndlogM(hmpdf_obj *d)
         SAFEALLOC(d->h->bias[z_index], malloc(d->n->NM * sizeof(double)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            SAFEHMPDF(_dndlogM(d, z_index, M_index,
-                               d->h->hmf[z_index]+M_index,
-                               d->h->bias[z_index]+M_index));
+            SAFEHMPDF(dndlogM(d, z_index, M_index,
+                              d->h->hmf[z_index]+M_index,
+                              d->h->bias[z_index]+M_index));
         }
     }
 

@@ -246,8 +246,8 @@ typedef struct
 }
 Battmodel_params;
 
-static double
-_Battmodel_primitive(hmpdf_obj *d, double M200c, double z, int n)
+static inline double
+Battmodel_primitive(hmpdf_obj *d, double M200c, double z, int n)
 {
     return d->p->Battaglia12_params[n*3+0]
            * pow(M200c/1e14, d->p->Battaglia12_params[n*3+1])
@@ -269,15 +269,15 @@ tsz_profile(hmpdf_obj *d, int z_index, int M_index,
     // convert to 200c
     double M200c, R200c, c200c;
     SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, &M200c, &R200c, &c200c));
-    double P0 = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
-    double xc = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
+    double P0 = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
+    double xc = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
 
     // prepare the integration
     Battmodel_params par;
-    par.alpha = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
-    par.beta  = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
-    par.gamma = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
+    par.alpha = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
+    par.beta  = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
+    par.gamma = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
 
     gsl_function integrand;
     integrand.function = &Battmodel_integrand;
