@@ -521,6 +521,7 @@ create_noisy_tp(hmpdf_obj *d)
         if (ws->pdf_real != NULL) { fftw_free(ws->pdf_real); }      \
         if (ws->bc != NULL) { free(ws->bc); }                  \
         if (ws->tempc_real != NULL) { fftw_free(ws->tempc_real); }  \
+        free(*out);                                                 \
         return 1;                                                   \
     }                                                               \
     } while (0)
