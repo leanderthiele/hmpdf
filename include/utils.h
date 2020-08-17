@@ -245,6 +245,14 @@ new_gsl_error_handler(const char *reason, const char *file,
     } while (0)                                             \
 //}}}
 
+//CONTINUE_IF_ERR{{{
+#define CONTINUE_IF_ERR         \
+    if (UNLIKELY(hmpdf_status)) \
+    {                           \
+        continue;               \
+    }                           \
+//}}}
+
 int ispwr2(int N, int *k);
 
 void linspace(int N, double xmin, double xmax, double *x);

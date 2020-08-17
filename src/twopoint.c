@@ -204,15 +204,12 @@ create_phi_indep(hmpdf_obj *d)
                                       t_of_s, d->tp->t[z_index][M_index]+segment));
 
                 // sanity check
-                // TODO can remove this later for performance?
-                if (not_monotonic(d->tp->t[z_index][M_index][segment].len,
-                                  d->tp->t[z_index][M_index][segment].data,
-                                  -1))
-                {
-                    HMPDFERR("theta values not monotonically decreasing in "
-                             "z = %d, M = %d, segment = %d",
-                             z_index, M_index, segment);
-                }
+                HMPDFCHECK(not_monotonic(d->tp->t[z_index][M_index][segment].len,
+                                         d->tp->t[z_index][M_index][segment].data,
+                                         -1),
+                           "theta values not monotonically decreasing in "
+                           "z = %d, M = %d, segment = %d",
+                           z_index, M_index, segment);
 
                 for (int signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
                      ii < d->tp->t[z_index][M_index][segment].len;
@@ -592,10 +589,7 @@ prepare_tp(hmpdf_obj *d, double phi)
     if (d->tp->ws == NULL)
     {
         SAFEHMPDF(new_tp_ws(d->n->Nsignal, &(d->tp->ws)));
-        if (d->tp->ws == NULL)
-        {
-            HMPDFERR("OOM.");
-        }
+        HMPDFCHECK(d->tp->ws==NULL, "OOM.");
     }
 
     // convert from arcmin to radians

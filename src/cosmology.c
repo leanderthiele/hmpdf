@@ -62,6 +62,7 @@ alloc_cosmo(hmpdf_obj *d)
     SAFEALLOC(d->c->Om, malloc(d->n->Nz * sizeof(double)));
     SAFEALLOC(d->c->rho_m, malloc(d->n->Nz * sizeof(double)));
     SAFEALLOC(d->c->rho_c, malloc(d->n->Nz * sizeof(double)));
+
     if (d->p->stype == hmpdf_kappa)
     {
         SAFEALLOC(d->c->Scrit, malloc(d->n->Nz * sizeof(double)));

@@ -214,10 +214,7 @@ init_params(hmpdf_obj *d, param *p)
     INIT_P_B(hmpdf_noise,
              d->ns->noise, dbl_type, def.noise);
 
-    if (ctr != hmpdf_end_configs)
-    {
-        HMPDFERR("Not all params filled, ctr = %d.", ctr);
-    }
+    HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 
     ENDFCT
 }//}}}
@@ -382,40 +379,21 @@ sanity_checks(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if ((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa))
-    {
-        HMPDFERR("Invalid signal type %d.", d->p->stype);
-    }
-
-    if ((d->p->stype==hmpdf_kappa)
-        && ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0)))
-    {
-        HMPDFERR("Invalid source redshift %g.", d->n->zsource);
-    }
-
+    HMPDFCHECK((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa),
+               "Invalid signal type %d.", d->p->stype);
+    HMPDFCHECK((d->p->stype==hmpdf_kappa)
+                && ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0)),
+                "Invalid source redshift %g.", d->n->zsource);
     #ifndef _OPENMP
-    if (d->Ncores > 1)
-    {
-        HMPDFERR("You specified hmpdf_N_threads = %d, "
-                 "but code is compiled without OpenMP.", d->Ncores);
-    }
+    HMPDFCHECK(d->Ncores>1, "You specified hmpdf_N_threads = %d, "
+                            "but code is compiled without OpenMP.", d->Ncores);
     #endif
-
-    if (d->n->signalmin >= d->n->signalmax)
-    {
-        HMPDFERR("hmpdf_signal_min must be less than hmpdf_signal_max.");
-    }
-
-    if (d->n->zmin >= d->n->zmax)
-    {
-        HMPDFERR("hmpdf_z_min must be less than hmpdf_z_max.");
-    }
-
-    if (d->n->Mmin >= d->n->Mmax)
-    {
-        HMPDFERR("hmpdf_M_min must be less than hmpdf_M_max.");
-    }
-
+    HMPDFCHECK(d->n->signalmin >= d->n->signalmax,
+               "hmpdf_signal_min must be less than hmpdf_signal_max.");
+    HMPDFCHECK(d->n->zmin >= d->n->zmax,
+               "hmpdf_z_min must be less than hmpdf_z_max.");
+    HMPDFCHECK(d->n->Mmin >= d->n->Mmax,
+               "hmpdf_M_min must be less than hmpdf_M_max.");
 
     ENDFCT
 }//}}}
@@ -479,12 +457,10 @@ hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
         p[c].set = 1;
 
         ++read;
-        if (read > hmpdf_end_configs)
-        {
-            HMPDFERR("You likely forgot to end the variable argument list "
-                     "with the mandatory argument hmpdf_end_configs, "
-                     "or you passed options twice.");
-        }
+        HMPDFCHECK(read > hmpdf_end_configs,
+                   "You likely forgot to end the variable argument list "
+                   "with the mandatory argument hmpdf_end_configs, "
+                   "or you passed options twice.");
     }
 
     va_end(valist);

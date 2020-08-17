@@ -92,10 +92,7 @@ noise_vect(hmpdf_obj *d, double *in, double *out)
 {//{{{
     STARTFCT
 
-    if (d->ns->toepl == NULL)
-    {
-        HMPDFERR("Toeplitz matrix not computed.");
-    }
+    HMPDFCHECK(d->ns->toepl == NULL, "Toeplitz matrix not computed.");
 
     cblas_dgemv(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
                 d->n->Nsignal/*rows*/, d->n->Nsignal_noisy/*cols*/,
@@ -112,10 +109,7 @@ noise_matr(hmpdf_obj *d, double *in, double *out)
 {//{{{
     STARTFCT
 
-    if (d->ns->toepl == NULL)
-    {
-        HMPDFERR("Toeplitz matrix not computed.");
-    }
+    HMPDFCHECK(d->ns->toepl == NULL, "Toeplitz matrix not computed.");
 
     // no aliasing allowed, so we need intermediate storage
     double *temp;

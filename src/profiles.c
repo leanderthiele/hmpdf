@@ -361,23 +361,19 @@ create_profiles(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             SAFEALLOC_NORETURN(d->p->profiles[z_index][M_index],
                                malloc((d->p->Ntheta+2) * sizeof(double)));
-            if (hmpdf_status) { continue; }
-            
+            CONTINUE_IF_ERR 
             SAFEHMPDF_NORETURN(profile(d, z_index, M_index,
                                        d->p->profiles[z_index][M_index]));
-            if (hmpdf_status) { continue; }
-            
+            CONTINUE_IF_ERR
             SAFEHMPDF_NORETURN(fix_endpoints(d->p->Ntheta, d->p->decr_tgrid,
                                              d->p->profiles[z_index][M_index]+1));
-            
-            if (hmpdf_status) { continue; }
         }
     }
 
@@ -402,29 +398,29 @@ create_conj_profiles(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         // need buffer to store the profiles with theta increasing
         // allocate inside z-loop for thread safety
         double *temp;
         SAFEALLOC_NORETURN(temp, malloc(d->p->Ntheta * sizeof(double)));
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->conj_profiles[z_index],
                            malloc(d->n->NM * sizeof(double *)));
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             SAFEALLOC_NORETURN(d->p->conj_profiles[z_index][M_index],
                                malloc((d->p->Ntheta+1) * sizeof(double)));
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, temp);
             // dht_ws is const under gsl_dht_apply, so this is thread safe
             SAFEGSL_NORETURN(gsl_dht_apply(d->p->dht_ws, temp,
                                            d->p->conj_profiles[z_index][M_index]+1));
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             d->p->conj_profiles[z_index][M_index][0]
                 = 1.0 / d->p->profiles[z_index][M_index][0];
         }
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         free(temp);
     }
 
@@ -448,16 +444,16 @@ create_filtered_profiles(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         double *ell;
         SAFEALLOC_NORETURN(ell, malloc(d->p->Ntheta * sizeof(double)));
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         double *temp;
         SAFEALLOC_NORETURN(temp, malloc(d->p->Ntheta * sizeof(double))); // buffer
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             for (int ii=0; ii<d->p->Ntheta; ii++)
             {
                 ell[ii] = d->p->reci_tgrid[ii]
@@ -467,11 +463,11 @@ create_filtered_profiles(hmpdf_obj *d)
             SAFEHMPDF_NORETURN(apply_filters(d, d->p->Ntheta, ell,
                                              d->p->conj_profiles[z_index][M_index]+1,
                                              temp, 1, filter_pdf, &z_index));
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             // transform back to real space
             SAFEGSL_NORETURN(gsl_dht_apply(d->p->dht_ws, temp,
                                            d->p->profiles[z_index][M_index]+1));
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             // reverse the profile
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1,
                                   d->p->profiles[z_index][M_index]+1);
@@ -485,7 +481,7 @@ create_filtered_profiles(hmpdf_obj *d)
             SAFEHMPDF_NORETURN(fix_endpoints(d->p->Ntheta, d->p->decr_tgrid,
                                              d->p->profiles[z_index][M_index]+1));
         }
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         free(temp);
         free(ell);
     }
@@ -511,18 +507,18 @@ create_segments(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index],
                            malloc(d->n->NM * sizeof(int *)));
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
             int len = 10;
             SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index][M_index],
                                malloc(len * sizeof(int)));
-            if (hmpdf_status) { continue; }
-            
+            CONTINUE_IF_ERR
+
             // 0th element stores the number of segments, it's at least one
             d->p->segment_boundaries[z_index][M_index][0] = 1;
 
@@ -546,7 +542,7 @@ create_segments(hmpdf_obj *d)
                         SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index][M_index],
                                            realloc(d->p->segment_boundaries[z_index][M_index],
                                            len * sizeof(int)));
-                        if (hmpdf_status) { continue; }
+                        CONTINUE_IF_ERR
                     }
                     d->p->segment_boundaries[z_index][M_index]
                         [d->p->segment_boundaries[z_index][M_index][0]] = ii + 1;
@@ -781,12 +777,9 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
             if (!(inbatch))
             // first element in the batch
             {
-                if (b->len > 0)
-                {
-                    HMPDFERR("something is weird with this profile "
-                             "(z = %d, M = %d, segment = %d)",
-                             z_index, M_index, segment);
-                }
+                HMPDFCHECK(b->len > 0, "something is weird with this profile "
+                                       "(z = %d, M = %d, segment = %d)",
+                                       z_index, M_index, segment);
                 SAFEALLOC(b->data, malloc(len_this_batch * sizeof(double)));
                 b->start = ii;
                 b->incr = sgn;

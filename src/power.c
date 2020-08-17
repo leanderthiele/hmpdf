@@ -328,12 +328,12 @@ corr(hmpdf_obj *d, int z_index, double phi, double *out)
     STARTFCT
 
     double r = d->c->comoving[z_index] * phi;
-    if (r > d->pwr->corr_rmax)
-    {
-        HMPDFERR("phi value out of interpolation range.\n"
-                 "\tIt is suggested you increase hmpdf_phimax\n"
-                 "\tor check the units.");
-    }
+
+    HMPDFCHECK(r > d->pwr->corr_rmax,
+               "phi value out of interpolation range.\n"
+               "\tIt is suggested you increase hmpdf_phimax\n"
+               "\tor check the units.");
+
     SAFEGSL(gsl_spline_eval_e(d->pwr->corr_interp, r,
                               d->pwr->corr_accel[this_core()],
                               out));

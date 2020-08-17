@@ -130,11 +130,8 @@ phigrid_exact_part_centers(hmpdf_obj *d, double **grid, double **weights, int *b
             SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
             SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
             ++realloced;
-            if (realloced > 2)
-            {
-                HMPDFERR("Failed to create phigrid, "
-                         "expanded buffer too often");
-            }
+            HMPDFCHECK(realloced>2, "Failed to create phigrid, "
+                                    "expanded buffer too often.");
         }
 
         *grid[*Nexact] = sqrt((double)(_rsq[ii]))
@@ -197,11 +194,8 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
             SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
             SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
             ++realloced;
-            if (realloced > 2)
-            {
-                HMPDFERR("Failed to create phigrid, "
-                         "expanded buffer too often.")
-            }
+            HMPDFCHECK(realloced>2, "Failed to create phigrid, "
+                                    "expanded buffer too often.");
         }
 
         for (int jj=1; jj<=Nphi_here/2; jj++)
@@ -261,11 +255,8 @@ phigrid_approx_part(hmpdf_obj *d, int Nexact, double **grid, double **weights, i
                 *buflen *= 2;
                 SAFEALLOC(*grid,    realloc(*grid,    *buflen * sizeof(double)));
                 SAFEALLOC(*weights, realloc(*weights, *buflen * sizeof(double)));
-                if (realloced > 2)
-                {
-                    HMPDFERR("Failed to create phigrid, "
-                             "expanded buffer too often.");
-                }
+                HMPDFCHECK(realloced>2, "Failed to create phigrid, "
+                                        "expanded buffer too often.");
             }
 
             *grid[Nexact + *Napprox] = pow(x[ii], d->n->phipwr);
@@ -324,18 +315,14 @@ create_phigrid(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_phigrid\n");
 
     // sanity checks
-    if (d->n->pixelexactmax <= 0)
-    {
-        HMPDFERR("You set hmpdf_pixelexact_max=%d "
-                 "(or did not set at all, "
-                 "must be strictly positive.", d->n->pixelexactmax);
-    }
-    if (d->f->pixelside <= 0.0)
-    {
-        HMPDFERR("You set hmpdf_pixel_side=%.4e "
-                 "(or did not set at all), "
-                 "must be strictly positive.", d->f->pixelside);
-    }
+    HMPDFCHECK(d->n->pixelexactmax<=0, "You set hmpdf_pixelexact_max=%d "
+                                       "(or did not set it at all, "
+                                       "must be strictly positive.",
+                                       d->n->pixelexactmax);
+    HMPDFCHECK(d->f->pixelside<=0.0, "You set hmpdf_pixel_side=%.4e "
+                                     "(or did not set it at all), "
+                                     "must be strictly positive.",
+                                     d->f->pixelside);
 
     // allocate twice as much as we probably need,
     // the continuum integral adds a bit of noise
@@ -424,10 +411,7 @@ create_tp_ws(hmpdf_obj *d)
                       "because memory ran out.\n", d->cov->Nws);
     }
 
-    if (d->cov->Nws < 1)
-    {
-        HMPDFERR("Failed to allocate any workspaces.");
-    }
+    HMPDFCHECK(d->cov->Nws<1, "Failed to allocate any workspaces.");
 
     d->cov->created_tp_ws = 1;
 
@@ -546,18 +530,19 @@ create_cov(hmpdf_obj *d)
     #endif
     for (int pp=0; pp<d->n->Nphi; pp++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
 
         // create twopoint at this phi
         SAFEHMPDF_NORETURN(create_tp(d, d->n->phigrid[pp],
                                      d->cov->ws[this_core()]));
 
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
+
         // compute the correlation function
         SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[this_core()],
                                       d->cov->corr_diagn+pp));
 
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         
         // add to covariance
         for (int ii=0; ii<d->n->Nsignal; ii++)
@@ -585,7 +570,8 @@ create_cov(hmpdf_obj *d)
                 SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi));
             }
         }
-        if (hmpdf_status) { continue; }
+
+        CONTINUE_IF_ERR
     }
 
     // subtract the one-point outer product
@@ -653,11 +639,6 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     STARTFCT
 
     SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
-
-    if (d->f->pixelside < 0.0)
-    {
-        HMPDFERR("pixel sidelength must be set for covariance matrix.");
-    }
 
     // perform the computation
     SAFEHMPDF(prepare_cov(d));

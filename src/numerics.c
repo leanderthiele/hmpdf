@@ -98,7 +98,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         case hmpdf_rational    : T = gsl_integration_fixed_rational; break;
         case hmpdf_chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
         default                : T = NULL;
-                                 HMPDFERR("Unknown integration mode.")
+                                 HMPDFERR("Unknown integration mode.");
     }
     gsl_integration_fixed_workspace *ws;
     SAFEALLOC(ws, gsl_integration_fixed_alloc(T, N, a, b, alpha, beta));

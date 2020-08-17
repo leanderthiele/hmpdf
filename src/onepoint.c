@@ -303,15 +303,11 @@ pdf_check_user_input(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], int nois
 {//{{{
     STARTFCT
 
-    if (noisy && d->ns->noise<0.0)
-    {
-        HMPDFERR("noisy output requested but no/invalid noise level passed.");
-    }
+    HMPDFCHECK(noisy && d->ns->noise<0.0,
+               "noisy output requested but no/invalid noise level passed.");
 
-    if (not_monotonic(Nbins+1, binedges, 1))
-    {
-        HMPDFERR("binedges not monotonically increasing.");
-    }
+    HMPDFCHECK(not_monotonic(Nbins+1, binedges, 1),
+               "binedges not monotonically increasing.");
 
     ENDFCT
 }//}}}
