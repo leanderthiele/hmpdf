@@ -24,29 +24,37 @@ null_data(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
+#define HMPDFNEW_ALLOC(var,expr) \
+    do {                         \
+    var = expr;                  \
+    if (UNLIKELY(!(var)))        \
+    {                            \
+        return NULL;             \
+    }                            \
+    } while(0)
+
 hmpdf_obj *
 hmpdf_new(void)
 {//{{{
-    STARTFCT
-
     hmpdf_obj *d;
-    SAFEALLOC_NORETURN(d, malloc(sizeof(hmpdf_obj)));
+    HMPDFNEW_ALLOC(d, malloc(sizeof(hmpdf_obj)));
 
-    SAFEALLOC_NORETURN(d->n, malloc(sizeof(numerics_t)));
-    SAFEALLOC_NORETURN(d->cls, malloc(sizeof(class_interface_t)));
-    SAFEALLOC_NORETURN(d->c, malloc(sizeof(cosmology_t)));
-    SAFEALLOC_NORETURN(d->pwr, malloc(sizeof(power_t)));
-    SAFEALLOC_NORETURN(d->h, malloc(sizeof(halo_model_t)));
-    SAFEALLOC_NORETURN(d->f, malloc(sizeof(filters_t)));
-    SAFEALLOC_NORETURN(d->p, malloc(sizeof(profiles_t)));
-    SAFEALLOC_NORETURN(d->ns, malloc(sizeof(noise_t)));
-    SAFEALLOC_NORETURN(d->op, malloc(sizeof(onepoint_t)));
-    SAFEALLOC_NORETURN(d->tp, malloc(sizeof(twopoint_t)));
-    SAFEALLOC_NORETURN(d->ps, malloc(sizeof(powerspectrum_t)));
-    SAFEALLOC_NORETURN(d->cov, malloc(sizeof(covariance_t)));
-    SAFEHMPDF_NORETURN(null_data(d));
+    HMPDFNEW_ALLOC(d->n,   malloc(sizeof(numerics_t)));
+    HMPDFNEW_ALLOC(d->cls, malloc(sizeof(class_interface_t)));
+    HMPDFNEW_ALLOC(d->c,   malloc(sizeof(cosmology_t)));
+    HMPDFNEW_ALLOC(d->pwr, malloc(sizeof(power_t)));
+    HMPDFNEW_ALLOC(d->h,   malloc(sizeof(halo_model_t)));
+    HMPDFNEW_ALLOC(d->f,   malloc(sizeof(filters_t)));
+    HMPDFNEW_ALLOC(d->p,   malloc(sizeof(profiles_t)));
+    HMPDFNEW_ALLOC(d->ns,  malloc(sizeof(noise_t)));
+    HMPDFNEW_ALLOC(d->op,  malloc(sizeof(onepoint_t)));
+    HMPDFNEW_ALLOC(d->tp,  malloc(sizeof(twopoint_t)));
+    HMPDFNEW_ALLOC(d->ps,  malloc(sizeof(powerspectrum_t)));
+    HMPDFNEW_ALLOC(d->cov, malloc(sizeof(covariance_t)));
+
+    int status = null_data(d);
     
-    if ((hmpdf_status) || (errno))
+    if (UNLIKELY(status || errno))
     {
         return NULL;
     }
@@ -55,6 +63,8 @@ hmpdf_new(void)
         return d;
     }
 }//}}}
+
+#undef HMPDFNEW_ALLOC
 
 int
 reset_obj(hmpdf_obj *d)

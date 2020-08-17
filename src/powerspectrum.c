@@ -190,7 +190,7 @@ create_Cell(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->ps->created_Cell) { return hmpdf_status; }
+    if (d->ps->created_Cell) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_Cell\n");
     
@@ -225,7 +225,7 @@ create_Cphi(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->ps->created_Cphi) { return hmpdf_status; }
+    if (d->ps->created_Cphi) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_Cphi\n");
     

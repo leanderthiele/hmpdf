@@ -209,7 +209,7 @@ create_noisy_op(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->op->created_noisy_op) { return hmpdf_status; }
+    if (d->op->created_noisy_op) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_noisy_op\n");
 
@@ -231,7 +231,7 @@ create_op(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->op->created_op) { return hmpdf_status; }
+    if (d->op->created_op) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_op\n");
     

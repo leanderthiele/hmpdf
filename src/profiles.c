@@ -386,7 +386,7 @@ create_conj_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_conj_profiles) { return hmpdf_status; }
+    if (d->p->created_conj_profiles) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_conj_profiles\n");
     
@@ -434,8 +434,8 @@ create_filtered_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_filtered_profiles) { return hmpdf_status; }
-    if (d->f->Nfilters == 0 ) { return hmpdf_status; }
+    if (d->p->created_filtered_profiles) { return 0; }
+    if (d->f->Nfilters == 0 ) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_filtered_profiles\n");
 
@@ -496,7 +496,7 @@ create_segments(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_segments) { return hmpdf_status; }
+    if (d->p->created_segments) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_segments\n");
 
@@ -715,7 +715,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
                  1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))
         || (len < min_size))
     {
-        return hmpdf_status;
+        ENDFCT
     }
 
     double *temp;
@@ -740,7 +740,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     // check if it's too short now
     if (len < min_size)
     {
-        return hmpdf_status;
+        ENDFCT
     }
 
     interp1d *interp;
@@ -807,7 +807,7 @@ init_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->inited_profiles) { return hmpdf_status; }
+    if (d->p->inited_profiles) { return 0; }
 
     HMPDFPRINT(1, "init_profiles\n");
 

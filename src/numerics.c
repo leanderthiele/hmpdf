@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
 #include <complex.h>
 
 #include <gsl/gsl_integration.h>
@@ -205,7 +204,7 @@ init_numerics(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->n->inited_numerics) { return hmpdf_status; }
+    if (d->n->inited_numerics) { return 0; }
 
     HMPDFPRINT(1, "init_numerics\n");
 
@@ -222,7 +221,6 @@ static double
 simps_real(int N, double dx, int stride, double *f)
 // real Simpson integration, N must be odd (even number of intervals)
 {//{{{
-    assert(GSL_IS_ODD(N));
     --N;
     double out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
     for (int ii=1; ii<N-2; ii+=2)
@@ -236,7 +234,6 @@ static double complex
 simps_comp(int N, double dx, int stride, double complex *f)
 // double double complex Simpson integration, N must be odd (even number of intervals)
 {//{{{
-    assert(GSL_IS_ODD(N));
     --N;
     double complex out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
     for (int ii=1; ii<N-2; ii+=2)
@@ -313,7 +310,6 @@ romb_comp(int k, double dx, int stride, double complex *f)
 double
 integr_real(int N, double dx, int stride, double *f)
 {//{{{
-    assert(GSL_IS_ODD(N));
     int k;
     if (ispwr2(N-1, &k))
     {
@@ -328,7 +324,6 @@ integr_real(int N, double dx, int stride, double *f)
 double complex
 integr_comp(int N, double dx, int stride, double complex *f)
 {//{{{
-    assert(GSL_IS_ODD(N));
     int k;
     if (ispwr2(N-1, &k))
     {

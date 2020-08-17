@@ -297,7 +297,7 @@ init_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->h->inited_halo) { return hmpdf_status; }
+    if (d->h->inited_halo) { return 0; }
 
     HMPDFPRINT(1, "init_halo_model\n");
 

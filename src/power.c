@@ -109,7 +109,7 @@ power_kernel(hmpdf_obj *d, double k, double *out)
 
 typedef struct
 {//{{{
-    int hmpdf_status;
+    int status;
     hmpdf_obj *d;
     gsl_function F;
 }//}}}
@@ -121,7 +121,7 @@ power_integrand(double k, void *params)
 {//{{{
     power_integrand_params *p = (power_integrand_params *)params;
     double temp;
-    p->hmpdf_status = power_kernel(p->d, k, &temp);
+    p->status = power_kernel(p->d, k, &temp);
     double out = GSL_FN_EVAL(&(p->F), k);
     return temp * out;
 }//}}}
@@ -131,7 +131,7 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
 {//{{{
     STARTFCT
 
-    p->hmpdf_status = 0;
+    p->status = 0;
 
     struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
 
@@ -155,7 +155,7 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
                                 ws, out, &err));
     gsl_integration_workspace_free(ws);
 
-    hmpdf_status |= p->hmpdf_status;
+    HMPDFCHECK(p->status, "error encountered during integration.");
 
     ENDFCT
 }//}}}
@@ -266,7 +266,7 @@ create_corr(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->pwr->created_corr) { return hmpdf_status; }
+    if (d->pwr->created_corr) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_corr_interp\n");
     

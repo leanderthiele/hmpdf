@@ -310,7 +310,7 @@ create_phigrid(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_phigrid) { return hmpdf_status; }
+    if (d->cov->created_phigrid) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_phigrid\n");
 
@@ -377,7 +377,7 @@ create_tp_ws(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_tp_ws) { return hmpdf_status; }
+    if (d->cov->created_tp_ws) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_tp_ws\n");
     HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d threads.\n", d->Ncores);
@@ -387,11 +387,11 @@ create_tp_ws(hmpdf_obj *d)
     // allocate workspaces until we run out of memory
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEHMPDF_NORETURN(new_tp_ws(d->n->Nsignal, d->cov->ws+ii));
-        if (hmpdf_status) // failure to allocate a work space is not considered
-                          // a critical error
+        int alloc_failed = new_tp_ws(d->n->Nsignal, d->cov->ws+ii);
+        if (alloc_failed) // failure to allocate a work space is not considered
+                          // a critical error, which is why we don't go through
+                          // the usual error handling system
         {
-            hmpdf_status = 0;
             break;
         }
         else
@@ -489,7 +489,7 @@ create_noisy_cov(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_noisy_cov) { return hmpdf_status; }
+    if (d->cov->created_noisy_cov) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_noisy_cov\n");
 
@@ -508,7 +508,7 @@ create_cov(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_cov) { return hmpdf_status; }
+    if (d->cov->created_cov) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_cov\n");
 

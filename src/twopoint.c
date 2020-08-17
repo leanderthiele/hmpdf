@@ -147,7 +147,7 @@ create_phi_indep(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->tp->created_phi_indep) { return hmpdf_status; }
+    if (d->tp->created_phi_indep) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_phi_indep\n");
     
@@ -517,40 +517,21 @@ new_tp_ws(int N, twopoint_workspace **out)
     STARTFCT
 
     SAFEALLOC(*out, malloc(sizeof(twopoint_workspace)));
+
     twopoint_workspace *ws = *out; // for convenience
 
-    SAFEALLOC_NORETURN(ws->pdf_real, fftw_malloc(N * (N+2) * sizeof(double)));
-    if (hmpdf_status)
-    {//{{{
-        free(*out);
-        return hmpdf_status;
-    }//}}}
+    SAFEALLOC(ws->pdf_real, fftw_malloc(N * (N+2) * sizeof(double)));
+
     ws->pdf_comp = (double complex *)(ws->pdf_real);
     ws->pu_r2c = fftw_plan_dft_r2c_2d(N, N, ws->pdf_real,
                                       ws->pdf_comp, PU_R2C_MODE);
     ws->ppdf_c2r = fftw_plan_dft_c2r_2d(N, N, ws->pdf_comp,
                                         ws->pdf_real, PPDF_C2R_MODE);
     
-    SAFEALLOC_NORETURN(ws->bc, malloc(N * (N/2+1) * sizeof(double complex)));
-    if (hmpdf_status)
-    {//{{{
-        fftw_destroy_plan(ws->ppdf_c2r);
-        fftw_destroy_plan(ws->pu_r2c);
-        fftw_free(ws->pdf_real);
-        free(*out);
-        return hmpdf_status;
-    }//}}}
+    SAFEALLOC(ws->bc, malloc(N * (N/2+1) * sizeof(double complex)));
 
-    SAFEALLOC_NORETURN(ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)));
-    if (hmpdf_status)
-    {//{{{
-        free(ws->bc);
-        fftw_destroy_plan(ws->ppdf_c2r);
-        fftw_destroy_plan(ws->pu_r2c);
-        fftw_free(ws->pdf_real);
-        free(*out);
-        return hmpdf_status;
-    }//}}}
+    SAFEALLOC(ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)));
+
     ws->tempc_comp = (double complex *)(ws->tempc_real);
     ws->pc_r2c = fftw_plan_dft_r2c_2d(N, N, ws->tempc_real, ws->tempc_comp, PC_R2C_MODE);
 

@@ -365,7 +365,7 @@ init_filters(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->f->inited_filters) { return hmpdf_status; }
+    if (d->f->inited_filters) { return 0; }
 
     HMPDFPRINT(1, "init_filters\n");
 
