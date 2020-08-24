@@ -6,7 +6,7 @@ import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 
 ## \cond
-PATHTOHMPDF = '/home/leander/Perimeter/Onepoint/C_implementation'
+# PATHTOHMPDF = < directory where libhmpdf.so is located >
 
 class _C(object) : # char pointer
 #{{{
