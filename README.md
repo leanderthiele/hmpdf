@@ -9,8 +9,7 @@ Currently, two fields are supported:
 * thermal Sunyaev-Zel'dovich effect (Compton-y)
 * weak lensing convergence
 
-It code is interfaced both through C header files as well as through a convenient python wrapper.
-
+The code is interfaced both through C header files as well as through a convenient python wrapper.
 
 Using the python wrapper, a calculation of the weak lensing convergence one-point PDF
 for sources at redshift 1 in a cosmology given by a CLASS input file named "example.ini"

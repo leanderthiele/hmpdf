@@ -20,7 +20,7 @@
  *      + thermal Sunyaev-Zel'dovich effect (Compton-y)
  *      + weak lensing convergence
  *
- *  It code is interfaced both through C header files
+ *  The code is interfaced both through C header files
  *  as well as through a convenient python wrapper.
  *
  *  \section build Building
