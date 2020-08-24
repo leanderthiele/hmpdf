@@ -275,8 +275,6 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
         for (int segment2 = 0;
              segment2 < d->p->segment_boundaries[z_index][M_index][0];
              segment2++)
-        // TODO maybe go to segment2 <= segment1 and then symmetrize differently in
-        //      the end [ probably 1/2 * (A + A^T) ]
         {
             // loop such that the theta values are always monotonically decreasing
             // so that we know when to break
@@ -312,15 +310,11 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                                   * d->tp->dtsq[z_index][M_index][segment2].data[jj]
                                   * d->n->Mweights[M_index];
 
-                    // take care of the symmetry factor on the diagonal
-                    // TODO think about this!!!
-                    if ((signalindex1 == signalindex2) && (segment1 != segment2))
-                    {
-                        temp *= 0.5;
-                    }
-                   
+                    // add to clustered term
                     ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
                         += temp * b;
+
+                    // add to unclustered term
                     ws->pdf_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
                         += temp * gsl_pow_2(d->c->comoving[z_index])
                            / d->c->hubble[z_index] * d->n->zweights[z_index];
@@ -383,8 +377,8 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
     double complex a1 = redundant(d->n->Nsignal, d->tp->ac[z_index], i1);
     double complex a2 = d->tp->ac[z_index][i2];
     double complex b = b12[i1*(d->n->Nsignal/2+1)+i2]
-                - b12[i1*(d->n->Nsignal/2+1)]
-                - b12[i2] + b12[0];
+                       - b12[i1*(d->n->Nsignal/2+1)]
+                       - b12[i2] + b12[0];
     double corr1, corr2;
     SAFEHMPDF(corr(d, z_index, phi, &corr1));
     SAFEHMPDF(corr(d, z_index, 0.5*phi, &corr2));
