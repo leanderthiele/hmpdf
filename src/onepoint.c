@@ -88,9 +88,9 @@ op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
              ii < bt.len;
              signalindex += bt.incr, ii++)
         {
-            au[signalindex] += fabs(bt.data[ii]) * M_PI * n
+            au[signalindex] += bt.data[ii] * M_PI * n
                                * d->n->Mweights[M_index];
-            ac[signalindex] += fabs(bt.data[ii]) * M_PI * n * b
+            ac[signalindex] += bt.data[ii] * M_PI * n * b
                                * d->n->Mweights[M_index];
         }
         delete_batch(&bt);

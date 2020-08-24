@@ -213,11 +213,11 @@ create_phi_indep(hmpdf_obj *d)
                      signalindex += d->tp->t[z_index][M_index][segment].incr, ii++)
                 {
                     au_real[signalindex] += M_PI * n
-                                            * fabs(d->tp->dtsq[z_index][M_index][segment].data[ii])
+                                            * d->tp->dtsq[z_index][M_index][segment].data[ii]
                                             * d->n->Mweights[M_index] * d->n->zweights[z_index]
                                             * gsl_pow_2(d->c->comoving[z_index]) / d->c->hubble[z_index];
                     tempc_real[signalindex] += M_PI * n * b
-                                               * fabs(d->tp->dtsq[z_index][M_index][segment].data[ii])
+                                               * d->tp->dtsq[z_index][M_index][segment].data[ii]
                                                * d->n->Mweights[M_index];
                 }
             }
@@ -264,6 +264,7 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
 {//{{{
     STARTFCT
 
+    // read HMF and bias
     double n = d->h->hmf[z_index][M_index];
     double b = d->h->bias[z_index][M_index];
 
@@ -286,27 +287,29 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
             {
                 double t1 = d->tp->t[z_index][M_index][segment1].data[ii];
                 // t1 is monotonically decreasing with ii
+
                 // check if no triangle can be formed anymore, since t1 only decreases
                 if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
 
                 for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
                      (jj < d->tp->t[z_index][M_index][segment2].len)
-                      && (signalindex2 <= signalindex1); // FIXME I think this is the problem
+                      && (signalindex2 <= signalindex1);
                      // compute only half of the matrix, because it's symmetric
                      signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
                 // loop over the direction that is Nsignal+2 long
                 {
                     double t2 = d->tp->t[z_index][M_index][segment2].data[jj];
                     // t2 is monotonically decreasing with jj
+
                     // check if we can form a triangle
                     if (t1 >= t2 + phi) { break; }    // t2 only decreases
                     if (t2 >= phi + t1) { continue; } // no triangle possible here, but perhaps later
                     if (phi >= t1 + t2) { break; }    // t1,t2 only decrease
-                    //double min_diff = GSL_MIN(phi+t1-t2, t1+t2-phi);
+
                     double Delta = triang_A(phi, t1, t2);
                     double temp = 0.25 * n * Delta
-                                  * fabs(d->tp->dtsq[z_index][M_index][segment1].data[ii])
-                                  * fabs(d->tp->dtsq[z_index][M_index][segment2].data[jj])
+                                  * d->tp->dtsq[z_index][M_index][segment1].data[ii]
+                                  * d->tp->dtsq[z_index][M_index][segment2].data[jj]
                                   * d->n->Mweights[M_index];
 
                     // take care of the symmetry factor on the diagonal
@@ -316,7 +319,8 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                         temp *= 0.5;
                     }
                    
-                    ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2] += temp * b;
+                    ws->tempc_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
+                        += temp * b;
                     ws->pdf_real[signalindex1*(d->n->Nsignal+2)+signalindex2]
                         += temp * gsl_pow_2(d->c->comoving[z_index])
                            / d->c->hubble[z_index] * d->n->zweights[z_index];
