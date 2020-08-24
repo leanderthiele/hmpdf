@@ -1,7 +1,6 @@
 /*! [compile] */
 /* gcc -I../include -o example example.c -L.. -lhmpdf */
 /*! [compile] */
-// TODO
 #include <stdio.h>
 
 #include "hmpdf.h"

@@ -366,10 +366,10 @@ unit_conversions(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    d->n->phimax *= M_PI/180.0/60.0;
-    d->f->pixelside *= M_PI/180.0/60.0;
-    d->f->tophat_radius *= M_PI/180.0/60.0;
-    d->f->gaussian_sigma *= M_PI/180.0/60.0/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+    d->n->phimax         *= RADPERARCMIN;
+    d->f->pixelside      *= RADPERARCMIN;
+    d->f->tophat_radius  *= RADPERARCMIN;
+    d->f->gaussian_sigma *= RADPERARCMIN/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
 
     ENDFCT
 }//}}}

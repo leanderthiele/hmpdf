@@ -15,6 +15,7 @@
 #define GNEWTON      4.30091e-13 // Mpc/Msun (100 km/s)^2
 #define SIGMATHOMSON 6.98684e-74 // Mpc^2
 #define MELECTRON    4.58110e-61 // Msun
+#define RADPERARCMIN (M_PI/180.0/60.0) // rad/arcmin
 
 static inline int
 hmpdf_status_update(int *status, int result)
