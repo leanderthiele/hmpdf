@@ -22,5 +22,5 @@ with HMPDF() as d :
 # do something with the one-point PDF ...
 ```
 
-For further information, read the
+For further information on building the code and using it, please read the
 [Documentation](https://leanderthiele.github.io/hmpdf/html/).
