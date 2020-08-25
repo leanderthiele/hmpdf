@@ -39,12 +39,16 @@
  *      + add FFTW3/GSL locations to LINKER if those are non-standard
  *      + remove the OpenMP flag if you do not wish parallel execution
  *
- *  If you intend to use the python wrapper, you need to adapt the variable PATHTOHMPDF
- *  in hmpdf.py.
+ *  Then you can simply type `make`.
  *
- *  It may also be convenient to put libhmpdf.so into one of the default locations
- *  searched by the linker
- *  (in which case you can simply delete the PATHTOHMPDF line).
+ *  Afterwards, if you intend to use the python wrapper, type `make python`.
+ *  This will run pip.
+ *  It will also hardcode the location of libhmpdf.so into the python package,
+ *  which has the advantage that you can recompile the C code without having to run
+ *  pip again, and the disadvantage that you need to keep libhmpdf.so where it is.
+ *
+ *  It may also be convenient to copy libhmpdf.so into one of the default locations
+ *  searched by the linker.
  *
  *  \section use Usage
  *

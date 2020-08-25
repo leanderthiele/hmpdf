@@ -4,10 +4,9 @@ from os.path import join
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 from typing import Optional, Tuple
+from pkg_resources import resource_filename
 
 ## \cond
-PATHTOHMPDF='/home/leander/Perimeter/Onepoint/C_implementation'
-
 class _C(object) : # char pointer
 #{{{
     def __init__(self) :
@@ -101,25 +100,30 @@ class _Configs(object) :
 #}}}
 ## \endcond
 
-## Python wrapper around hmpdf.h
-#
-#  The general interface is very similar to the C one,
-#  so please read the documentation for this.
-#  The differences are:
-#       + all names have the hmpdf_ prefix removed
-#       + enums are replaced by strings
-#       + the function signatures are a bit different
-#       + the argument list to init() is implemented with the **kwargs syntax
-#         and not ended with #hmpdf_end_configs
-#       + passing custom ell- and k-space filters works differently,
-#         see the \ref examples. The options #hmpdf_custom_ell_filter_params
-#         and #hmpdf_custom_k_filter_params are not supported.
-#
-#  Best used in a context manager.
 class HMPDF(object) :
+    """! Python wrapper around hmpdf.h
+
+    The general interface is very similar to the C one,
+    so please read the documentation for this.
+    The differences are:
+         + all names have the hmpdf_ prefix removed
+         + enums are replaced by strings
+         + the function signatures are a bit different
+         + the argument list to init() is implemented with the **kwargs syntax
+           and not ended with #hmpdf_end_configs
+         + passing custom ell- and k-space filters works differently,
+           see the \ref examples. The options #hmpdf_custom_ell_filter_params
+           and #hmpdf_custom_k_filter_params are not supported.
+
+    Best used in a context manager.
+    """
 #{{{
     # interaction with the DLL
     #{{{
+    # locate the shared library
+    __pathtohmpdf_name = resource_filename('hmpdf', 'PATHTOHMPDF.txt')
+    with open(__pathtohmpdf_name, 'r') as f :
+        PATHTOHMPDF = f.readline().rstrip()
     try :
         __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
     except OSError : # try to read the shared library from LD_LINKER_PATH
@@ -185,47 +189,49 @@ class HMPDF(object) :
                 return args
     #}}}
     
-    ## calls hmpdf_new().
-    def __init__(self) :
+    def __init__(self) -> None :
+        """! calls hmpdf_new()."""
     #{{{
         self.d = HMPDF.__new()
         if not self.d :
             raise MemoryError('Could not allocate hmpdf_obj.')
     #}}}
 
-    ## calls hmpdf_delete()
-    #
-    #  \param  none
-    def __del__(self) :
+    def __del__(self) -> None :
+        """! calls hmpdf_delete()"""
     #{{{
         err = HMPDF.__delete(self.d)
         if err :
             raise RuntimeError('delete failed.')
     #}}}
 
-    ## returns object
-    def __enter__(self) :
+    def __enter__(self) -> HMPDF :
+        """! returns object"""
     #{{{
         return self
     #}}}
 
-    ## calls hmpdf_delete()
-    def __exit__(self, exc_type, exc_value, exc_traceback) :
+    def __exit__(self,
+                 exc_type,
+                 exc_value,
+                 exc_traceback) -> None :
+        """! calls hmpdf_delete()"""
     #{{{
         del self
     #}}}
 
-    ## Initializes the object [calls hmpdf_init()].
-    #
-    #  \param class_ini     CLASS .ini file
-    #  \param stype         signal type (either "kappa" or "tsz")
-    #  \param zsource       source redshift. Use only if stype="kappa"
-    #  \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
     def init(self,
              class_ini: str,
              stype: str,
              zsource: Optional[float]=None,
              **kwargs) -> None :
+        """! Initializes the object [calls hmpdf_init()].
+        
+        \param class_ini     CLASS .ini file
+        \param stype         signal type (either "kappa" or "tsz")
+        \param zsource       source redshift. Use only if stype="kappa"
+        \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
+        """
     #{{{
         if stype == 'kappa' :
             if zsource is None :
@@ -247,16 +253,17 @@ class HMPDF(object) :
         return self.__ret(err, 'init()')
     #}}}
 
-    ## Get the one-point PDF [calls hmpdf_get_op()]
-    #
-    #  \param binedges      1d, defines how the PDF is binned
-    #  \param incl_2h       whether to include the two-halo term
-    #  \param noisy         whether to include pixel-wise Gaussian noise
-    #  \return the binned PDF (1d)
     def get_op(self,
                binedges: np.ndarray,
                incl_2h: bool=True,
                noisy: bool=False) -> np.ndarray :
+        """! Get the one-point PDF [calls hmpdf_get_op()]
+        
+        \param binedges      1d, defines how the PDF is binned
+        \param incl_2h       whether to include the two-halo term
+        \param noisy         whether to include pixel-wise Gaussian noise
+        \return the binned PDF (1d)
+        """
     #{{{
         out = np.empty(len(binedges)-1)
         err = HMPDF.__get_op(self.d, len(binedges)-1, binedges, out,
@@ -264,16 +271,17 @@ class HMPDF(object) :
         return self.__ret(err, 'get_op()', out)
     #}}}
 
-    ## Get the two-point PDF [calls hmpdf_get_tp()]
-    #
-    #  \param binedges      1d, defines how the PDF is binned
-    #  \param phi           angular separation of the two sky locations (in arcmin)
-    #  \param noisy         whether to include pixel-wise Gaussian noise
-    #  \return the binned PDF (2d)
     def get_tp(self,
                phi: float,
                binedges: np.ndarray,
                noisy: bool=False) -> np.ndarray :
+        """! Get the two-point PDF [calls hmpdf_get_tp()]
+        
+        \param binedges      1d, defines how the PDF is binned
+        \param phi           angular separation of the two sky locations (in arcmin)
+        \param noisy         whether to include pixel-wise Gaussian noise
+        \return the binned PDF (2d)
+        """
     #{{{
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
         err = HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
@@ -281,14 +289,15 @@ class HMPDF(object) :
         return self.__ret(err, 'get_tp()', out)
     #}}}
 
-    ## Get the covariance matrix of the one-point PDF [calls hmpdf_get_cov()]
-    #
-    #  \param binedges      1d, defines how the covariance matrix is binned
-    #  \param noisy         whether to include pixel-wise Gaussian noise
-    #  \return the binned covariance matrix (2d)
     def get_cov(self,
                 binedges: np.ndarray,
                 noisy: bool=False) -> np.ndarray :
+        """! Get the covariance matrix of the one-point PDF [calls hmpdf_get_cov()]
+        
+        \param binedges      1d, defines how the covariance matrix is binned
+        \param noisy         whether to include pixel-wise Gaussian noise
+        \return the binned covariance matrix (2d)
+        """
     #{{{
         Nbins = len(binedges) - 1
         out = np.empty(Nbins*Nbins)
@@ -297,14 +306,15 @@ class HMPDF(object) :
         return self.__ret(err, 'get_cov()', out)
     #}}}
 
-    ## Get the angular power spectrum [calls hmpdf_get_Cell()]
-    #
-    #  \param ell           1d, the angular wavenumbers
-    #  \param mode          one of "onehalo", "twohalo", "total"
-    #  \return the power spectrum at ell (1d)
     def get_Cell(self,
                  ell: np.ndarray,
                  mode: str='total') -> np.ndarray :
+        """! Get the angular power spectrum [calls hmpdf_get_Cell()]
+        
+        \param ell           1d, the angular wavenumbers
+        \param mode          one of "onehalo", "twohalo", "total"
+        \return the power spectrum at ell (1d)
+        """
     #{{{
         out = np.empty(len(ell))
         err = HMPDF.__get_Cell(self.d, len(ell), ell, out,
@@ -312,14 +322,15 @@ class HMPDF(object) :
         return self.__ret(err, 'get_Cell()', out)
     #}}}
 
-    ## Get the angular correlation function [calls hmpdf_get_Cphi()]
-    #
-    #  \param phi           1d, the angular separations (in arcmin)
-    #  \param mode          one of "onehalo", "twohalo", "total"
-    #  \return the correlation function at phi (1d)
     def get_Cphi(self,
                  phi: np.ndarray,
                  mode: str='total') -> np.ndarray :
+        """! Get the angular correlation function [calls hmpdf_get_Cphi()]
+        
+        \param phi           1d, the angular separations (in arcmin)
+        \param mode          one of "onehalo", "twohalo", "total"
+        \return the correlation function at phi (1d)
+        """
     #{{{
         out = np.empty(len(phi))
         err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
@@ -327,10 +338,11 @@ class HMPDF(object) :
         return self.__ret(err, 'get_Cphi()', out)
     #}}}
 
-    ## Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
-    #
-    #  \return (phi, phiweights, corr_diagn)
     def get_cov_diagnostics(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """! Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
+        
+        \return (phi, phiweights, corr_diagn)
+        """
     #{{{
         Nphi = c_int(0)
         err = HMPDF.__get_Nphi(self.d, byref(Nphi))
@@ -344,4 +356,3 @@ class HMPDF(object) :
         return self.__ret(err, 'get_cov_diagnostics',
                           phi, phiweights, corr_diagn)
     #}}}
-#}}}

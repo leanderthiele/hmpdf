@@ -5,4 +5,5 @@ setup(name='hmpdf',
       version='1',
       packages=['hmpdf'],
       python_requires='>3',
+      include_package_data=True,
       url='https://github.com/leanderthiele/hmpdf')
