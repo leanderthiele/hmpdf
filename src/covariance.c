@@ -643,16 +643,8 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     // perform the computation
     SAFEHMPDF(prepare_cov(d));
 
-    // if kappa, adjust the bins
     double _binedges[Nbins+1];
-    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    if (d->p->stype == hmpdf_kappa)
-    {
-        for (int ii=0; ii<=Nbins; ii++)
-        {
-            _binedges[ii] += d->op->signalmeanc;
-        }
-    }
+    SAFEHMPDF(pdf_adjust_binedges(d, Nbins, binedges, _binedges, d->op->signalmeanc));
 
     // perform the binning
     HMPDFPRINT(3, "\t\tbinning the covariance matrix\n");

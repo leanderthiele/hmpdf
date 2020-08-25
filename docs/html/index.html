@@ -118,45 +118,45 @@ Building</h1>
 <li>remove the OpenMP flag if you do not wish parallel execution</li>
 </ul>
 <p>Then you can simply type <code>make</code>.</p>
-<p>Afterwards, if you intend to use the python wrapper, type <code>make python</code>. This will hardcode the location of libhmpdf.so into the python script (...) and run pip.</p>
+<p>Afterwards, if you intend to use the python wrapper, type <code>make python</code>. This will run pip. It will also hardcode the location of libhmpdf.so into the python package, which has the advantage that you can recompile the C code without having to run pip again, and the disadvantage that you need to keep libhmpdf.so where it is.</p>
 <p>It may also be convenient to copy libhmpdf.so into one of the default locations searched by the linker.</p>
 <h1><a class="anchor" id="use"></a>
 Usage</h1>
-<p>The C interface can be found in <a class="el" href="a00023.html">hmpdf.h</a>. All exposed objects' names start with hmpdf_ to help you keep your name space clean.</p>
+<p>The C interface can be found in <a class="el" href="a00020.html">hmpdf.h</a>. All exposed objects' names start with hmpdf_ to help you keep your name space clean.</p>
 <p>Workflow is as follows:</p><ol type="1">
-<li>allocate a new <a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>.</li>
-<li>set all options (required and optional) with <a class="el" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>, this will also compute the data needed for all outputs. See <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for optional inputs.</li>
-<li>get your output [<a class="el" href="a00038.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op()</a>, <a class="el" href="a00044.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a>, <a class="el" href="a00029.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a>, <a class="el" href="a00041.html#a2b2b780272724460d05b616068140cf2">hmpdf_get_Cell()</a>, <a class="el" href="a00041.html#abf66b768e57cf7db8551cba341d8d9e2">hmpdf_get_Cphi()</a>].</li>
+<li>allocate a new <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>.</li>
+<li>set all options (required and optional) with <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>, this will also compute the data needed for all outputs. See <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for optional inputs.</li>
+<li>get your output [<a class="el" href="a00035.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op()</a>, <a class="el" href="a00041.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a>, <a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a>, <a class="el" href="a00038.html#a2b2b780272724460d05b616068140cf2">hmpdf_get_Cell()</a>, <a class="el" href="a00038.html#abf66b768e57cf7db8551cba341d8d9e2">hmpdf_get_Cphi()</a>].</li>
 <li>go to (3.) if you require any other outputs; go to (2.) if you want to re-run the code with different options.</li>
-<li>free the memory associated with the <a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00035.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete()</a>.</li>
+<li>free the memory associated with the <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> with <a class="el" href="a00032.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete()</a>.</li>
 </ol>
-<p>There is also a Python wrapper (<a class="el" href="a00047.html">hmpdf.py</a>), with analogous workflow and simpler syntax.</p>
+<p>There is also a Python wrapper (<a class="el" href="a00044.html">hmpdf.py</a>), with analogous workflow and simpler syntax.</p>
 <h1><a class="anchor" id="opt"></a>
 Options</h1>
-<p>There is a number of optional arguments to <a class="el" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>, the most important ones to get you started are</p><ul>
-<li>pixelization: <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></li>
-<li>ell space filters: <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> (and <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>)</li>
-<li>pixel-wise Gaussian noise: <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a></li>
-<li>multithreading: <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></li>
+<p>There is a number of optional arguments to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>, the most important ones to get you started are</p><ul>
+<li>pixelization: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></li>
+<li>ell space filters: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>)</li>
+<li>pixel-wise Gaussian noise: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a></li>
+<li>multithreading: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></li>
 </ul>
-<p>See the documentation of <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for all options.</p>
+<p>See the documentation of <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> for all options.</p>
 <h1><a class="anchor" id="time"></a>
 Runtime</h1>
-<p>The following were found with default settings on a laptop. All functions scale as <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a3d0fe1b9c6a879c262ff8626012cbe59">hmpdf_N_M</a> x <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574">hmpdf_N_z</a>, this is omitted in the following:</p><ul>
-<li><a class="el" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>: a few seconds (depends strongly on the configuration) <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a> to <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a>^2. Different if CLASS runtime starts to dominate. <a class="el" href="a00026.html#a217886565815a6572ecbb844dcebe7d7aa097749963cade7cee4edc8c9821bed8">hmpdf_tsz</a> takes longer than <a class="el" href="a00026.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>.</dd></dl>
+<p>The following were found with default settings on a laptop. All functions scale as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3d0fe1b9c6a879c262ff8626012cbe59">hmpdf_N_M</a> x <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574">hmpdf_N_z</a>, this is omitted in the following:</p><ul>
+<li><a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>: a few seconds (depends strongly on the configuration) <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a> to <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a>^2. Different if CLASS runtime starts to dominate. <a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7aa097749963cade7cee4edc8c9821bed8">hmpdf_tsz</a> takes longer than <a class="el" href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>.</dd></dl>
 </li>
-<li><a class="el" href="a00044.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a>: ~10 seconds on a single thread. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2.</dd></dl>
+<li><a class="el" href="a00041.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a>: ~10 seconds on a single thread. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2.</dd></dl>
 </li>
-<li><a class="el" href="a00029.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a>: ~20 minutes on 8 threads. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2 x <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2">hmpdf_N_phi</a>.</dd></dl>
+<li><a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a>: ~20 minutes on 8 threads. <dl class="section user"><dt></dt><dd>scales as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>^2 x <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2">hmpdf_N_phi</a>.</dd></dl>
 </li>
 </ul>
-<p>Other functions are fast in comparison to <a class="el" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>. <a class="el" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> and <a class="el" href="a00029.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a> are parallelized in critical parts, while <a class="el" href="a00044.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a> does not get faster if <a class="el" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a> is increased.</p>
+<p>Other functions are fast in comparison to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>. <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> and <a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a> are parallelized in critical parts, while <a class="el" href="a00041.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a> does not get faster if <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a> is increased.</p>
 <h1><a class="anchor" id="errrors"></a>
 Error handling</h1>
-<p>All functions [except <a class="el" href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>] return a non-zero int if an error occured. A traceback will be printed to stderr. You can remove the definition of the macro DEBUG in the Makefile, in which case no error handling at all will be happening (could give a marginal speed-up in some cases, but not recommended).</p>
+<p>All functions [except <a class="el" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new()</a>] return a non-zero int if an error occured. A traceback will be printed to stderr. You can remove the definition of the macro DEBUG in the Makefile, in which case no error handling at all will be happening (could give a marginal speed-up in some cases, but not recommended).</p>
 <h1><a class="anchor" id="threads"></a>
 Thread safety</h1>
-<p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour.</p>
+<p>All functions are <em>not</em> threadsafe: making two calls on the same <a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> concurrently results in undefined behaviour.</p>
 <h1><a class="anchor" id="examples"></a>
 Examples</h1>
 <p>Some examples are collected in examples/example.c and examples/example.py. You can compile the C code with </p><div class="fragment"><div class="line"><span class="comment">/* gcc -I../include -o example example.c -L.. -lhmpdf */</span></div>
@@ -169,24 +169,24 @@ Examples</h1>
 <div class="line">        binedges[ii] = kappamin + (<span class="keywordtype">double</span>)(ii)*(kappamax-kappamin)/(double)(Nbins);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* get a new hmpdf_obj */</span></div>
-<div class="line">    <a class="code" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d = <a class="code" href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a>();</div>
+<div class="line">    <a class="code" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d = <a class="code" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a>();</div>
 <div class="line">    <span class="keywordflow">if</span> (!(d))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* initialize with default settings */</span></div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a>(d, <span class="stringliteral">&quot;example.ini&quot;</span>, <a class="code" href="a00026.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>,</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a>(d, <span class="stringliteral">&quot;example.ini&quot;</span>, <a class="code" href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>,</div>
 <div class="line">                   1.0<span class="comment">/* source redshift */</span>))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* get the one-point PDF */</span></div>
 <div class="line">    <span class="keywordtype">double</span> op[Nbins];</div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00038.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op</a>(d, Nbins, binedges, op,</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00035.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op</a>(d, Nbins, binedges, op,</div>
 <div class="line">                     1<span class="comment">/* include two-halo term */</span>,</div>
 <div class="line">                     0<span class="comment">/* don&#39;t include noise */</span>))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* free memory associated with the hmpdf_obj */</span></div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00035.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a>(d))</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00032.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a>(d))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* do something with the one-point PDF ... */</span></div>
@@ -201,7 +201,7 @@ Examples</h1>
 <div class="line">    <span class="comment"># do something with the one-point PDF ...</span></div>
 </div><!-- fragment --><p> Including the effect of an ell-space filter would look like this: </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> example_ell_filter_use(<span class="keywordtype">void</span>)</div>
 <div class="line">{</div>
-<div class="line">    <a class="code" href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d = <a class="code" href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a>();</div>
+<div class="line">    <a class="code" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d = <a class="code" href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a>();</div>
 <div class="line">    <span class="keywordflow">if</span> (!(d))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
@@ -209,19 +209,19 @@ Examples</h1>
 <div class="line"><span class="comment">     * modes above ell = 5000</span></div>
 <div class="line"><span class="comment">     */</span></div>
 <div class="line">    <span class="keywordtype">double</span> ell_max = 5000.0;</div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a>(d, <span class="stringliteral">&quot;example.ini&quot;</span>, <a class="code" href="a00026.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>, 1.0,</div>
-<div class="line">                   <a class="code" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>, &amp;example_ell_filter,</div>
-<div class="line">                   <a class="code" href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>, &amp;ell_max))</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a>(d, <span class="stringliteral">&quot;example.ini&quot;</span>, <a class="code" href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a>, 1.0,</div>
+<div class="line">                   <a class="code" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>, &amp;example_ell_filter,</div>
+<div class="line">                   <a class="code" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>, &amp;ell_max))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* get your results ... */</span></div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00035.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a>(d))</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code" href="a00032.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a>(d))</div>
 <div class="line">        <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p>Here, we defined the function example_ell_filter conforming to the typedef <a class="el" href="a00026.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>: </p><div class="fragment"><div class="line"><span class="keywordtype">double</span> example_ell_filter(<span class="keywordtype">double</span> ell, <span class="keywordtype">void</span> *p)</div>
+</div><!-- fragment --><p>Here, we defined the function example_ell_filter conforming to the typedef <a class="el" href="a00023.html#a7a44e2a9bed611ed03ff9e9562889ecd">hmpdf_ell_filter_f</a>: </p><div class="fragment"><div class="line"><span class="keywordtype">double</span> example_ell_filter(<span class="keywordtype">double</span> ell, <span class="keywordtype">void</span> *p)</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordtype">double</span> ell_max = *(<span class="keywordtype">double</span> *)p;</div>
 <div class="line">    <span class="keywordflow">return</span> (<span class="keywordtype">double</span>)(ell &lt; ell_max);</div>
@@ -235,14 +235,14 @@ Examples</h1>
 </div><!-- fragment --></div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
-<div class="ttc" id="aa00032_html_a54f161978355cfb09dde0b4a4b3e7599"><div class="ttname"><a href="a00032.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a></div><div class="ttdeci">#define hmpdf_init(...)</div><div class="ttdef"><b>Definition:</b> hmpdf_init.h:43</div></div>
-<div class="ttc" id="aa00026_html_a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a"><div class="ttname"><a href="a00026.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a></div><div class="ttdeci">@ hmpdf_kappa</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:24</div></div>
-<div class="ttc" id="aa00026_html_a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff"><div class="ttname"><a href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a></div><div class="ttdeci">@ hmpdf_custom_ell_filter</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:213</div></div>
-<div class="ttc" id="aa00026_html_a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea"><div class="ttname"><a href="a00026.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a></div><div class="ttdeci">@ hmpdf_custom_ell_filter_params</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:220</div></div>
-<div class="ttc" id="aa00035_html_ab087598ef780813528136bcde80deed2"><div class="ttname"><a href="a00035.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a></div><div class="ttdeci">hmpdf_obj * hmpdf_new(void)</div></div>
-<div class="ttc" id="aa00038_html_a48d704eb071f26ec88a6864175fee4e5"><div class="ttname"><a href="a00038.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op</a></div><div class="ttdeci">int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)</div></div>
-<div class="ttc" id="aa00035_html_a439998de2d821dfe3a21a91fb2687eac"><div class="ttname"><a href="a00035.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a></div><div class="ttdeci">struct hmpdf_obj_s hmpdf_obj</div><div class="ttdef"><b>Definition:</b> hmpdf_object.h:10</div></div>
-<div class="ttc" id="aa00035_html_a3ab51e3102e0a3e08341135f5fec99f8"><div class="ttname"><a href="a00035.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a></div><div class="ttdeci">int hmpdf_delete(hmpdf_obj *d)</div></div>
+<div class="ttc" id="aa00029_html_a54f161978355cfb09dde0b4a4b3e7599"><div class="ttname"><a href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init</a></div><div class="ttdeci">#define hmpdf_init(...)</div><div class="ttdef"><b>Definition:</b> hmpdf_init.h:43</div></div>
+<div class="ttc" id="aa00032_html_a3ab51e3102e0a3e08341135f5fec99f8"><div class="ttname"><a href="a00032.html#a3ab51e3102e0a3e08341135f5fec99f8">hmpdf_delete</a></div><div class="ttdeci">int hmpdf_delete(hmpdf_obj *d)</div></div>
+<div class="ttc" id="aa00035_html_a48d704eb071f26ec88a6864175fee4e5"><div class="ttname"><a href="a00035.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op</a></div><div class="ttdeci">int hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)</div></div>
+<div class="ttc" id="aa00023_html_a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff"><div class="ttname"><a href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a></div><div class="ttdeci">@ hmpdf_custom_ell_filter</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:213</div></div>
+<div class="ttc" id="aa00032_html_ab087598ef780813528136bcde80deed2"><div class="ttname"><a href="a00032.html#ab087598ef780813528136bcde80deed2">hmpdf_new</a></div><div class="ttdeci">hmpdf_obj * hmpdf_new(void)</div></div>
+<div class="ttc" id="aa00032_html_a439998de2d821dfe3a21a91fb2687eac"><div class="ttname"><a href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a></div><div class="ttdeci">struct hmpdf_obj_s hmpdf_obj</div><div class="ttdef"><b>Definition:</b> hmpdf_object.h:10</div></div>
+<div class="ttc" id="aa00023_html_a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a"><div class="ttname"><a href="a00023.html#a217886565815a6572ecbb844dcebe7d7acebd12689e8426762baf7ff918224c7a">hmpdf_kappa</a></div><div class="ttdeci">@ hmpdf_kappa</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:24</div></div>
+<div class="ttc" id="aa00023_html_a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea"><div class="ttname"><a href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a></div><div class="ttdeci">@ hmpdf_custom_ell_filter_params</div><div class="ttdef"><b>Definition:</b> hmpdf_configs.h:220</div></div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>

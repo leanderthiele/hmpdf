@@ -309,6 +309,26 @@ pdf_check_user_input(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], int nois
 }//}}}
 
 int
+pdf_adjust_binedges(hmpdf_obj *d, int Nbins,
+                    double binedges_in[Nbins+1],
+                    double binedges_out[Nbins+1],
+                    double mean)
+{//{{{
+    STARTFCT
+
+    memcpy(binedges_out, binedges_in, (Nbins+1) * sizeof(double));
+    if (d->p->stype == hmpdf_kappa)
+    {
+        for (int ii=0; ii<=Nbins; ii++)
+        {
+            binedges_out[ii] += mean;
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+int
 hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int incl_2h, int noisy)
 {//{{{
     STARTFCT
@@ -318,14 +338,9 @@ hmpdf_get_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins]
     SAFEHMPDF(prepare_op(d));
     
     double _binedges[Nbins+1];
-    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    if (d->p->stype == hmpdf_kappa)
-    {
-        for (int ii=0; ii<=Nbins; ii++)
-        {
-            _binedges[ii] += (incl_2h) ? d->op->signalmeanc : d->op->signalmeanu;
-        }
-    }
+    SAFEHMPDF(pdf_adjust_binedges(d, Nbins, binedges, _binedges,
+                                  (incl_2h) ? d->op->signalmeanc
+                                            : d->op->signalmeanu));
 
     SAFEHMPDF(bin_1d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
                      (noisy) ? d->n->signalgrid_noisy : d->n->signalgrid,

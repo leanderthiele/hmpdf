@@ -1,5 +1,5 @@
 var a00029 =
 [
-    [ "hmpdf_get_cov", "a00029.html#a46c10272d00ba6fde5b5d4b0836d846e", null ],
-    [ "hmpdf_get_cov_diagnostics", "a00029.html#ac6a1a1025cee09dede78b935767325c8", null ]
+    [ "hmpdf_init", "a00029.html#a54f161978355cfb09dde0b4a4b3e7599", null ],
+    [ "hmpdf_init_fct", "a00029.html#a56610c3095cf0097b8cfb7ce3bce66c0", null ]
 ];

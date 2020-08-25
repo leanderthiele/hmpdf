@@ -1,6 +1,4 @@
 var a00035 =
 [
-    [ "hmpdf_obj", "a00035.html#a439998de2d821dfe3a21a91fb2687eac", null ],
-    [ "hmpdf_new", "a00035.html#ab087598ef780813528136bcde80deed2", null ],
-    [ "hmpdf_delete", "a00035.html#a3ab51e3102e0a3e08341135f5fec99f8", null ]
+    [ "hmpdf_get_op", "a00035.html#a48d704eb071f26ec88a6864175fee4e5", null ]
 ];

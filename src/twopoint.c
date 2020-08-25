@@ -621,15 +621,7 @@ hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], doub
     d->tp->last_phi = phi;
 
     double _binedges[Nbins+1];
-    memcpy(_binedges, binedges, (Nbins+1) * sizeof(double));
-    // if kappa, adjust the bins
-    if (d->p->stype == hmpdf_kappa)
-    {
-        for (int ii=0; ii<= Nbins; ii++)
-        {
-            _binedges[ii] += d->op->signalmeanc;
-        }
-    }
+    SAFEHMPDF(pdf_adjust_binedges(d, Nbins, binedges, _binedges, d->op->signalmeanc));
 
     HMPDFPRINT(3, "\t\tbinning the twopoint pdf\n");
     SAFEHMPDF(bin_2d((noisy) ? d->n->Nsignal_noisy : d->n->Nsignal,
