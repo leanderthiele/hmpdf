@@ -1,6 +1,5 @@
 PATHTOCLASS = /usr/local/class_public
 
-
 CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
@@ -39,6 +38,11 @@ directories: $(OBJDIR)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 	mkdir -p $(OUTDIR)
+
+.PHONY: python
+python:
+	pwd > hmpdf/PATHTOHMPDF.txt
+	pip install . --user
 
 .PHONY: clean
 clean:

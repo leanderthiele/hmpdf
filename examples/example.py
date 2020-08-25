@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 
-sys.path.append('../')
 from hmpdf import HMPDF
 
 ## [example_kappa_onepoint]

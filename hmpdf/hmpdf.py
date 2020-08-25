@@ -6,7 +6,11 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 from typing import Optional, Tuple
 
 ## \cond
-# PATHTOHMPDF = < directory where libhmpdf.so is located >
+try :
+    with open('PATHTOHMPDF.txt', 'r') as f :
+        PATHTOHMPDF = f.readline().rstrip()
+except IOError :
+    pass
 
 class _C(object) : # char pointer
 #{{{
