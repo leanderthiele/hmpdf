@@ -1,9 +1,10 @@
 ## \file
 from ctypes import *
 from os.path import join
-import sys
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
+from typing import Optional, Tuple
+
 
 ## \cond
 # PATHTOHMPDF = < directory where libhmpdf.so is located >
@@ -13,20 +14,13 @@ class _C(object) : # char pointer
     def __init__(self) :
         pass
     def __call__(self, name) :
-        if sys.version_info >= (3, 0) :
-            if isinstance(name, str) :
-                return c_char_p(name.encode('utf-8'))
-            elif isinstance(name, bytes) :
-                return c_char_p(name)
-            else :
-                raise TypeError('Not a string.')
+        if isinstance(name, str) :
+            return c_char_p(name.encode('utf-8'))
+        elif isinstance(name, bytes) :
+            return c_char_p(name)
         else :
-            if isinstance(name, str) :
-                return c_char_p(name)
-            else :
-                raise TypeError('Not a string.')
+            raise TypeError('Not a string.')
 #}}}
-
 
 class _E(object) : # enumeration class
 #{{{
@@ -181,30 +175,20 @@ class HMPDF(object) :
     #}}}
     def __ret(self, err, callname, *args) :
     #{{{
-        if not self.catch_errors :
-            return (err, ) + args
+        if err :
+            raise RuntimeError(HMPDF.__errmsg%callname)
         else :
-            if err :
-                raise RuntimeError(HMPDF.__errmsg%callname)
+            if len(args) == 0 :
+                return None
+            elif len(args) == 1 :
+                return args[0]
             else :
-                if len(args) == 0 :
-                    return None
-                elif len(args) == 1 :
-                    return args[0]
-                else :
-                    return args
+                return args
     #}}}
     
     ## calls hmpdf_new().
-    #
-    #  \param catch_errors      If set to false, the python code does not perform error
-    #                           checking and outputs the error code as the first entry
-    #                           in any output tuple.
-    #                           Default is True, i.e. the python code will raise errors
-    #                           upon encountering a non-zero error code.
-    def __init__(self, catch_errors=True) :
+    def __init__(self) :
     #{{{
-        self.catch_errors = catch_errors
         self.d = HMPDF.__new()
         if not self.d :
             raise MemoryError('Could not allocate hmpdf_obj.')
@@ -234,11 +218,15 @@ class HMPDF(object) :
 
     ## Initializes the object [calls hmpdf_init()].
     #
-    #  \param class_ini     string, the CLASS .ini file
-    #  \param stype         string, the signal type (either "kappa" or "tsz")
-    #  \param zsource       the source redshift. Use only if stype="kappa"
+    #  \param class_ini     CLASS .ini file
+    #  \param stype         signal type (either "kappa" or "tsz")
+    #  \param zsource       source redshift. Use only if stype="kappa"
     #  \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
-    def init(self, class_ini, stype, zsource=None, **kwargs) :
+    def init(self,
+             class_ini: str,
+             stype: str,
+             zsource: Optional[float]=None,
+             **kwargs) -> None :
     #{{{
         if stype == 'kappa' :
             if zsource is None :
@@ -262,11 +250,14 @@ class HMPDF(object) :
 
     ## Get the one-point PDF [calls hmpdf_get_op()]
     #
-    #  \param binedges      1d numpy array
-    #  \param incl_2h       bool, default: True
-    #  \param noisy         bool, default: False
-    #  \return the binned PDF (1d numpy array)
-    def get_op(self, binedges, incl_2h=True, noisy=False) :
+    #  \param binedges      1d, defines how the PDF is binned
+    #  \param incl_2h       whether to include the two-halo term
+    #  \param noisy         whether to include pixel-wise Gaussian noise
+    #  \return the binned PDF (1d)
+    def get_op(self,
+               binedges: np.ndarray,
+               incl_2h: bool=True,
+               noisy: bool=False) -> np.ndarray :
     #{{{
         out = np.empty(len(binedges)-1)
         err = HMPDF.__get_op(self.d, len(binedges)-1, binedges, out,
@@ -276,11 +267,14 @@ class HMPDF(object) :
 
     ## Get the two-point PDF [calls hmpdf_get_tp()]
     #
-    #  \param binedges      1d numpy array
-    #  \param phi           float
-    #  \param noisy         bool, default; False
+    #  \param binedges      1d, defines how the PDF is binned
+    #  \param phi           angular separation of the two sky locations (in arcmin)
+    #  \param noisy         whether to include pixel-wise Gaussian noise
     #  \return the binned PDF (2d numpy array)
-    def get_tp(self, phi, binedges, noisy=False) :
+    def get_tp(self,
+               phi: float,
+               binedges: np.ndarray,
+               noisy: bool=False) -> np.ndarray :
     #{{{
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
         HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
@@ -290,10 +284,12 @@ class HMPDF(object) :
 
     ## Get the covariance matrix of the one-point PDF [calls hmpdf_get_cov()]
     #
-    #  \param binedges      1d numpy array
-    #  \param noisy         bool, default: False
+    #  \param binedges      1d, defines how the covariance matrix is binned
+    #  \param noisy         whether to include pixel-wise Gaussian noise
     #  \return the binned covariance matrix (2d numpy array)
-    def get_cov(self, binedges, noisy=False) :
+    def get_cov(self,
+                binedges: np.ndarray,
+                noisy: bool=False) -> np.ndarray :
     #{{{
         Nbins = len(binedges) - 1
         out = np.empty(Nbins*Nbins)
@@ -304,10 +300,12 @@ class HMPDF(object) :
 
     ## Get the angular power spectrum [calls hmpdf_get_Cell()]
     #
-    #  \param ell           1d numpy array
-    #  \param mode          string ("onehalo", "twohalo", "total"), default: "total"
+    #  \param ell           1d, the angular wavenumbers
+    #  \param mode          one of "onehalo", "twohalo", "total"
     #  \return the power spectrum at ell (1d numpy array)
-    def get_Cell(self, ell, mode='total') :
+    def get_Cell(self,
+                 ell: np.ndarray,
+                 mode: str='total') -> np.ndarray :
     #{{{
         out = np.empty(len(ell))
         err = HMPDF.__get_Cell(self.d, len(ell), ell, out,
@@ -317,10 +315,12 @@ class HMPDF(object) :
 
     ## Get the angular correlation function [calls hmpdf_get_Cphi()]
     #
-    #  \param phi           1d numpy array
-    #  \param mode          string ("onehalo", "twohalo", "total"), default: "total"
-    #  \return the correlation function at phi (1d numpy array)
-    def get_Cphi(self, phi, mode='total') :
+    #  \param phi           1d, the angular separations (in arcmin)
+    #  \param mode          one of "onehalo", "twohalo", "total"
+    #  \return the correlation function at phi (1d)
+    def get_Cphi(self,
+                 phi: np.ndarray,
+                 mode: str='total') -> np.ndarray :
     #{{{
         out = np.empty(len(phi))
         err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
@@ -331,7 +331,7 @@ class HMPDF(object) :
     ## Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
     #
     #  \return (phi, phiweights, corr_diagn)
-    def get_cov_diagnostics(self) :
+    def get_cov_diagnostics(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     #{{{
         Nphi = c_int(0)
         err = HMPDF.__get_Nphi(self.d, byref(Nphi))

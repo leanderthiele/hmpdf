@@ -31,7 +31,7 @@ int hmpdf_get_Cell(hmpdf_obj *d,
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d
  *  \param[in] Nphi     number of phi-values the correlation function is to be output at
- *  \param[in] phi      array of length Nphi (in radians)
+ *  \param[in] phi      array of length Nphi (in arcmin)
  *  \param[out] Cphi    output array, at least Nphi long
  *  \param[in] mode     one of #hmpdf_Cell_mode_e
  *  \return error code

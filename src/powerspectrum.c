@@ -364,7 +364,7 @@ hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double phi[Nphi], double Cphi[Nphi], hmpd
 
     for (int ii=0; ii<Nphi; ii++)
     {
-        SAFEHMPDF(interp1d_eval(interp, phi[ii], Cphi+ii));
+        SAFEHMPDF(interp1d_eval(interp, RADPERARCMIN*phi[ii], Cphi+ii));
     }
     
     delete_interp1d(interp);
