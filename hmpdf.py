@@ -5,7 +5,6 @@ import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 from typing import Optional, Tuple
 
-
 ## \cond
 # PATHTOHMPDF = < directory where libhmpdf.so is located >
 
@@ -269,14 +268,14 @@ class HMPDF(object) :
     #  \param binedges      1d, defines how the PDF is binned
     #  \param phi           angular separation of the two sky locations (in arcmin)
     #  \param noisy         whether to include pixel-wise Gaussian noise
-    #  \return the binned PDF (2d numpy array)
+    #  \return the binned PDF (2d)
     def get_tp(self,
                phi: float,
                binedges: np.ndarray,
                noisy: bool=False) -> np.ndarray :
     #{{{
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
-        HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
+        err = HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
         out = out.reshape((len(binedges)-1, len(binedges)-1))
         return self.__ret(err, 'get_tp()', out)
     #}}}
@@ -285,14 +284,14 @@ class HMPDF(object) :
     #
     #  \param binedges      1d, defines how the covariance matrix is binned
     #  \param noisy         whether to include pixel-wise Gaussian noise
-    #  \return the binned covariance matrix (2d numpy array)
+    #  \return the binned covariance matrix (2d)
     def get_cov(self,
                 binedges: np.ndarray,
                 noisy: bool=False) -> np.ndarray :
     #{{{
         Nbins = len(binedges) - 1
         out = np.empty(Nbins*Nbins)
-        err = HMPDF.__get_cov(self.d, Nbins, binedges, out, fname)
+        err = HMPDF.__get_cov(self.d, Nbins, binedges, out, noisy)
         out = out.reshape((Nbins, Nbins))
         return self.__ret(err, 'get_cov()', out)
     #}}}
@@ -301,7 +300,7 @@ class HMPDF(object) :
     #
     #  \param ell           1d, the angular wavenumbers
     #  \param mode          one of "onehalo", "twohalo", "total"
-    #  \return the power spectrum at ell (1d numpy array)
+    #  \return the power spectrum at ell (1d)
     def get_Cell(self,
                  ell: np.ndarray,
                  mode: str='total') -> np.ndarray :
