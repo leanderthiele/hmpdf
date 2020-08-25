@@ -48,7 +48,7 @@
 
 #define PRTILDE_INTEGR_NTHETA 513
 
-#define OPINTERP_TYPE interp_cspline
+#define OPINTERP_TYPE interp_steffen
 #define TPINTERP_TYPE interp2d_bilinear
 #define TPINTEGR_N 30 // sqrt of sample points per pixel
                       // -- verified that this gives sub-percent accuracy
@@ -75,9 +75,6 @@
 #define PS_COVINTEGR_N 100
 
 #define COV_STATUS_PERIOD 100
-
-#define ROLLOP_INTERP interp_cspline
-#define ROLLTP_INTERP interp2d_bilinear
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;

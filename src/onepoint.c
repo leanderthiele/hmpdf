@@ -174,7 +174,7 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
 }//}}}
 
 static int
-_mean(int N, const double *const x, const double *const p, double *out)
+compute_mean(int N, const double *const x, const double *const p, double *out)
 {//{{{
     STARTFCT
 
@@ -195,10 +195,10 @@ get_mean_signal(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
-                    d->op->PDFu, &(d->op->signalmeanu)));
-    SAFEHMPDF(_mean(d->n->Nsignal, d->n->signalgrid,
-                    d->op->PDFc, &(d->op->signalmeanc)));
+    SAFEHMPDF(compute_mean(d->n->Nsignal, d->n->signalgrid,
+                           d->op->PDFu, &(d->op->signalmeanu)));
+    SAFEHMPDF(compute_mean(d->n->Nsignal, d->n->signalgrid,
+                           d->op->PDFc, &(d->op->signalmeanc)));
 
     ENDFCT
 }//}}}
