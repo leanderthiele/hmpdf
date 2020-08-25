@@ -6,11 +6,7 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 from typing import Optional, Tuple
 
 ## \cond
-try :
-    with open('PATHTOHMPDF.txt', 'r') as f :
-        PATHTOHMPDF = f.readline().rstrip()
-except IOError :
-    pass
+PATHTOHMPDF='/home/leander/Perimeter/Onepoint/C_implementation'
 
 class _C(object) : # char pointer
 #{{{
@@ -124,9 +120,7 @@ class HMPDF(object) :
 #{{{
     # interaction with the DLL
     #{{{
-    __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so')
-                      if 'PATHTOHMPDF' in globals()
-                      else 'libhmpdf.so')
+    __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
     __new = __libhmpdf.hmpdf_new
     __new.restype = POINTER(c_int)
     __delete = __libhmpdf.hmpdf_delete

@@ -41,7 +41,7 @@ $(OBJDIR):
 
 .PHONY: python
 python:
-	pwd > hmpdf/PATHTOHMPDF.txt
+	sed -i "s?PATHTOHMPDF\=.*?PATHTOHMPDF='$(shell pwd)'?g" hmpdf/hmpdf.py
 	pip install . --user
 
 .PHONY: clean
