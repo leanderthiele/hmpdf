@@ -416,7 +416,7 @@ compute_necessary_for_all(hmpdf_obj *d)
 }//}}}
 
 int
-hmpdf_init(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
+hmpdf_init_fct(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 {//{{{
     STARTFCT
 

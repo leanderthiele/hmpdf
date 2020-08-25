@@ -136,7 +136,7 @@ class HMPDF(object) :
     __delete = __libhmpdf.hmpdf_delete
     __delete.restype = c_int
     __delete.argtypes = [c_void_p, ]
-    __init = __libhmpdf.hmpdf_init
+    __init = __libhmpdf.hmpdf_init_fct
     __init.restype = c_int
     __get_op = __libhmpdf.hmpdf_get_op
     __get_op.restype = c_int

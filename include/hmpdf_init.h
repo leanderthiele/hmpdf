@@ -15,8 +15,6 @@
  *  
  *  \attention if stype=#hmpdf_kappa, the first entry in ... must be the source
  *             redshift (double)
- *  \attention the last argument in ... must be #hmpdf_end_configs, regardless
- *             of whether ... is empty otherwise.
  *  \remark    this function performs some basic sanity checks on the user inputs.
  *             If inputs fall out of recommended bounds,
  *             an error message will be printed.
@@ -33,9 +31,8 @@
  *  pixel sidelength, you would call
  *  \code
  *  hmpdf_init(d, "example.ini", hmpdf_kappa, 1.0,
- *             hmpdf_N_threads, 4,    // use 4 threads
- *             hmpdf_pixel_side, 0.4, // use 0.4 arcmin pixels
- *             hmpdf_end_configs);
+ *             hmpdf_N_threads, 4,
+ *             hmpdf_pixel_side, 0.4);
  *  \endcode
  *
  *  \attention perhaps counter-intuitively, successive hmpdf_init() calls are not
@@ -43,9 +40,13 @@
  *             Thus, you need to pass all configuration options in a single call
  *             to hmpdf_init().
  */
-int hmpdf_init(hmpdf_obj *d,
-               char *class_ini,
-               hmpdf_signaltype_e stype,
-               ...);
+#define hmpdf_init(...) hmpdf_init_fct(__VA_ARGS__, hmpdf_end_configs)
+
+/*! Underlying function. For convenience, it should be called through the hmpdf_init macro.
+ */
+int hmpdf_init_fct(hmpdf_obj *d,
+                   char *class_ini,
+                   hmpdf_signaltype_e stype,
+                   ...);
 
 #endif

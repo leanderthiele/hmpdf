@@ -21,8 +21,7 @@ int example_kappa_onepoint(void)
 
     /* initialize with default settings */
     if (hmpdf_init(d, "example.ini", hmpdf_kappa,
-                   1.0/* source redshift */,
-                   hmpdf_end_configs/* always include! */))
+                   1.0/* source redshift */))
         return -1;
 
     /* get the one-point PDF */
@@ -63,8 +62,7 @@ int example_ell_filter_use(void)
     double ell_max = 5000.0;
     if (hmpdf_init(d, "example.ini", hmpdf_kappa, 1.0,
                    hmpdf_custom_ell_filter, &example_ell_filter,
-                   hmpdf_custom_ell_filter_params, &ell_max,
-                   hmpdf_end_configs))
+                   hmpdf_custom_ell_filter_params, &ell_max))
         return -1;
 
     /* get your results ... */

@@ -58,8 +58,6 @@ typedef enum
  *  There is a large number of options, many of which the typical user will not need to use.
  *  Here is a brief synopsis:
  *
- *  Always used: #hmpdf_end_configs
- *
  *  Frequently used options:
  *      + pixelization: #hmpdf_pixel_side
  *      + ell space filters: #hmpdf_tophat_radius, #hmpdf_gaussian_fwhm,
@@ -324,7 +322,9 @@ typedef enum
                   *   Type: double. Default: None.
                   *   \remark negative values have no effect (but will not trigger a warning).
                   */
-    hmpdf_end_configs, /*!< \attention Required last argument in hmpdf_init(). */
+    hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
+                        *   hmpdf_init() takes care of that.
+                        */
     // keep this last
 } hmpdf_configs_e;
 
