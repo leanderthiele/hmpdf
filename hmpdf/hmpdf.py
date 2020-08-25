@@ -120,7 +120,10 @@ class HMPDF(object) :
 #{{{
     # interaction with the DLL
     #{{{
-    __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
+    try :
+        __libhmpdf = CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
+    except OSError : # try to read the shared library from LD_LINKER_PATH
+        __libhmpdf = CDLL('libhmpdf.so')
     __new = __libhmpdf.hmpdf_new
     __new.restype = POINTER(c_int)
     __delete = __libhmpdf.hmpdf_delete
