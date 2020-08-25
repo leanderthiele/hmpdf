@@ -382,7 +382,7 @@ sanity_checks(hmpdf_obj *d)
     HMPDFCHECK((d->p->stype != hmpdf_tsz) && (d->p->stype != hmpdf_kappa),
                "Invalid signal type %d.", d->p->stype);
     HMPDFCHECK((d->p->stype==hmpdf_kappa)
-                && ((d->n->zsource <= 0.0) || (d->n->zsource > 1500.0)),
+                && ((d->n->zsource < (d->n->zmax-0.001)) || (d->n->zsource > 1200.0)),
                 "Invalid source redshift %g.", d->n->zsource);
     #ifndef _OPENMP
     HMPDFCHECK(d->Ncores>1, "You specified hmpdf_N_threads = %d, "

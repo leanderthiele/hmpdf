@@ -127,8 +127,6 @@ typedef enum
     hmpdf_z_max, /*!< maximum redshift.
                   *   \par
                   *   Type: double. Default: 6 for tSZ, source redshift for weak lensing.
-                  *   \warning If set to values larger than source redshift in weak lensing,
-                  *            behaviour is undefined.
                   */
     hmpdf_N_M, /*!< number of sample points in halo mass integration.
                 *   \par
