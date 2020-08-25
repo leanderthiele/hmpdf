@@ -205,7 +205,7 @@ class HMPDF(object) :
             raise RuntimeError('delete failed.')
     #}}}
 
-    def __enter__(self) -> HMPDF :
+    def __enter__(self) -> 'HMPDF' :
         """! returns object"""
     #{{{
         return self
