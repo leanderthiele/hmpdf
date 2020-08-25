@@ -150,7 +150,6 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <li>enums are replaced by strings</li>
 <li>the function signatures are a bit different</li>
 <li>the argument list to <a class="el" href="a00052.html#a9bb50da18f8a0a0a7e938c0b77174826" title="Initializes the object [calls hmpdf_init()].">init()</a> is implemented with the **kwargs syntax and not ended with <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></li>
-<li>you have the option to let the object do the error code checking</li>
 <li>passing custom ell- and k-space filters works differently, see the <a class="el" href="index.html#examples">Examples</a>. The options <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a> and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a> are not supported.</li>
 </ul>
 <p>Best used in a context manager. </p>
@@ -280,9 +279,9 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <p>Get the one-point PDF [calls <a class="el" href="a00035.html#a48d704eb071f26ec88a6864175fee4e5">hmpdf_get_op()</a>]. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">binedges</td><td>1d </td></tr>
-    <tr><td class="paramname">incl_2h</td><td>default: True </td></tr>
-    <tr><td class="paramname">noisy</td><td>default: False </td></tr>
+    <tr><td class="paramname">binedges</td><td>1d, defines how the PDF is binned </td></tr>
+    <tr><td class="paramname">incl_2h</td><td>whether to include the two-halo term </td></tr>
+    <tr><td class="paramname">noisy</td><td>whether to include pixel-wise Gaussian noise </td></tr>
   </table>
   </dd>
 </dl>
@@ -331,10 +330,9 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <p>Get the two-point PDF [calls <a class="el" href="a00041.html#ad1429fbee3b8bbbd20482679fe118704">hmpdf_get_tp()</a>]. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">binedges</td><td>1d </td></tr>
-    <tr><td class="paramname">phi</td><td><br  />
- </td></tr>
-    <tr><td class="paramname">noisy</td><td>default; False </td></tr>
+    <tr><td class="paramname">binedges</td><td>1d, defines how the PDF is binned </td></tr>
+    <tr><td class="paramname">phi</td><td>angular separation of the two sky locations (in arcmin) </td></tr>
+    <tr><td class="paramname">noisy</td><td>whether to include pixel-wise Gaussian noise </td></tr>
   </table>
   </dd>
 </dl>
@@ -377,8 +375,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <p>Get the covariance matrix of the one-point PDF [calls <a class="el" href="a00026.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a>]. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">binedges</td><td>1d </td></tr>
-    <tr><td class="paramname">noisy</td><td>default: False </td></tr>
+    <tr><td class="paramname">binedges</td><td>1d, defines how the covariance matrix is binned </td></tr>
+    <tr><td class="paramname">noisy</td><td>whether to include pixel-wise Gaussian noise </td></tr>
   </table>
   </dd>
 </dl>
@@ -421,8 +419,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <p>Get the angular power spectrum [calls <a class="el" href="a00038.html#a2b2b780272724460d05b616068140cf2">hmpdf_get_Cell()</a>]. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ell</td><td>1d </td></tr>
-    <tr><td class="paramname">mode</td><td>"onehalo", "twohalo", "total", default: "total" </td></tr>
+    <tr><td class="paramname">ell</td><td>1d, the angular wavenumbers </td></tr>
+    <tr><td class="paramname">mode</td><td>one of "onehalo", "twohalo", "total" </td></tr>
   </table>
   </dd>
 </dl>
@@ -465,8 +463,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a0005
 <p>Get the angular correlation function [calls <a class="el" href="a00038.html#abf66b768e57cf7db8551cba341d8d9e2">hmpdf_get_Cphi()</a>]. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">phi</td><td>1d </td></tr>
-    <tr><td class="paramname">mode</td><td>"onehalo", "twohalo", "total", default: "total" </td></tr>
+    <tr><td class="paramname">phi</td><td>1d, the angular separations (in arcmin) </td></tr>
+    <tr><td class="paramname">mode</td><td>one of "onehalo", "twohalo", "total" </td></tr>
   </table>
   </dd>
 </dl>

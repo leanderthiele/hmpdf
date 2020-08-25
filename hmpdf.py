@@ -112,7 +112,6 @@ class _Configs(object) :
 #       + the function signatures are a bit different
 #       + the argument list to init() is implemented with the **kwargs syntax
 #         and not ended with #hmpdf_end_configs
-#       + you have the option to let the object do the error code checking
 #       + passing custom ell- and k-space filters works differently,
 #         see the \ref examples. The options #hmpdf_custom_ell_filter_params
 #         and #hmpdf_custom_k_filter_params are not supported.
