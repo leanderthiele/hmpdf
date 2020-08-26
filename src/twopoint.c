@@ -390,6 +390,25 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
 }//}}}
 
 static int
+symmetrize(hmpdf_obj *d, double *A)
+// fills the lower triangular part of A[Nsignal+2,Nsignal]
+//     with the upper triangular part
+{//{{{
+    STARTFCT
+
+    for (size_t ii=0; ii<d->n->Nsignal; ii++)
+    {
+        for (size_t jj=0; jj<ii; jj++)
+        {
+            A[jj*(d->n->Nsignal+2)+ii]
+                = A[ii*(d->n->Nsignal+2)*jj];
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+static int
 tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 // z-integral of the unclustered terms, without FFT 
 // z-integral of the clustered terms, including FFT (of course)
@@ -406,14 +425,7 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         SAFEHMPDF(tp_Mint(d, z_index, phi, ws));
 
         // symmetrize the clustered beta matrix
-        for (size_t ii=0; ii<d->n->Nsignal; ii++)
-        {
-            for (size_t jj=0; jj<ii; jj++)
-            {
-                ws->tempc_real[jj*(d->n->Nsignal+2)+ii]
-                    = ws->tempc_real[ii*(d->n->Nsignal+2)+jj];
-            }
-        }
+        SAFEHMPDF(symmetrize(d, ws->tempc_real));
 
         // perform the FFT on the clustered part tempc_real -> tempc_comp
         fftw_execute(ws->pc_r2c);
@@ -450,14 +462,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     SAFEHMPDF(tp_zint(d, phi, ws));
 
     // symmetrize the unclustered part
-    for (size_t ii=0; ii<d->n->Nsignal; ii++)
-    {
-        for (size_t jj=0; jj<ii; jj++)
-        {
-            ws->pdf_real[jj*(d->n->Nsignal+2)+ii]
-                = ws->pdf_real[ii*(d->n->Nsignal+2)+jj];
-        }
-    }
+    SAFEHMPDF(symmetrize(d, ws->pdf_real));
     
     // perform the FFT on the unclustered part pdf_real -> pdf_comp
     fftw_execute(ws->pu_r2c);
