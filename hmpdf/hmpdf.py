@@ -200,9 +200,11 @@ class HMPDF(object) :
     def __del__(self) -> None :
         """! calls hmpdf_delete()"""
     #{{{
-        err = HMPDF.__delete(self.__d)
-        if err :
-            raise RuntimeError('delete failed.')
+        if self.__d is not None :
+            err = HMPDF.__delete(self.__d)
+            if err :
+                raise RuntimeError('delete failed.')
+            self.__d = None
     #}}}
 
     def __enter__(self) -> 'HMPDF' :
@@ -217,7 +219,7 @@ class HMPDF(object) :
                  exc_traceback) -> None :
         """! calls hmpdf_delete()"""
     #{{{
-        del self
+        self.__del__()
     #}}}
 
     def init(self,
