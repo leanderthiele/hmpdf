@@ -155,18 +155,30 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
+#ifdef __GNUC__
+#   define WCONVERSIONOFF _Pragma("GCC diagnostic ignored \"-Wsign-conversion\"")
+#   define WCONVERSIONON  _Pragma("GCC diagnostic pop")
+#else
+#   define WCONVERSIONOFF
+#   define WCONVERSIONON
+#endif
+
 //SAFEALLOC{{{
 #ifdef DEBUG
 #   define SAFEALLOC(var,expr)                       \
         do {                                         \
+            WCONVERSIONOFF                           \
             var = expr;                              \
+            WCONVERSIONON                            \
             HMPDFCHECK(!(var),                       \
                        "memory allocation failed."); \
         } while (0)
 #else
 #   define SAFEALLOC(var,expr)  \
         do {                    \
+            WCONVERSIONOFF      \
             var = expr;         \
+            WCONVERSIONON       \
         } while (0)
 #endif
 //}}}
@@ -175,17 +187,24 @@ new_gsl_error_handler(const char *reason, const char *file,
 #ifdef DEBUG
 #   define SAFEALLOC_NORETURN(var,expr)              \
         do {                                         \
+            WCONVERSIONOFF                           \
             var = expr;                              \
+            WCONVERSIONON                            \
             HMPDFCHECK_NORETURN(!(var),              \
                        "memory allocation failed."); \
         } while (0)
 #else
 #   define SAFEALLOC_NORETURN(var,expr)  \
         do {                             \
+            WCONVERSIONOFF               \
             var = expr;                  \
+            WCONVERSIONON                \
         } while (0)
 #endif
 //}}}
+
+#undef WCONVERSIONOFF
+#undef WCONVERSIONON
 
 //CHECKERR{{{
 #ifdef DEBUG
@@ -357,8 +376,8 @@ int ispwr2(int N, int *k);
 
 int linspace(int N, double xmin, double xmax, double *x);
 int logspace(int N, double xmin, double xmax, double *x);
-void zero_real(size_t N, double *x);
-void zero_comp(size_t N, double complex *x);
+void zero_real(long N, double *x);
+void zero_comp(long N, double complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);

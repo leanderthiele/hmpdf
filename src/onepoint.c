@@ -50,7 +50,7 @@ reset_onepoint(hmpdf_obj *d)
 }//}}}
 
 int
-correct_phase1d(hmpdf_obj *d, double complex *x, size_t stride, int sgn)
+correct_phase1d(hmpdf_obj *d, double complex *x, long stride, int sgn)
 // sign is +1 for application after real -> double complex FFT
 // and -1 for application before double complex -> real FFT
 {//{{{
@@ -58,7 +58,7 @@ correct_phase1d(hmpdf_obj *d, double complex *x, size_t stride, int sgn)
 
     if (d->n->Nsignal_negative > 0)
     {
-        for (size_t ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             x[ii*stride]
                 *= cexp(- (double complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
@@ -81,7 +81,7 @@ op_segmentsum(hmpdf_obj *d, int z_index, int M_index, double *au, double *ac)
     {
         batch_t bt;
         SAFEHMPDF(inv_profile(d, z_index, M_index, segment, dtsq_of_s, &bt));
-        for (size_t signalindex=bt.start, ii=0;
+        for (long signalindex=bt.start, ii=0;
              ii < bt.len;
              (bt.incr==1) ? signalindex++ : signalindex--, ii++)
         {
@@ -144,7 +144,7 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
         SAFEHMPDF(correct_phase1d(d, au_comp, 1, 1));
         SAFEHMPDF(correct_phase1d(d, ac_comp, 1, 1));
 
-        for (size_t ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             // subtract the zero modes, square the clustered mass integral
             double complex tempu = au_comp[ii] - au_comp[0];
@@ -171,13 +171,13 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
 }//}}}
 
 static int
-compute_mean(size_t N, const double *const x, const double *const p, double *out)
+compute_mean(long N, const double *const x, const double *const p, double *out)
 {//{{{
     STARTFCT
 
     *out = 0.0;
     double norm = 0.0;
-    for (size_t ii=0; ii<N; ii++)
+    for (long ii=0; ii<N; ii++)
     {
         *out += p[ii] * x[ii];
         norm += p[ii];
@@ -244,7 +244,7 @@ create_op(hmpdf_obj *d)
     SAFEHMPDF(op_zint(d, PDFu_comp, PDFc_comp));
 
     // take exponential and normalize
-    for (size_t ii=0; ii<d->n->Nsignal/2+1; ii++)
+    for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
     {
         PDFu_comp[ii] = cexp(PDFu_comp[ii])/(double)(d->n->Nsignal);
         PDFc_comp[ii] = cexp(PDFc_comp[ii])/(double)(d->n->Nsignal);

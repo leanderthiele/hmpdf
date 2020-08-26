@@ -1,7 +1,6 @@
 #ifndef NUMERICS_H
 #define NUMERICS_H
 
-#include <stdlib.h>
 #include <complex.h>
 
 #include "hmpdf.h"
@@ -22,14 +21,14 @@ typedef struct//{{{
     double *Mgrid;
     double *Mweights;
 
-    size_t Nsignal;
-    size_t Nsignal_negative;
+    long Nsignal;
+    long Nsignal_negative;
     double signalmin;
     double signalmax;
     double *signalgrid;
     double *lambdagrid;
 
-    size_t Nsignal_noisy;
+    long Nsignal_noisy;
     double *signalgrid_noisy;
 
     int Nphi;

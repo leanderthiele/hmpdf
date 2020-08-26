@@ -424,9 +424,9 @@ corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
     STARTFCT
 
     *out = 0.0;
-    for (size_t ii=0; ii<d->n->Nsignal; ii++)
+    for (long ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (size_t jj=0; jj<d->n->Nsignal; jj++)
+        for (long jj=0; jj<d->n->Nsignal; jj++)
         {
             // assumes pdf_real to be properly normalized!
             *out += ws->pdf_real[ii*(d->n->Nsignal+2)+jj]
@@ -545,9 +545,9 @@ create_cov(hmpdf_obj *d)
         CONTINUE_IF_ERR
         
         // add to covariance
-        for (size_t ii=0; ii<d->n->Nsignal; ii++)
+        for (long ii=0; ii<d->n->Nsignal; ii++)
         {
-            for (size_t jj=0; jj<d->n->Nsignal; jj++)
+            for (long jj=0; jj<d->n->Nsignal; jj++)
             {
                 #ifdef _OPENMP
                 // make sure no two threads add to the same element simultaneously
@@ -580,9 +580,9 @@ create_cov(hmpdf_obj *d)
     {
         weight_sum += d->n->phiweights[pp];
     }
-    for (size_t ii=0; ii<d->n->Nsignal; ii++)
+    for (long ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (size_t jj=0; jj<d->n->Nsignal; jj++)
+        for (long jj=0; jj<d->n->Nsignal; jj++)
         {
             d->cov->Cov[ii*d->n->Nsignal+jj] -= weight_sum
                                                 * d->op->PDFc[ii]

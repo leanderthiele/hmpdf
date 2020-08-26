@@ -77,7 +77,7 @@ create_toepl(hmpdf_obj *d)
                                              /sqrt(2.0*M_PI)/sigma;
     }
     // fill the remaining rows
-    for (size_t ii=1; ii<d->n->Nsignal; ii++)
+    for (long ii=1; ii<d->n->Nsignal; ii++)
     {
         memcpy(d->ns->toepl + ii*(d->n->Nsignal_noisy+1), d->ns->toepl,
                (2*d->ns->len_kernel+1) * sizeof(double));

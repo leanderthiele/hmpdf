@@ -1,7 +1,6 @@
 #ifndef TWOPOINT_H
 #define TWOPOINT_H
 
-#include <stdlib.h>
 #include <complex.h>
 
 #include <fftw3.h>
@@ -46,7 +45,7 @@ typedef struct//{{{
 }//}}}
 twopoint_t;
 
-int new_tp_ws(size_t N, twopoint_workspace **out);
+int new_tp_ws(long N, twopoint_workspace **out);
 
 int null_twopoint(hmpdf_obj *d);
 int reset_twopoint(hmpdf_obj *d);
