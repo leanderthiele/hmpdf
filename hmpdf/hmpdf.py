@@ -192,15 +192,15 @@ class HMPDF(object) :
     def __init__(self) -> None :
         """! calls hmpdf_new()."""
     #{{{
-        self.d = HMPDF.__new()
-        if not self.d :
+        self.__d = HMPDF.__new()
+        if not self.__d :
             raise MemoryError('Could not allocate hmpdf_obj.')
     #}}}
 
     def __del__(self) -> None :
         """! calls hmpdf_delete()"""
     #{{{
-        err = HMPDF.__delete(self.d)
+        err = HMPDF.__delete(self.__d)
         if err :
             raise RuntimeError('delete failed.')
     #}}}
@@ -248,7 +248,7 @@ class HMPDF(object) :
         arglist = self.__c()
         if stype == 'kappa' :
             arglist.insert(0, c_double(zsource))
-        err = HMPDF.__init(self.d, _C()(class_ini),
+        err = HMPDF.__init(self.__d, _C()(class_ini),
                            _E(_stypes)(stype), *arglist)
         return self.__ret(err, 'init()')
     #}}}
@@ -262,11 +262,11 @@ class HMPDF(object) :
         \param binedges      1d, defines how the PDF is binned
         \param incl_2h       whether to include the two-halo term
         \param noisy         whether to include pixel-wise Gaussian noise
-        \return the binned PDF (1d)
+        \\return the binned PDF (1d)
         """
     #{{{
         out = np.empty(len(binedges)-1)
-        err = HMPDF.__get_op(self.d, len(binedges)-1, binedges, out,
+        err = HMPDF.__get_op(self.__d, len(binedges)-1, binedges, out,
                              incl_2h, noisy)
         return self.__ret(err, 'get_op()', out)
     #}}}
@@ -277,14 +277,14 @@ class HMPDF(object) :
                noisy: bool=False) -> np.ndarray :
         """! Get the two-point PDF [calls hmpdf_get_tp()]
         
-        \param binedges      1d, defines how the PDF is binned
         \param phi           angular separation of the two sky locations (in arcmin)
+        \param binedges      1d, defines how the PDF is binned
         \param noisy         whether to include pixel-wise Gaussian noise
-        \return the binned PDF (2d)
+        \\return the binned PDF (2d)
         """
     #{{{
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
-        err = HMPDF.__get_tp(self.d, phi, len(binedges)-1, binedges, out, noisy)
+        err = HMPDF.__get_tp(self.__d, phi, len(binedges)-1, binedges, out, noisy)
         out = out.reshape((len(binedges)-1, len(binedges)-1))
         return self.__ret(err, 'get_tp()', out)
     #}}}
@@ -301,7 +301,7 @@ class HMPDF(object) :
     #{{{
         Nbins = len(binedges) - 1
         out = np.empty(Nbins*Nbins)
-        err = HMPDF.__get_cov(self.d, Nbins, binedges, out, noisy)
+        err = HMPDF.__get_cov(self.__d, Nbins, binedges, out, noisy)
         out = out.reshape((Nbins, Nbins))
         return self.__ret(err, 'get_cov()', out)
     #}}}
@@ -313,11 +313,11 @@ class HMPDF(object) :
         
         \param ell           1d, the angular wavenumbers
         \param mode          one of "onehalo", "twohalo", "total"
-        \return the power spectrum at ell (1d)
+        \\return the power spectrum at ell (1d)
         """
     #{{{
         out = np.empty(len(ell))
-        err = HMPDF.__get_Cell(self.d, len(ell), ell, out,
+        err = HMPDF.__get_Cell(self.__d, len(ell), ell, out,
                                _E(_corr_types)(mode))
         return self.__ret(err, 'get_Cell()', out)
     #}}}
@@ -329,11 +329,11 @@ class HMPDF(object) :
         
         \param phi           1d, the angular separations (in arcmin)
         \param mode          one of "onehalo", "twohalo", "total"
-        \return the correlation function at phi (1d)
+        \\return the correlation function at phi (1d)
         """
     #{{{
         out = np.empty(len(phi))
-        err = HMPDF.__get_Cphi(self.d, len(phi), phi, out,
+        err = HMPDF.__get_Cphi(self.__d, len(phi), phi, out,
                                _E(_corr_types)(mode))
         return self.__ret(err, 'get_Cphi()', out)
     #}}}
@@ -341,18 +341,18 @@ class HMPDF(object) :
     def get_cov_diagnostics(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """! Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
         
-        \return (phi, phiweights, corr_diagn)
+        \\return (phi, phiweights, corr_diagn)
         """
     #{{{
         Nphi = c_int(0)
-        err = HMPDF.__get_Nphi(self.d, byref(Nphi))
+        err = HMPDF.__get_Nphi(self.__d, byref(Nphi))
         if err :
             return self.__ret(err, 'get_cov_diagnostics()',
                               None, None, None)
         phi = np.empty(Nphi)
         phiweights = np.empty(Nphi)
         corr_diagn = np.empty(Nphi)
-        err = HMPDF.__get_cov_diagnostics(self.d, phi, phiweights, corr_diagn)
+        err = HMPDF.__get_cov_diagnostics(self.__d, phi, phiweights, corr_diagn)
         return self.__ret(err, 'get_cov_diagnostics',
                           phi, phiweights, corr_diagn)
     #}}}
