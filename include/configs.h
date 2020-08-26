@@ -48,7 +48,7 @@
 
 #define PRTILDE_INTEGR_NTHETA 513
 
-#define OPINTERP_TYPE interp_steffen
+#define OPINTERP_TYPE interp_linear
 #define TPINTERP_TYPE interp2d_bilinear
 #define TPINTEGR_N 30 // sqrt of sample points per pixel
                       // -- verified that this gives sub-percent accuracy

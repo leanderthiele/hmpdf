@@ -16,7 +16,7 @@ for sources at redshift 1 in a cosmology given by a CLASS input file named "exam
 would go like this:
 ```python
 from hmpdf import HMPDF
-binedges = np.linspace(0.0, 0.3, num=101)
+binedges = np.linspace(0.0, 0.3)
 with HMPDF() as d :
     d.init('example.ini', 'kappa', 1.0)
     op = d.get_op(binedges)
