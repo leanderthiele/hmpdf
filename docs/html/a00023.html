@@ -370,12 +370,12 @@ this does <em>not</em> control the multithreading behaviour of CLASS </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a8cef4f9497c09381fa58c2a37e19a0fe"></a>hmpdf_M_max&#160;</td><td class="fielddoc"><p>maximum halo mass, in M200m definition and Msun units. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 1e16. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5"></a>hmpdf_N_signal&#160;</td><td class="fielddoc"><p>number of points on which the one-point PDF is sampled internally </p><dl class="section user"><dt></dt><dd>Type: size_t. Default: 1024. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5"></a>hmpdf_N_signal&#160;</td><td class="fielddoc"><p>number of points on which the one-point PDF is sampled internally </p><dl class="section user"><dt></dt><dd>Type: long. Default: 1024. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>two-point PDF will be sampled on the square of this. </dd>
 <dd>
 Should be chosen as a power of 2 for optimal speed. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>Setting this to large values can trigger numerical instability in small-phi two-point PDF, and covariance matrix computations. </dd></dl>
-<dl class="section attention"><dt>Attention</dt><dd>This is the only instance of an expected size_t. </dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>This is the only instance of an expected long. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ad2d62d364af25db2ef2222edac4a2518"></a>hmpdf_signal_min&#160;</td><td class="fielddoc"><p>minimum signal value at which PDF is sampled internally. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 0. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>The PDF should be well converged to zero for smaller signal values. </dd>
