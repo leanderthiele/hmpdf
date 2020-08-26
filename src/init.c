@@ -38,23 +38,23 @@ dtype;
 
 // perform action depending on data type
 //DT_DEP_ACTION{{{
-#define DT_DEP_ACTION(dt, expr)                                \
-    do {                                                       \
-    switch (dt)                                                \
-    {                                                          \
-        case (str_type) : expr(char *); break;                 \
-        case (int_type) : expr(int); break;                    \
-        case (long_type) : expr(long); break;                \
-        case (dbl_type) : expr(double); break;                 \
-        case (dptr_type) : expr(double *); break;              \
-        case (mdef_type) : expr(hmpdf_mdef_e); break;          \
-        case (integr_type) : expr(hmpdf_integr_mode_e); break; \
-        case (vptr_type) : expr(void *); break;                \
-        case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
-        case (kf_type) : expr(hmpdf_k_filter_f); break;        \
-        default : HMPDFERR("Unknown dtype.");                  \
-                  break;                                       \
-    }                                                          \
+#define DT_DEP_ACTION(dt, expr)                                    \
+    do {                                                           \
+        switch (dt)                                                \
+        {                                                          \
+            case (str_type) : expr(char *); break;                 \
+            case (int_type) : expr(int); break;                    \
+            case (long_type) : expr(long); break;                  \
+            case (dbl_type) : expr(double); break;                 \
+            case (dptr_type) : expr(double *); break;              \
+            case (mdef_type) : expr(hmpdf_mdef_e); break;          \
+            case (integr_type) : expr(hmpdf_integr_mode_e); break; \
+            case (vptr_type) : expr(void *); break;                \
+            case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
+            case (kf_type) : expr(hmpdf_k_filter_f); break;        \
+            default : HMPDFERR("Unknown dtype.");                  \
+                      break;                                       \
+        }                                                          \
     } while (0)
 //}}}
 
@@ -249,27 +249,39 @@ assign_set(param *p, va_list *valist)
 
 #undef ASSIGN_SET
 
+#ifdef __GNUC__
+#   define WPEDANTICOFF _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+#   define WPEDANTICON  _Pragma("GCC diagnostic pop")
+#else
+#   define WPEDANTICOFF
+#   define WPEDANTICON
+#endif
+
 // check if user setting is reasonable
 //CHECK_VALIDITY{{{
-#define CHECK_VALIDITY(dt)                             \
-    do {                                               \
-    if (comparable)                                    \
-    {                                                  \
-        if (p->lo != NULL)                             \
-        {                                              \
-            if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
-            {                                          \
-                *invalid_param = 1;                    \
-            }                                          \
-        }                                              \
-        if (p->hi != NULL)                             \
-        {                                              \
-            if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
-            {                                          \
-                *invalid_param = 1;                    \
-            }                                          \
-        }                                              \
-    }                                                  \
+#define CHECK_VALIDITY(dt)                                 \
+    do {                                                   \
+        if (comparable)                                    \
+        {                                                  \
+            if (p->lo != NULL)                             \
+            {                                              \
+                WPEDANTICOFF                               \
+                if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
+                WPEDANTICON                                \
+                {                                          \
+                    *invalid_param = 1;                    \
+                }                                          \
+            }                                              \
+            if (p->hi != NULL)                             \
+            {                                              \
+                WPEDANTICOFF                               \
+                if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
+                WPEDANTICON                                \
+                {                                          \
+                    *invalid_param = 1;                    \
+                }                                          \
+            }                                              \
+        }                                                  \
     } while (0)
 //}}}
 
