@@ -319,7 +319,6 @@ typedef enum
     hmpdf_noise, /*!< Option to add pixel-wise Gaussian noise of this standard deviation.
                   *   \par
                   *   Type: double. Default: None.
-                  *   \remark negative values have no effect (but will not trigger a warning).
                   */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
