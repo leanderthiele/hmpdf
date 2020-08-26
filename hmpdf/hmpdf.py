@@ -1,4 +1,4 @@
-## \file
+# \file
 from ctypes import *
 from os.path import join
 import numpy as np
@@ -68,7 +68,7 @@ class _Configs(object) :
                'class_pre', _C(), 
                'N_z', c_int, 'z_min', c_double, 'z_max', c_double,
                'N_M', c_int, 'M_min', c_double, 'M_max', c_double,
-               'N_signal', c_size_t, 'signal_min', c_double, 'signal_max', c_double,
+               'N_signal', c_long, 'signal_min', c_double, 'signal_max', c_double,
                'N_theta', c_int, 'rout_scale', c_double, 'rout_rdef', _E(_mdefs),
                'pixel_side', c_double, 'tophat_radius', c_double, 'gaussian_fwhm', c_double,
                'custom_ell_filter', _F(1), 'custom_ell_filter_params', None,

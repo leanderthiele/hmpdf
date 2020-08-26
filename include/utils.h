@@ -159,7 +159,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #   define WCONVERSIONOFF _Pragma("GCC diagnostic ignored \"-Wsign-conversion\"")
 #   define WCONVERSIONON  _Pragma("GCC diagnostic pop")
 #else
-#   define WCONVERSIONOFF
+#   define WCONVERSIONOFF 
 #   define WCONVERSIONON
 #endif
 
@@ -202,9 +202,6 @@ new_gsl_error_handler(const char *reason, const char *file,
         } while (0)
 #endif
 //}}}
-
-#undef WCONVERSIONOFF
-#undef WCONVERSIONON
 
 //CHECKERR{{{
 #ifdef DEBUG
