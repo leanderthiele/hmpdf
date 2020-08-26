@@ -752,9 +752,9 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     int len_this_batch = (int)(fabs(temp[len-1]-temp[0])
                                / (d->n->signalgrid[1]-d->n->signalgrid[0])) + 4;
 
-    for (int ii = (sgn==1) ? 0 : d->n->Nsignal-1;
-         (sgn==1) ? ii<d->n->Nsignal : ii>=0;
-         ii += sgn)
+    for (size_t ii = (sgn==1) ? 0 : d->n->Nsignal-1;
+         ii<d->n->Nsignal/*covers >=0 as well since ii is unsigned*/;
+         (sgn==1) ? ii++ : ii--)
     {
         double val;
         int inrange;

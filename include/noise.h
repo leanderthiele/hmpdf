@@ -1,13 +1,15 @@
 #ifndef NOISE_H
 #define NOISE_H
 
+#include <stdlib.h>
+
 #include "hmpdf.h"
 
 typedef struct
 {//{{{
     double noise;
 
-    int len_kernel;
+    size_t len_kernel;
     double *toepl;
 }//}}}
 noise_t;

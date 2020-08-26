@@ -8,6 +8,8 @@ null_data(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
+    d->inited = 0;
+
     SAFEHMPDF(null_numerics(d));
     SAFEHMPDF(null_class_interface(d));
     SAFEHMPDF(null_cosmology(d));
@@ -24,20 +26,23 @@ null_data(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-#define HMPDFNEW_ALLOC(var,expr) \
-    do {                         \
-    var = expr;                  \
-    if (UNLIKELY(!(var)))        \
-    {                            \
-        return NULL;             \
-    }                            \
+#define HMPDFNEW_ALLOC(var,expr)     \
+    do {                             \
+        var = expr;                  \
+        if (UNLIKELY(!(var)))        \
+        {                            \
+            return NULL;             \
+        }                            \
     } while(0)
 
 hmpdf_obj *
 hmpdf_new(void)
 {//{{{
     hmpdf_obj *d;
+
     HMPDFNEW_ALLOC(d, malloc(sizeof(hmpdf_obj)));
+
+    d->inited = 0;
 
     HMPDFNEW_ALLOC(d->n,   malloc(sizeof(numerics_t)));
     HMPDFNEW_ALLOC(d->cls, malloc(sizeof(class_interface_t)));

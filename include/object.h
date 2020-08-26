@@ -22,6 +22,7 @@ struct hmpdf_obj_s
     int Ncores;
     int verbosity;
     int warn_is_err;
+    int inited;
 
     numerics_t *n;
     class_interface_t *cls;

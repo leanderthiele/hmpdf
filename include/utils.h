@@ -159,7 +159,9 @@ new_gsl_error_handler(const char *reason, const char *file,
 #ifdef DEBUG
     #define SAFEALLOC(var,expr)                      \
         do {                                         \
+            _Pragma ("GCC diagnostic ignored \"-Wsign-conversion\"") \
             var = expr;                              \
+            _Pragma ("GCC diagnostic pop") \
             HMPDFCHECK(!(var),                       \
                        "memory allocation failed."); \
         } while (0)
@@ -175,7 +177,9 @@ new_gsl_error_handler(const char *reason, const char *file,
 #ifdef DEBUG
     #define SAFEALLOC_NORETURN(var,expr)             \
         do {                                         \
+            _Pragma ("GCC diagnostic ignored \"-Wsign-conversion\"") \
             var = expr;                              \
+            _Pragma ("GCC diagnostic pop") \
             HMPDFCHECK_NORETURN(!(var),              \
                        "memory allocation failed."); \
         } while (0)
@@ -203,6 +207,19 @@ new_gsl_error_handler(const char *reason, const char *file,
         } while (0)
 #endif
 //}}}
+
+//CHECKINIT
+#ifdef DEBUG
+    #define CHECKINIT                                        \
+        do {                                                 \
+            HMPDFCHECK(!(d->inited),                         \
+                       "hmpdf_init has not been called yet " \
+                       "or previous call failed.");          \
+        } while (0)
+#else
+    #define CHECKINIT \
+        do { } while (0)
+#endif
 
 //STARTFCT -- no semicolon!{{{
 #ifdef DEBUG
@@ -344,8 +361,8 @@ int ispwr2(int N, int *k);
 
 int linspace(int N, double xmin, double xmax, double *x);
 int logspace(int N, double xmin, double xmax, double *x);
-void zero_real(int N, double *x);
-void zero_comp(int N, double complex *x);
+void zero_real(size_t N, double *x);
+void zero_comp(size_t N, double complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);

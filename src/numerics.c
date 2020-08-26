@@ -126,7 +126,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
 }//}}}
 
 static int
-construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
+construct_signalgrid(size_t N, size_t *N1, double *smin, double *smax, double *grid)
 // N1 holds the number of negative signal values
 {//{{{
     STARTFCT
@@ -136,7 +136,7 @@ construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
 
     // find the index where we would like the signal to be
     //    exactly zero
-    *N1 = (int)round(-*smin/(*smax-*smin)*(double)(N-1));
+    *N1 = (size_t)round(-*smin/(*smax-*smin)*(double)(N-1));
     if (*N1 != 0)
     {
         // adjust the maximum signal accordingly
@@ -147,7 +147,7 @@ construct_signalgrid(int N, int *N1, double *smin, double *smax, double *grid)
         *smin = 0.0;
     }
 
-    SAFEHMPDF(linspace(N, *smin, *smax, grid));
+    SAFEHMPDF(linspace((int)N, *smin, *smax, grid));
 
     // guard against small numerical instabilities
     grid[*N1] = 0.0;

@@ -1,6 +1,8 @@
 #ifndef CONFIGS_H
 #define CONFIGS_H
 
+#include <stdlib.h>
+
 #include "utils.h"
 
 #include "hmpdf.h"
@@ -81,7 +83,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  char *class_pre;
                  int Npoints_z[3]; double z_min[3]; double z_max[3];
                  int Npoints_M[3]; double M_min[3]; double M_max[3];
-                 int Npoints_signal[3]; double min_kappa[3]; double min_tsz[3]; double max_kappa[3]; double max_tsz[3];
+                 size_t Npoints_signal[3]; double min_kappa[3]; double min_tsz[3]; double max_kappa[3]; double max_tsz[3];
                  int Npoints_theta[3]; double rout_scale[3]; hmpdf_mdef_e rout_rdef[3];
                  double pixel_sidelength[3]; double tophat_radius[3]; double gaussian_fwhm[3];
                  hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;

@@ -311,6 +311,8 @@ hmpdf_get_Cell(hmpdf_obj *d, int Nell, double ell[Nell], double Cell[Nell], hmpd
 {//{{{
     STARTFCT
 
+    CHECKINIT;
+
     SAFEHMPDF(prepare_Cell(d));
 
     double *C;
@@ -343,6 +345,8 @@ int
 hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double phi[Nphi], double Cphi[Nphi], hmpdf_Cell_mode_e mode)
 {//{{{
     STARTFCT
+
+    CHECKINIT;
 
     SAFEHMPDF(prepare_Cphi(d));
 

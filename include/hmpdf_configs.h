@@ -146,11 +146,12 @@ typedef enum
                   */
     hmpdf_N_signal, /*!< number of points on which the one-point PDF is sampled internally
                      *   \par
-                     *   Type: int. Default: 1024.
+                     *   Type: size_t. Default: 1024.
                      *   \remark two-point PDF will be sampled on the square of this.
                      *   \remark Should be chosen as a power of 2 for optimal speed.
                      *   \warning Setting this to large values can trigger numerical instability
                      *            in small-phi two-point PDF, and covariance matrix computations.
+                     *   \attention This is the only instance of an expected size_t.
                      */
     hmpdf_signal_min, /*!< minimum signal value at which PDF is sampled internally.
                        *   \par

@@ -140,7 +140,7 @@ all_zero(int N, double *x, double threshold)
 }//}}}
 
 void
-zero_real(int N, double *x)
+zero_real(size_t N, double *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {
@@ -149,7 +149,7 @@ zero_real(int N, double *x)
 }//}}}
 
 void
-zero_comp(int N, double complex *x)
+zero_comp(size_t N, double complex *x)
 {//{{{
     for (int ii=0; ii<N; ii++)
     {

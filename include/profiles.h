@@ -1,6 +1,8 @@
 #ifndef PROFILES_H
 #define PROFILES_H
 
+#include <stdlib.h>
+
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_dht.h>
 
@@ -49,8 +51,8 @@ inv_profile_e;
 
 typedef struct
 {//{{{
-    int start;    // the start index in the signal grid
-    int len;      // length of this batch
+    size_t start; // the start index in the signal grid
+    size_t len;   // length of this batch
     int incr;     // +-1 --> loop over signal grid such that
                   //    theta is always decreasing
     double *data; // either t_of_s or dtsq_of_s, of length len

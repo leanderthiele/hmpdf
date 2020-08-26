@@ -125,13 +125,13 @@ correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
     if (d->n->Nsignal_negative > 0)
     {
         // correct rows
-        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (size_t ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             SAFEHMPDF(correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
                                       1, sgn));
         }
         // correct cols
-        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (size_t ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
             SAFEHMPDF(correct_phase1d(d, x+ii,
                                       d->n->Nsignal/2+1, sgn));
@@ -208,9 +208,9 @@ create_phi_indep(hmpdf_obj *d)
                            "z = %d, M = %d, segment = %d",
                            z_index, M_index, segment);
 
-                for (int signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
+                for (size_t signalindex=d->tp->t[z_index][M_index][segment].start, ii=0;
                      ii < d->tp->t[z_index][M_index][segment].len;
-                     signalindex += d->tp->t[z_index][M_index][segment].incr, ii++)
+                     (d->tp->t[z_index][M_index][segment].incr==1) ? signalindex++ : signalindex--, ii++)
                 {
                     au_real[signalindex] += M_PI * n
                                             * d->tp->dtsq[z_index][M_index][segment].data[ii]
@@ -228,7 +228,7 @@ create_phi_indep(hmpdf_obj *d)
         // correct phases
         SAFEHMPDF(correct_phase1d(d, tempc_comp, 1, 1));
         // write into the output array, subtracting the zero mode
-        for (int ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (int ii=0; ii<(int)d->n->Nsignal/2+1; ii++)
         {
             d->tp->ac[z_index][ii] = tempc_comp[ii] - tempc_comp[0];
         }
@@ -238,7 +238,7 @@ create_phi_indep(hmpdf_obj *d)
     // correct phases
     SAFEHMPDF(correct_phase1d(d, d->tp->au, 1, 1));
     // subtract zero mode of unclustered contribution
-    for (int ii=d->n->Nsignal/2; ii>=0; ii--)
+    for (int ii=(int)d->n->Nsignal/2; ii>=0; ii--)
     {
         d->tp->au[ii] -= d->tp->au[0];
     }
@@ -278,9 +278,9 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
         {
             // loop such that the theta values are always monotonically decreasing
             // so that we know when to break
-            for (int signalindex1 = d->tp->t[z_index][M_index][segment1].start, ii=0;
+            for (size_t signalindex1 = d->tp->t[z_index][M_index][segment1].start, ii=0;
                  ii < d->tp->t[z_index][M_index][segment1].len;
-                 signalindex1 += d->tp->t[z_index][M_index][segment1].incr, ii++)
+                 (d->tp->t[z_index][M_index][segment1].incr==1) ? signalindex1++ : signalindex1--, ii++)
             // loop over the direction that is Nsignal long
             {
                 double t1 = d->tp->t[z_index][M_index][segment1].data[ii];
@@ -289,11 +289,11 @@ tp_segmentsum(hmpdf_obj *d, int z_index, int M_index, double phi, twopoint_works
                 // check if no triangle can be formed anymore, since t1 only decreases
                 if (phi >= t1 + d->p->profiles[z_index][M_index][0]) { break; }
 
-                for (int signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
+                for (size_t signalindex2 = d->tp->t[z_index][M_index][segment2].start, jj=0;
                      (jj < d->tp->t[z_index][M_index][segment2].len)
                       && (signalindex2 <= signalindex1);
                      // compute only half of the matrix, because it's symmetric
-                     signalindex2 += d->tp->t[z_index][M_index][segment2].incr, jj++)
+                     (d->tp->t[z_index][M_index][segment2].incr==1) ? signalindex2++ : signalindex2--, jj++)
                 // loop over the direction that is Nsignal+2 long
                 {
                     double t2 = d->tp->t[z_index][M_index][segment2].data[jj];
@@ -346,7 +346,7 @@ tp_Mint(hmpdf_obj *d, int z_index, double phi, twopoint_workspace *ws)
 }//}}}
 
 static inline double complex
-redundant(int N, double complex *a, int ii)
+redundant(size_t N, double complex *a, size_t ii)
 // extends the vector a[N/2+1] to N elements through conjugation
 // N is assumed even
 {//{{{
@@ -362,8 +362,8 @@ redundant(int N, double complex *a, int ii)
 
 static inline int
 clustered_term(hmpdf_obj *d, int z_index, double phi,
-                       int i1/*long direction*/, int i2/*short direction*/,
-                       double complex *b12, double complex *out)
+               size_t i1/*long direction*/, size_t i2/*short direction*/,
+               double complex *b12, double complex *out)
 // computes 1/2 * (alpha1^2 + alpha2^2) * zeta(0)
 //          + alpha1 * alpha2 * zeta(phi)
 //          + 1/2 * beta12^2 * zeta(0)
@@ -406,9 +406,9 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         SAFEHMPDF(tp_Mint(d, z_index, phi, ws));
 
         // symmetrize the clustered beta matrix
-        for (int ii=0; ii<d->n->Nsignal; ii++)
+        for (size_t ii=0; ii<d->n->Nsignal; ii++)
         {
-            for (int jj=0; jj<ii; jj++)
+            for (size_t jj=0; jj<ii; jj++)
             {
                 ws->tempc_real[jj*(d->n->Nsignal+2)+ii]
                     = ws->tempc_real[ii*(d->n->Nsignal+2)+jj];
@@ -421,10 +421,10 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         SAFEHMPDF(correct_phase2d(d, ws->tempc_comp, 1));
 
         // add to the clustered output
-        for (int ii=0; ii<d->n->Nsignal; ii++)
+        for (size_t ii=0; ii<d->n->Nsignal; ii++)
         // loop over the long direction
         {
-            for (int jj=0; jj<d->n->Nsignal/2+1; jj++)
+            for (size_t jj=0; jj<d->n->Nsignal/2+1; jj++)
             // loop over the short direction
             {
                 double complex clterm;
@@ -450,9 +450,9 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     SAFEHMPDF(tp_zint(d, phi, ws));
 
     // symmetrize the unclustered part
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    for (size_t ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (int jj=0; jj<ii; jj++)
+        for (size_t jj=0; jj<ii; jj++)
         {
             ws->pdf_real[jj*(d->n->Nsignal+2)+ii]
                 = ws->pdf_real[ii*(d->n->Nsignal+2)+jj];
@@ -469,9 +469,9 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
     // take exponential,
     // and normalize properly
     // loop backwards so we don't have to store the zero modes elsewhere
-    for (int ii=d->n->Nsignal-1; ii>=0; ii--)
+    for (size_t ii=d->n->Nsignal-1; ii<d->n->Nsignal/*>=0 for unsigned type*/; ii--)
     {
-        for (int jj=d->n->Nsignal/2; jj>=0; jj--)
+        for (size_t jj=d->n->Nsignal/2; jj<=d->n->Nsignal/2/*>=0 for unsigned type*/; jj--)
         {
             ws->pdf_comp[ii*(d->n->Nsignal/2+1)+jj]
                 = cexp(ws->pdf_comp[ii*(d->n->Nsignal/2+1)+jj]
@@ -525,7 +525,7 @@ create_noisy_tp(hmpdf_obj *d)
     } while (0)
 
 int
-new_tp_ws(int N, twopoint_workspace **out)
+new_tp_ws(size_t N, twopoint_workspace **out)
 {//{{{
     STARTFCT
 
@@ -591,7 +591,7 @@ prepare_tp(hmpdf_obj *d, double phi)
     {
         SAFEALLOC(d->tp->pdf, malloc(d->n->Nsignal*d->n->Nsignal*sizeof(double)));
     }
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    for (size_t ii=0; ii<d->n->Nsignal; ii++)
     {
         memcpy(d->tp->pdf+ii*d->n->Nsignal,
                d->tp->ws->pdf_real+ii*(d->n->Nsignal+2),
@@ -610,6 +610,8 @@ int
 hmpdf_get_tp(hmpdf_obj *d, double phi, int Nbins, double binedges[Nbins+1], double tp[Nbins*Nbins], int noisy)
 {//{{{
     STARTFCT
+
+    CHECKINIT;
 
     SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
 

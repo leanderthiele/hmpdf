@@ -66,18 +66,18 @@ create_toepl(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_toepl\n");
 
     SAFEALLOC(d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                     * sizeof(double)));
+                                   * sizeof(double)));
     zero_real(d->n->Nsignal*d->n->Nsignal_noisy, d->ns->toepl);
     double sigma = d->ns->noise
                    / (d->n->signalgrid[1] - d->n->signalgrid[0]);
     // fill the first row
-    for (int ii=-d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
+    for (int ii= -(int)d->ns->len_kernel; ii<=(int)d->ns->len_kernel; ii++)
     {
         d->ns->toepl[ii+d->ns->len_kernel] = exp(-0.5*gsl_pow_2((double)(ii)/sigma))
-                                      /sqrt(2.0*M_PI)/sigma;
+                                             /sqrt(2.0*M_PI)/sigma;
     }
     // fill the remaining rows
-    for (int ii=1; ii<d->n->Nsignal; ii++)
+    for (size_t ii=1; ii<d->n->Nsignal; ii++)
     {
         memcpy(d->ns->toepl + ii*(d->n->Nsignal_noisy+1), d->ns->toepl,
                (2*d->ns->len_kernel+1) * sizeof(double));

@@ -165,15 +165,15 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
         double deltaphi;
         if (ii == 0)
         {
-            deltaphi = grid[1] - grid[0];
+            deltaphi = *grid[1] - *grid[0];
         }
         else if (ii == *Nexact-1)
         {
-            deltaphi = grid[*Nexact-1] - grid[*Nexact-2];
+            deltaphi = *grid[*Nexact-1] - *grid[*Nexact-2];
         }
         else
         {
-            deltaphi = 0.5 * (grid[ii+1] - grid[ii-1]);
+            deltaphi = 0.5 * (*grid[ii+1] - *grid[ii-1]);
         }
         double rho_here = pow(*grid[ii], 1.0/d->n->phipwr-1.0);
         
@@ -424,9 +424,9 @@ corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
     STARTFCT
 
     *out = 0.0;
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    for (size_t ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (int jj=0; jj<d->n->Nsignal; jj++)
+        for (size_t jj=0; jj<d->n->Nsignal; jj++)
         {
             // assumes pdf_real to be properly normalized!
             *out += ws->pdf_real[ii*(d->n->Nsignal+2)+jj]
@@ -545,9 +545,9 @@ create_cov(hmpdf_obj *d)
         CONTINUE_IF_ERR
         
         // add to covariance
-        for (int ii=0; ii<d->n->Nsignal; ii++)
+        for (size_t ii=0; ii<d->n->Nsignal; ii++)
         {
-            for (int jj=0; jj<d->n->Nsignal; jj++)
+            for (size_t jj=0; jj<d->n->Nsignal; jj++)
             {
                 #ifdef _OPENMP
                 // make sure no two threads add to the same element simultaneously
@@ -580,9 +580,9 @@ create_cov(hmpdf_obj *d)
     {
         weight_sum += d->n->phiweights[pp];
     }
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    for (size_t ii=0; ii<d->n->Nsignal; ii++)
     {
-        for (int jj=0; jj<d->n->Nsignal; jj++)
+        for (size_t jj=0; jj<d->n->Nsignal; jj++)
         {
             d->cov->Cov[ii*d->n->Nsignal+jj] -= weight_sum
                                                 * d->op->PDFc[ii]
@@ -638,6 +638,8 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
 {//{{{
     STARTFCT
 
+    CHECKINIT;
+
     SAFEHMPDF(pdf_check_user_input(d, Nbins, binedges, noisy));
 
     // perform the computation
@@ -670,6 +672,7 @@ int
 _get_Nphi(hmpdf_obj *d, int *Nphi)
 {//{{{
     STARTFCT
+    CHECKINIT;
     *Nphi = d->n->Nphi;
     ENDFCT
 }//}}}
@@ -678,6 +681,7 @@ int
 _get_phi(hmpdf_obj *d, double *phi)
 {//{{{
     STARTFCT
+    CHECKINIT;
     memcpy(phi, d->n->phigrid, d->n->Nphi * sizeof(double));
     ENDFCT
 }//}}}
@@ -686,6 +690,7 @@ int
 _get_phiweights(hmpdf_obj *d, double *phiweights)
 {//{{{
     STARTFCT
+    CHECKINIT;
     memcpy(phiweights, d->n->phiweights, d->n->Nphi * sizeof(double));
     ENDFCT
 }//}}}
@@ -694,6 +699,7 @@ int
 _get_corr_diagn(hmpdf_obj *d, double *corr_diagn)
 {//{{{
     STARTFCT
+    CHECKINIT;
     memcpy(corr_diagn, d->cov->corr_diagn, d->n->Nphi * sizeof(double));
     ENDFCT
 }//}}}
@@ -702,6 +708,8 @@ int
 hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)
 {//{{{
     STARTFCT
+
+    CHECKINIT;
 
     // perform the computation
     SAFEHMPDF(prepare_cov(d));
@@ -733,6 +741,8 @@ int
 hmpdf_get_cov_diagnostics1(hmpdf_obj *d, double *phi, double *phiweights, double *corr_diagn)
 {//{{{
     STARTFCT
+
+    CHECKINIT;
 
     SAFEHMPDF(prepare_cov(d));
 

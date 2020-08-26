@@ -23,6 +23,7 @@
 typedef enum
 {//{{{
     int_type, // int
+    size_type, // size_t
     dbl_type, // double
     mdef_type, // hmpdf_mdef_e
     integr_type, // hmpdf_integr_mode_e
@@ -43,6 +44,7 @@ dtype;
     {                                                          \
         case (str_type) : expr(char *); break;                 \
         case (int_type) : expr(int); break;                    \
+        case (size_type) : expr(size_t); break;                \
         case (dbl_type) : expr(double); break;                 \
         case (dptr_type) : expr(double *); break;              \
         case (mdef_type) : expr(hmpdf_mdef_e); break;          \
@@ -158,7 +160,7 @@ init_params(hmpdf_obj *d, param *p)
     INIT_P_B(hmpdf_M_max,
              d->n->Mmax, dbl_type, def.M_max);
     INIT_P_B(hmpdf_N_signal,
-             d->n->Nsignal, int_type, def.Npoints_signal);
+             d->n->Nsignal, size_type, def.Npoints_signal);
     INIT_P2_BKT(hmpdf_signal_min,
                d->n->signalmin, dbl_type, def.min_kappa, def.min_tsz);
     INIT_P2_BKT(hmpdf_signal_max,
@@ -309,6 +311,7 @@ assign_def(param *p)
 #define FMT(dt)                \
     (dt==str_type) ? "%s"      \
     : (dt==int_type) ? "%d"    \
+    : (dt==size_type) ? "%lu"  \
     : (dt==dbl_type) ? "%g"    \
     : (dt==dptr_type) ? "%p"   \
     : (dt==mdef_type) ? "%d"   \
@@ -422,6 +425,8 @@ hmpdf_init_fct(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     gsl_set_error_handler(&new_gsl_error_handler);
 
+    d->inited = 0;
+
     d->cls->class_ini = class_ini;
     d->p->stype = stype;
 
@@ -497,6 +502,8 @@ hmpdf_init_fct(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
     // compute things that we need for all output products
     SAFEHMPDF(compute_necessary_for_all(d));
+
+    d->inited = 1;
 
     ENDFCT
 }//}}}
