@@ -296,7 +296,7 @@ class HMPDF(object) :
         
         \param binedges      1d, defines how the covariance matrix is binned
         \param noisy         whether to include pixel-wise Gaussian noise
-        \return the binned covariance matrix (2d)
+        \\return the binned covariance matrix (2d)
         """
     #{{{
         Nbins = len(binedges) - 1
