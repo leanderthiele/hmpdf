@@ -10,7 +10,7 @@
 #endif
 
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #else
 #pragma message "Warning: compiling without OpenMP. Covariance matrix will be slow."
 #endif

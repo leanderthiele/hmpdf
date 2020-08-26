@@ -4,7 +4,7 @@
 #include <math.h>
 #include <time.h>
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #endif
 
 #include <gsl/gsl_math.h>
@@ -526,7 +526,7 @@ create_cov(hmpdf_obj *d)
     
     // loop over phi values
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->cov->Nws)
+    #   pragma omp parallel for num_threads(d->cov->Nws)
     #endif
     for (int pp=0; pp<d->n->Nphi; pp++)
     {
@@ -551,7 +551,7 @@ create_cov(hmpdf_obj *d)
             {
                 #ifdef _OPENMP
                 // make sure no two threads add to the same element simultaneously
-                #pragma omp atomic
+                #   pragma omp atomic
                 #endif
                 d->cov->Cov[ii*d->n->Nsignal+jj]
                     += d->n->phiweights[pp]
@@ -561,7 +561,7 @@ create_cov(hmpdf_obj *d)
 
         // status update
         #ifdef _OPENMP
-        #pragma omp critical(Status)
+        #   pragma omp critical(Status)
         #endif
         {
             ++Nstatus;

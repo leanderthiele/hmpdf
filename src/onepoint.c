@@ -5,9 +5,6 @@
 #include <complex.h>
 
 #include <fftw3.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_integration.h>

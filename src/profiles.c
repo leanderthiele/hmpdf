@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #endif
 
 #include <gsl/gsl_math.h>
@@ -357,7 +357,7 @@ create_profiles(hmpdf_obj *d)
     
     SAFEALLOC(d->p->profiles, malloc(d->n->Nz * sizeof(double **)));
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -394,7 +394,7 @@ create_conj_profiles(hmpdf_obj *d)
     d->p->dht_ws = gsl_dht_new(d->p->Ntheta, 0, 1.0);
     SAFEALLOC(d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)));
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -440,7 +440,7 @@ create_filtered_profiles(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_filtered_profiles\n");
 
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -503,7 +503,7 @@ create_segments(hmpdf_obj *d)
     SAFEALLOC(d->p->segment_boundaries,
               malloc(d->n->Nz * sizeof(int **)));
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {

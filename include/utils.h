@@ -49,7 +49,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFECLASS{{{
 #ifdef DEBUG
-    #define SAFECLASS(expr, errmsg)                     \
+#   define SAFECLASS(expr, errmsg)                      \
         do {                                            \
             if (UNLIKELY(expr==_FAILURE_))              \
             {                                           \
@@ -63,7 +63,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             errno = 0;                                  \
         } while (0)
 #else
-    #define SAFECLASS(expr, errmsg) \
+#   define SAFECLASS(expr, errmsg)  \
         do {                        \
             expr;                   \
             errno = 0;              \
@@ -73,7 +73,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEGSL{{{
 #ifdef DEBUG
-    #define SAFEGSL(expr)                                    \
+#   define SAFEGSL(expr)                                     \
         do {                                                 \
             if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                                              expr)))         \
@@ -87,7 +87,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             errno = 0;                                       \
         } while (0)
 #else
-    #define SAFEGSL(expr) \
+#   define SAFEGSL(expr)  \
         do {              \
             expr;         \
             errno = 0;    \
@@ -97,7 +97,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEGSL_NORETURN{{{
 #ifdef DEBUG
-    #define SAFEGSL_NORETURN(expr)                           \
+#   define SAFEGSL_NORETURN(expr)                            \
         do {                                                 \
             if (UNLIKELY(hmpdf_status_update(&hmpdf_status,  \
                                     expr)))                  \
@@ -110,7 +110,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             errno = 0;                                       \
         } while (0)
 #else
-    #define SAFEGSL_NORETURN(expr) \
+#   define SAFEGSL_NORETURN(expr)  \
         do {                       \
             expr;                  \
             errno = 0;             \
@@ -120,7 +120,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEHMPDF{{{
 #ifdef DEBUG
-    #define SAFEHMPDF(expr)                                 \
+#   define SAFEHMPDF(expr)                                  \
         do {                                                \
             if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                              expr)))        \
@@ -130,7 +130,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             }                                               \
         } while (0)
 #else
-    #define SAFEHMPDF(expr) \
+#   define SAFEHMPDF(expr)  \
         do {                \
             expr;           \
         } while (0)
@@ -139,7 +139,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEHMPDF_NORETURN{{{
 #ifdef DEBUG
-    #define SAFEHMPDF_NORETURN(expr)                        \
+#   define SAFEHMPDF_NORETURN(expr)                         \
         do {                                                \
             if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                              expr)))        \
@@ -148,7 +148,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             }                                               \
         } while (0)
 #else
-    #define SAFEHMPDF_NORETURN(expr) \
+#   define SAFEHMPDF_NORETURN(expr)  \
         do {                         \
             expr;                    \
         } while (0)
@@ -157,16 +157,14 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEALLOC{{{
 #ifdef DEBUG
-    #define SAFEALLOC(var,expr)                      \
+#   define SAFEALLOC(var,expr)                       \
         do {                                         \
-            _Pragma ("GCC diagnostic ignored \"-Wsign-conversion\"") \
             var = expr;                              \
-            _Pragma ("GCC diagnostic pop") \
             HMPDFCHECK(!(var),                       \
                        "memory allocation failed."); \
         } while (0)
 #else
-    #define SAFEALLOC(var,expr) \
+#   define SAFEALLOC(var,expr)  \
         do {                    \
             var = expr;         \
         } while (0)
@@ -175,16 +173,14 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //SAFEALLOC_NORETURN{{{
 #ifdef DEBUG
-    #define SAFEALLOC_NORETURN(var,expr)             \
+#   define SAFEALLOC_NORETURN(var,expr)              \
         do {                                         \
-            _Pragma ("GCC diagnostic ignored \"-Wsign-conversion\"") \
             var = expr;                              \
-            _Pragma ("GCC diagnostic pop") \
             HMPDFCHECK_NORETURN(!(var),              \
                        "memory allocation failed."); \
         } while (0)
 #else
-    #define SAFEALLOC_NORETURN(var,expr) \
+#   define SAFEALLOC_NORETURN(var,expr)  \
         do {                             \
             var = expr;                  \
         } while (0)
@@ -193,7 +189,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //CHECKERR{{{
 #ifdef DEBUG
-    #define CHECKERR                                        \
+#   define CHECKERR                                         \
         do {                                                \
             if (UNLIKELY(hmpdf_status_update(&hmpdf_status, \
                                              errno)))       \
@@ -210,41 +206,41 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //CHECKINIT
 #ifdef DEBUG
-    #define CHECKINIT                                        \
+#   define CHECKINIT                                         \
         do {                                                 \
             HMPDFCHECK(!(d->inited),                         \
                        "hmpdf_init has not been called yet " \
                        "or previous call failed.");          \
         } while (0)
 #else
-    #define CHECKINIT \
+#   define CHECKINIT \
         do { } while (0)
 #endif
 
 //STARTFCT -- no semicolon!{{{
 #ifdef DEBUG
-    #define STARTFCT          \
+#   define STARTFCT           \
         int hmpdf_status = 0; \
         errno = 0;
 #else
-    #define STARTFCT
+#   define STARTFCT
 #endif
 //}}}
 
 //ENDFCT -- no semicolon!{{{
 #ifdef DEBUG
-    #define ENDFCT           \
+#   define ENDFCT            \
         CHECKERR;            \
         return hmpdf_status;
 #else
-    #define ENDFCT \
+#   define ENDFCT \
         return 0;
 #endif
 //}}}
 
 //HMPDFERR_NORETURN{{{
 #ifdef DEBUG
-    #define HMPDFERR_NORETURN(...)               \
+#   define HMPDFERR_NORETURN(...)                \
         do {                                     \
             fprintf(stderr, "***hmpdf error: "); \
             fprintf(stderr, __VA_ARGS__);        \
@@ -254,27 +250,27 @@ new_gsl_error_handler(const char *reason, const char *file,
             hmpdf_status = 1;                    \
         } while (0)
 #else
-    #define HMPDFERR_NORETURN(...) \
+#   define HMPDFERR_NORETURN(...) \
         do { } while (0)
 #endif
 //}}}
 
 //HMPDFERR{{{
 #ifdef DEBUG
-    #define HMPDFERR(...)                   \
+#   define HMPDFERR(...)                    \
         do {                                \
             HMPDFERR_NORETURN(__VA_ARGS__); \
             return hmpdf_status;            \
         } while (0)
 #else
-    #define HMPDFERR(...) \
+#   define HMPDFERR(...) \
         do { } while (0)
 #endif
 //}}}
 
 //HMPDFCHECK_NORETURN{{{
 #ifdef DEBUG
-    #define HMPDFCHECK_NORETURN(expr, ...)      \
+#   define HMPDFCHECK_NORETURN(expr, ...)       \
         do {                                    \
             if (UNLIKELY(expr))                 \
             {                                   \
@@ -282,14 +278,14 @@ new_gsl_error_handler(const char *reason, const char *file,
             }                                   \
         } while (0)
 #else
-    #define HMPDFCHECK_NORETURN(expr, ...) \
+#   define HMPDFCHECK_NORETURN(expr, ...) \
         do { } while (0)
 #endif
 //}}}
 
 //HMPDFCHECK{{{
 #ifdef DEBUG
-    #define HMPDFCHECK(expr, ...)      \
+#   define HMPDFCHECK(expr, ...)       \
         do {                           \
             if (UNLIKELY(expr))        \
             {                          \
@@ -297,7 +293,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             }                          \
         } while (0)
 #else
-    #define HMPDFCHECK(expr, ...) \
+#define HMPDFCHECK(expr, ...) \
         do { } while (0)
 #endif
 //}}}
@@ -315,7 +311,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 //HMPDFWARN{{{
 #ifdef DEBUG
-    #define HMPDFWARN(...)                                           \
+#   define HMPDFWARN(...)                                            \
         do {                                                         \
             if (d->warn_is_err > 0)                                  \
             {                                                        \
@@ -340,20 +336,20 @@ new_gsl_error_handler(const char *reason, const char *file,
             }                                                        \
         } while (0)
 #else
-    #define HMPDFWARN(...) \
+#   define HMPDFWARN(...) \
         do { } while (0)
 #endif
 //}}}
 
 //CONTINUE_IF_ERR -- no semicolon!{{{
 #ifdef DEBUG
-    #define CONTINUE_IF_ERR         \
+#   define CONTINUE_IF_ERR          \
         if (UNLIKELY(hmpdf_status)) \
         {                           \
             continue;               \
         }
 #else
-    #define CONTINUE_IF_ERR
+#   define CONTINUE_IF_ERR
 #endif
 //}}}
 
