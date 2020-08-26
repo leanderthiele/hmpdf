@@ -112,7 +112,7 @@ class HMPDF(object) :
          + the argument list to init() is implemented with the **kwargs syntax
            and not ended with #hmpdf_end_configs
          + passing custom ell- and k-space filters works differently,
-           see the \ref examples. The options #hmpdf_custom_ell_filter_params
+           see the @ref examples. The options #hmpdf_custom_ell_filter_params
            and #hmpdf_custom_k_filter_params are not supported.
 
     Best used in a context manager.
@@ -227,10 +227,10 @@ class HMPDF(object) :
              **kwargs) -> None :
         """! Initializes the object [calls hmpdf_init()].
         
-        \param class_ini     CLASS .ini file
-        \param stype         signal type (either "kappa" or "tsz")
-        \param zsource       source redshift. Use only if stype="kappa"
-        \param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
+        @param class_ini     CLASS .ini file
+        @param stype         signal type (either "kappa" or "tsz")
+        @param zsource       source redshift. Use only if stype="kappa"
+        @param **kwargs      optional settings, see the documentation of #hmpdf_configs_e.
         """
     #{{{
         if stype == 'kappa' :
@@ -259,10 +259,10 @@ class HMPDF(object) :
                noisy: bool=False) -> np.ndarray :
         """! Get the one-point PDF [calls hmpdf_get_op()]
         
-        \param binedges      1d, defines how the PDF is binned
-        \param incl_2h       whether to include the two-halo term
-        \param noisy         whether to include pixel-wise Gaussian noise
-        \\return the binned PDF (1d)
+        @param binedges      1d, defines how the PDF is binned
+        @param incl_2h       whether to include the two-halo term
+        @param noisy         whether to include pixel-wise Gaussian noise
+        @return the binned PDF (1d)
         """
     #{{{
         out = np.empty(len(binedges)-1)
@@ -277,10 +277,10 @@ class HMPDF(object) :
                noisy: bool=False) -> np.ndarray :
         """! Get the two-point PDF [calls hmpdf_get_tp()]
         
-        \param phi           angular separation of the two sky locations (in arcmin)
-        \param binedges      1d, defines how the PDF is binned
-        \param noisy         whether to include pixel-wise Gaussian noise
-        \\return the binned PDF (2d)
+        @param phi           angular separation of the two sky locations (in arcmin)
+        @param binedges      1d, defines how the PDF is binned
+        @param noisy         whether to include pixel-wise Gaussian noise
+        @return the binned PDF (2d)
         """
     #{{{
         out = np.empty((len(binedges)-1)*(len(binedges)-1))
@@ -294,9 +294,9 @@ class HMPDF(object) :
                 noisy: bool=False) -> np.ndarray :
         """! Get the covariance matrix of the one-point PDF [calls hmpdf_get_cov()]
         
-        \param binedges      1d, defines how the covariance matrix is binned
-        \param noisy         whether to include pixel-wise Gaussian noise
-        \\return the binned covariance matrix (2d)
+        @param binedges      1d, defines how the covariance matrix is binned
+        @param noisy         whether to include pixel-wise Gaussian noise
+        @return the binned covariance matrix (2d)
         """
     #{{{
         Nbins = len(binedges) - 1
@@ -311,9 +311,9 @@ class HMPDF(object) :
                  mode: str='total') -> np.ndarray :
         """! Get the angular power spectrum [calls hmpdf_get_Cell()]
         
-        \param ell           1d, the angular wavenumbers
-        \param mode          one of "onehalo", "twohalo", "total"
-        \\return the power spectrum at ell (1d)
+        @param ell           1d, the angular wavenumbers
+        @param mode          one of "onehalo", "twohalo", "total"
+        @return the power spectrum at ell (1d)
         """
     #{{{
         out = np.empty(len(ell))
@@ -327,9 +327,9 @@ class HMPDF(object) :
                  mode: str='total') -> np.ndarray :
         """! Get the angular correlation function [calls hmpdf_get_Cphi()]
         
-        \param phi           1d, the angular separations (in arcmin)
-        \param mode          one of "onehalo", "twohalo", "total"
-        \\return the correlation function at phi (1d)
+        @param phi           1d, the angular separations (in arcmin)
+        @param mode          one of "onehalo", "twohalo", "total"
+        @return the correlation function at phi (1d)
         """
     #{{{
         out = np.empty(len(phi))
@@ -341,7 +341,7 @@ class HMPDF(object) :
     def get_cov_diagnostics(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """! Get the covariance diagnostics [calls hmpdf_get_cov_diagnostics()]
         
-        \\return (phi, phiweights, corr_diagn)
+        @return (phi, phiweights, corr_diagn)
         """
     #{{{
         Nphi = c_int(0)
