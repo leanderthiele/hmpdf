@@ -15,6 +15,7 @@ Using the python wrapper, a calculation of the weak lensing convergence one-poin
 for sources at redshift 1 in a cosmology given by a CLASS input file named "example.ini"
 would go like this:
 ```python
+from hmpdf import HMPDF
 binedges = np.linspace(0.0, 0.3, num=101)
 with HMPDF() as d :
     d.init('example.ini', 'kappa', 1.0)
