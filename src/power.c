@@ -271,7 +271,8 @@ create_corr(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_corr_interp\n");
     
     d->pwr->corr_rmax = 1.1 * d->n->phimax * d->c->comoving[d->n->Nz-1];
-    gsl_dht *t = gsl_dht_new(CORRINTERP_N, 0, d->pwr->corr_rmax);
+    gsl_dht *t;
+    SAFEALLOC(t, gsl_dht_new(CORRINTERP_N, 0, d->pwr->corr_rmax));
     double *Pk;
     double *r;
     double *zeta;

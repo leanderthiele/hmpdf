@@ -391,7 +391,7 @@ create_conj_profiles(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_conj_profiles\n");
     
     // prepare the Hankel transform work space
-    d->p->dht_ws = gsl_dht_new(d->p->Ntheta, 0, 1.0);
+    SAFEALLOC(d->p->dht_ws, gsl_dht_new(d->p->Ntheta, 0, 1.0));
     SAFEALLOC(d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)));
     #ifdef _OPENMP
     #   pragma omp parallel for num_threads(d->Ncores)

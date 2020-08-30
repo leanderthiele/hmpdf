@@ -230,7 +230,8 @@ create_Cphi(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_Cphi\n");
     
     SAFEHMPDF(find_Nell(d, &(d->ps->Nell_corr)));
-    gsl_dht *t = gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->phimax);
+    gsl_dht *t;
+    SAFEALLOC(t, gsl_dht_new(d->ps->Nell_corr, 0, 2.0 * d->n->phimax));
     
     SAFEALLOC(d->ps->phi, malloc(d->ps->Nell_corr * sizeof(double)));
     double *temp_ell;
