@@ -621,7 +621,7 @@ choose_ordinate(hmpdf_obj *d, int end, int start, inv_profile_e mode, int sgn, d
 {//{{{
     STARTFCT
 
-    int indx;
+    int indx = 0; // avoid maybe-uninitialized
     switch (sgn)
     {
         case (1)  : indx = start - 1;
@@ -631,7 +631,7 @@ choose_ordinate(hmpdf_obj *d, int end, int start, inv_profile_e mode, int sgn, d
         default   : HMPDFERR("unknown sign");
     }
 
-    double *ptr;
+    double *ptr = NULL; // avoid maybe-uninitialized
     switch (mode)
     {
         case (dtsq_of_s) :

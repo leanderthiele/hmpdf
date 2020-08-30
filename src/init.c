@@ -313,6 +313,8 @@ check_validity(param *p, int *invalid_param)
 }//}}}
 
 #undef CHECK_VALIDITY
+#undef WPEDANTICON
+#undef WPEDANTICOFF
 
 // assign parameter to default value
 //ASSIGN_DEF{{{
@@ -378,6 +380,8 @@ printval(char *f, void *val, dtype dt, int *printed)
 
 #undef FMT
 #undef PRINTVAL
+#undef WFORMATOFF
+#undef WFORMATON
 #undef DT_DEP_ACTION
 
 static int
