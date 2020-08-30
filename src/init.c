@@ -71,65 +71,79 @@ typedef struct
 param;
 
 // convenience function to save typing
-static void
+static int
 init_p(param *p, char *name, void *target, dtype dt, void *def, void *lo, void *hi)
 {//{{{
+    STARTFCT
+
     p->name = name;
     p->target = target;
     p->dt = dt;
     p->def = def;
+
+    HMPDFCHECK(p->dt>=end_comparable_dtypes
+               && (lo != NULL || hi != NULL),
+               "gave lower/upper boundaries for setting %s "
+               "which does not have a comparable data type.",
+               p->name);
     p->lo = lo;
     p->hi = hi;
+    
     p->set = 0;
+
+    ENDFCT
 }//}}}
 
 // convenience macros to save even more typing
 //INIT_P*{{{
-#define INIT_P(indx, targ, dt, df)                         \
-    do {                                                   \
-    init_p(p+indx, #indx, &(targ), dt, &(df), NULL, NULL); \
-    ++ctr;                                                 \
+#define INIT_P(indx, targ, dt, df)                   \
+    do {                                             \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt, \
+                  &(df), NULL, NULL));               \
+        ++ctr;                                       \
     } while (0)
 
-#define INIT_P_B(indx, targ, dt, df)                                  \
-    do {                                                              \
-    init_p(p+indx, #indx, &(targ), dt, &(df[0]), &(df[1]), &(df[2])); \
-    ++ctr;                                                            \
-    } while (0)
-
-#define INIT_P2(indx, targ, dt, dfk, dft)                \
+#define INIT_P_B(indx, targ, dt, df)                     \
     do {                                                 \
-    init_p(p+indx, #indx, &(targ), dt,                   \
-           (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft), \
-           NULL, NULL);                                  \
-    ++ctr;                                               \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt,     \
+                         &(df[0]), &(df[1]), &(df[2]))); \
+        ++ctr;                                           \
     } while (0)
 
-#define INIT_P2_BK(indx, targ, dt, dfk, dft)                \
-    do {                                                    \
-    init_p(p+indx, #indx, &(targ), dt,                      \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft), \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : NULL,   \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : NULL);  \
-    ++ctr;                                                  \
+#define INIT_P2(indx, targ, dt, dfk, dft)             \
+    do {                                              \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt,  \
+                         (d->p->stype==hmpdf_kappa) ? \
+                         &(dfk) : &(dft),             \
+                         NULL, NULL));                \
+        ++ctr;                                        \
     } while (0)
 
-#define INIT_P2_BT(indx, targ, dt, dfk, dft)                 \
-    do {                                                     \
-    init_p(p+indx, #indx, &(targ), dt,                       \
-           (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft[0]),  \
-           (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[1]),  \
-           (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[2])); \
-    ++ctr;                                                   \
+#define INIT_P2_BK(indx, targ, dt, dfk, dft)                              \
+    do {                                                                  \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt,                      \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft), \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : NULL,   \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : NULL)); \
+        ++ctr;                                                            \
     } while (0)
 
-#define INIT_P2_BKT(indx, targ, dt, dfk, dft)                   \
-    do {                                                        \
-    init_p(p+indx, #indx, &(targ), dt,                          \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft[0]),  \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : &(dft[1]),  \
-           (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : &(dft[2])); \
-    ++ctr;                                                      \
+#define INIT_P2_BT(indx, targ, dt, dfk, dft)                                \
+    do {                                                                    \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt,                        \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk) : &(dft[0]),   \
+                         (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[1]),   \
+                         (d->p->stype==hmpdf_kappa) ? NULL   : &(dft[2]))); \
+        ++ctr;                                                              \
+    } while (0)
+
+#define INIT_P2_BKT(indx, targ, dt, dfk, dft)                                  \
+    do {                                                                       \
+        SAFEHMPDF(init_p(p+indx, #indx, &(targ), dt,                           \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[0]) : &(dft[0]),   \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[1]) : &(dft[1]),   \
+                         (d->p->stype==hmpdf_kappa) ? &(dfk[2]) : &(dft[2]))); \
+        ++ctr;                                                                 \
     } while (0)
 //}}}
 
@@ -258,6 +272,8 @@ assign_set(param *p, va_list *valist)
 #endif
 
 // check if user setting is reasonable
+// disable -Wpedantic -- it complains about comparisons of pointers,
+//     but these comparisons can never happen logic-wise
 //CHECK_VALIDITY{{{
 #define CHECK_VALIDITY(dt)                                 \
     do {                                                   \
@@ -333,9 +349,20 @@ assign_def(param *p)
     : (dt==kf_type) ? "%p"     \
     : "%d"
 
-#define PRINTVAL(dt1)                                \
-    do {                                             \
-    *printed += sprintf(f, FMT(dt), *((dt1*)(val))); \
+#ifdef __GNUC__
+#   define WFORMATOFF _Pragma("GCC diagnostic ignored \"-Wformat\"")
+#   define WFORMATON  _Pragma("GCC diagnostic pop")
+#else
+#   define WFORMATOFF
+#   define WFORMATON
+#endif
+
+// convenience macro -- disable -Wformat
+#define PRINTVAL(dt1)                                    \
+    do {                                                 \
+        WFORMATOFF                                       \
+        *printed += sprintf(f, FMT(dt), *((dt1*)(val))); \
+        WFORMATON                                        \
     } while (0)
 //}}}
 
