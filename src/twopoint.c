@@ -499,7 +499,7 @@ create_tp(hmpdf_obj *d, double phi, twopoint_workspace *ws)
 }//}}}
 
 static int
-create_noisy_tp(hmpdf_obj *d)
+create_noisy_tp(hmpdf_obj *d, double phi)
 {//{{{
     STARTFCT
 
@@ -511,7 +511,8 @@ create_noisy_tp(hmpdf_obj *d)
                          * sizeof(double)));
     }
 
-    SAFEHMPDF(noise_matr(d, d->tp->pdf, d->tp->pdf_noisy));
+    SAFEHMPDF(noise_matr(d, d->tp->pdf, d->tp->pdf_noisy,
+                         0/*not buffered*/, phi));
 
     ENDFCT
 }//}}}
@@ -607,7 +608,8 @@ prepare_tp(hmpdf_obj *d, double phi)
 
     if (d->ns->noise_pwr != NULL)
     {
-        SAFEHMPDF(create_noisy_tp(d));
+        SAFEHMPDF(create_noise_matr_conv(d, 1/*need only one buffer*/));
+        SAFEHMPDF(create_noisy_tp(d, phi));
     }
 
     ENDFCT

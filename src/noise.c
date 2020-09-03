@@ -112,6 +112,12 @@ create_noisy_grids(hmpdf_obj *d)
     double smin = d->n->signalmin - extra_signal;
     double smax = d->n->signalmax + extra_signal;
     SAFEHMPDF(linspace(d->n->Nsignal_noisy, smin, smax, d->n->signalgrid_noisy));
+    SAFEALLOC(d->n->lambdagrid_noisy, malloc((d->n->Nsignal_noisy/2+1)
+                                             * sizeof(double)));
+    SAFEHMPDF(linspace(d->n->Nsignal_noisy/2+1,
+                       0.0,
+                       M_PI / (d->n->signalgrid_noisy[1]-d->n->signalgrid_noisy[0]),
+                       d->n->lambdagrid_noisy));
 
     ENDFCT
 }//}}}
@@ -409,7 +415,6 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
     ENDFCT
 }//}}}
 
-// TODO
 int
 noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi)
 // assumes [in] = Nsignal*Nsignal if !is_buffered, else (Nsignal+2)*Nsignal,

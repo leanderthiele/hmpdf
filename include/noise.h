@@ -38,6 +38,8 @@ int null_noise(hmpdf_obj *d);
 int reset_noise(hmpdf_obj *d);
 int init_noise(hmpdf_obj *d);
 
+int create_noise_matr_conv(hmpdf_obj *d, int Nbuffers);
+
 int noise_vect(hmpdf_obj *d, double *in, double *out);
 int noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi);
 

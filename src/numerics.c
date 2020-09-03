@@ -195,8 +195,8 @@ create_grids(hmpdf_obj *d)
     
     SAFEALLOC(d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)));
     SAFEHMPDF(linspace(d->n->Nsignal/2+1,
-             0.0, M_PI/(d->n->signalgrid[1] - d->n->signalgrid[0]),
-             d->n->lambdagrid));
+                       0.0, M_PI/(d->n->signalgrid[1] - d->n->signalgrid[0]),
+                       d->n->lambdagrid));
 
     ENDFCT
 }//}}}

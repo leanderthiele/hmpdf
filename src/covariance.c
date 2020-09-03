@@ -485,20 +485,76 @@ rescale_to_fsky1(hmpdf_obj *d, int N, double *cov)
 }//}}}
 
 static int
-create_noisy_cov(hmpdf_obj *d)
+add_tp_to_cov(hmpdf_obj *d, int phiindex)
 {//{{{
     STARTFCT
 
-    if (d->cov->created_noisy_cov) { return 0; }
+    for (long ii=0; ii<d->n->Nsignal; ii++)
+    {
+        for (long jj=0; jj<d->n->Nsignal; jj++)
+        {
+            #ifdef _OPENMP
+            // make sure no two threads add to the same element simultaneously
+            #   pragma omp atomic
+            #endif
+            d->cov->Cov[ii*d->n->Nsignal+jj]
+                += d->n->phiweights[phiindex]
+                   * d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj];
+        }
+    }
 
-    HMPDFPRINT(2, "\tcreate_noisy_cov\n");
+    if (d->ns->noise_pwr != NULL)
+    {
+        // add to noisy covariance matrix
+        for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
+        {
+            for (long jj=0; jj<d->n->Nsignal_noisy; jj++)
+            {
+                #ifdef _OPENMP
+                // make sure no two threads add to the same element simultaneously
+                #   pragma omp atomic
+                #endif
+                d->cov->Cov_noisy[ii*d->n->Nsignal_noisy+jj]
+                    += d->n->phiweights[phiindex]
+                       * d->ns->conv_buffer_real[this_core()][ii*(d->n->Nsignal_noisy+2)+jj];
+            }
+        }
+    }
 
-    SAFEALLOC(d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
-                                        * d->n->Nsignal_noisy
-                                        * sizeof(double)));
-    SAFEHMPDF(noise_matr(d, d->cov->Cov, d->cov->Cov_noisy));
+    ENDFCT
+}//}}}
 
-    d->cov->created_noisy_cov = 1;
+static int
+subtract_op_from_cov(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    double weight_sum = 1.0; // includes the zero-separation contribution here
+    for (int pp=0; pp<d->n->Nphi; pp++)
+    {
+        weight_sum += d->n->phiweights[pp];
+    }
+
+    for (long ii=0; ii<d->n->Nsignal; ii++)
+    {
+        for (long jj=0; jj<d->n->Nsignal; jj++)
+        {
+            d->cov->Cov[ii*d->n->Nsignal+jj]
+                -= weight_sum * d->op->PDFc[ii] * d->op->PDFc[jj];
+        }
+    }
+
+    if (d->ns->noise_pwr != NULL)
+    {
+        for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
+        {
+            for (long jj=0; jj<d->n->Nsignal_noisy; jj++)
+            {
+                d->cov->Cov_noisy[ii*d->n->Nsignal_noisy+jj]
+                    -= weight_sum * d->op->PDFc_noisy[ii] * d->op->PDFc_noisy[jj];
+            }
+        }
+    }
 
     ENDFCT
 }//}}}
@@ -513,12 +569,24 @@ create_cov(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_cov\n");
 
     // allocate storage
-    SAFEALLOC(d->cov->Cov, malloc(d->n->Nsignal * d->n->Nsignal
+    SAFEALLOC(d->cov->Cov, malloc(d->n->Nsignal
+                                  * d->n->Nsignal
                                   * sizeof(double)));
+    if (d->ns->noise_pwr != NULL)
+    {
+        SAFEALLOC(d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
+                                            * d->n->Nsignal_noisy
+                                            * sizeof(double)));
+    }
     SAFEALLOC(d->cov->corr_diagn, malloc(d->n->Nphi * sizeof(double)));
 
     // zero covariance
     zero_real(d->n->Nsignal * d->n->Nsignal, d->cov->Cov);
+    if (d->ns->noise_pwr != NULL)
+    {
+        zero_real(d->n->Nsignal_noisy * d->n->Nsignal_noisy,
+                  d->cov->Cov_noisy);
+    }
 
     // status
     int Nstatus = 0;
@@ -535,29 +603,25 @@ create_cov(hmpdf_obj *d)
         // create twopoint at this phi
         SAFEHMPDF_NORETURN(create_tp(d, d->n->phigrid[pp],
                                      d->cov->ws[this_core()]));
-
         CONTINUE_IF_ERR
 
+        // compute noisy two-point PDF if necessary
+        if (d->ns->noise_pwr != NULL)
+        {
+            SAFEHMPDF_NORETURN(noise_matr(d, d->cov->ws[this_core()]->pdf_real,
+                                          NULL/*no separate output allocated*/,
+                                          1/*is buffered*/, d->n->phigrid[pp]));
+        }
+        CONTINUE_IF_ERR
+        
         // compute the correlation function
         SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[this_core()],
                                       d->cov->corr_diagn+pp));
-
         CONTINUE_IF_ERR
         
         // add to covariance
-        for (long ii=0; ii<d->n->Nsignal; ii++)
-        {
-            for (long jj=0; jj<d->n->Nsignal; jj++)
-            {
-                #ifdef _OPENMP
-                // make sure no two threads add to the same element simultaneously
-                #   pragma omp atomic
-                #endif
-                d->cov->Cov[ii*d->n->Nsignal+jj]
-                    += d->n->phiweights[pp]
-                       * d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj];
-            }
-        }
+        SAFEHMPDF_NORETURN(add_tp_to_cov(d, pp));
+        CONTINUE_IF_ERR
 
         // status update
         #ifdef _OPENMP
@@ -570,25 +634,11 @@ create_cov(hmpdf_obj *d)
                 SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi));
             }
         }
-
         CONTINUE_IF_ERR
     }
 
     // subtract the one-point outer product
-    double weight_sum = 1.0; // includes the zero-separation contribution here
-    for (int pp=0; pp<d->n->Nphi; pp++)
-    {
-        weight_sum += d->n->phiweights[pp];
-    }
-    for (long ii=0; ii<d->n->Nsignal; ii++)
-    {
-        for (long jj=0; jj<d->n->Nsignal; jj++)
-        {
-            d->cov->Cov[ii*d->n->Nsignal+jj] -= weight_sum
-                                                * d->op->PDFc[ii]
-                                                * d->op->PDFc[jj];
-        }
-    }
+    SAFEHMPDF(subtract_op_from_cov(d));
 
     d->cov->created_cov = 1;
 
@@ -608,27 +658,26 @@ prepare_cov(hmpdf_obj *d)
         SAFEHMPDF(create_conj_profiles(d));
         SAFEHMPDF(create_filtered_profiles(d));
     }
+
     SAFEHMPDF(create_segments(d));
+
     SAFEHMPDF(create_op(d));
+
+    if (d->ns->noise_pwr != NULL)
+    {
+        SAFEHMPDF(create_noisy_op(d));
+        SAFEHMPDF(create_noise_matr_conv(d, d->Ncores));
+    }
 
     SAFEHMPDF(create_corr(d));
 
     SAFEHMPDF(create_phi_indep(d));
     
-    // create phi grid
     SAFEHMPDF(create_phigrid(d));
     
-    // allocate the workspaces
     SAFEHMPDF(create_tp_ws(d));
     
-    // create covariance matrix
     SAFEHMPDF(create_cov(d));
-
-    // create noisy covariance matrix
-    if (d->ns->noise > 0.0)
-    {
-        SAFEHMPDF(create_noisy_cov(d));
-    }
 
     ENDFCT
 }//}}}
