@@ -229,10 +229,10 @@ init_params(hmpdf_obj *d, param *p)
            d->h->Tinker10_params, dptr_type, def.Tinker10_p);
     INIT_P(hmpdf_Battaglia12_tsz_params,
            d->p->Battaglia12_params, dptr_type, def.Battaglia12_p);
-    INIT_P_B(hmpdf_noise_pwr,
-             d->ns->noise_pwr, np_type, def.noise_pwr);
-    INIT_P_B(hmpdf_noise_pwr_params,
-             d->ns->noise_pwr_params, vptr_type, def.noise_pwr_params);
+    INIT_P(hmpdf_noise_pwr,
+           d->ns->noise_pwr, np_type, def.noise_pwr);
+    INIT_P(hmpdf_noise_pwr_params,
+           d->ns->noise_pwr_params, vptr_type, def.noise_pwr_params);
 
     HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 
