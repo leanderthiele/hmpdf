@@ -50,7 +50,7 @@ reset_onepoint(hmpdf_obj *d)
 }//}}}
 
 int
-correct_phase1d(hmpdf_obj *d, double complex *x, long stride, int sgn)
+correct_phase1d(hmpdf_obj *d, double complex *x, int sgn)
 // sign is +1 for application after real -> double complex FFT
 // and -1 for application before double complex -> real FFT
 {//{{{
@@ -60,8 +60,9 @@ correct_phase1d(hmpdf_obj *d, double complex *x, long stride, int sgn)
     {
         for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
-            x[ii*stride]
-                *= cexp(- (double complex)sgn * _Complex_I * d->n->signalmin * d->n->lambdagrid[ii]);
+            x[ii]
+                *= cexp(- (double complex)sgn * _Complex_I
+                          * d->n->signalmin * d->n->lambdagrid[ii]);
         }
     }
 
@@ -141,8 +142,8 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
         fftw_execute(plan_u);
         fftw_execute(plan_c);
         // correct phases
-        SAFEHMPDF(correct_phase1d(d, au_comp, 1, 1));
-        SAFEHMPDF(correct_phase1d(d, ac_comp, 1, 1));
+        SAFEHMPDF(correct_phase1d(d, au_comp, 1));
+        SAFEHMPDF(correct_phase1d(d, ac_comp, 1));
 
         for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -251,8 +252,8 @@ create_op(hmpdf_obj *d)
     }
 
     // correct phases
-    SAFEHMPDF(correct_phase1d(d, PDFu_comp, 1, -1));
-    SAFEHMPDF(correct_phase1d(d, PDFc_comp, 1, -1));
+    SAFEHMPDF(correct_phase1d(d, PDFu_comp, -1));
+    SAFEHMPDF(correct_phase1d(d, PDFc_comp, -1));
     // transform back to real space
     fftw_execute(plan_u);
     fftw_execute(plan_c);

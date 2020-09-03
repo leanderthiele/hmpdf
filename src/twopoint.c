@@ -119,24 +119,33 @@ reset_twopoint(hmpdf_obj *d)
 
 static int
 correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
-// FIXME pretty sure there's a bug here with the lambda grid not being extended!!!
 {//{{{
     STARTFCT
 
     if (d->n->Nsignal_negative > 0)
     {
-        // correct rows
-        for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
+        for (long ii=0; ii<d->n->Nsignal; ii++)
+        // loop over long direction (rows)
         {
-            SAFEHMPDF(correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
-                                      1, sgn));
-        }
+            double lambda1;
+            if (ii<=d->n->Nsignal/2)
+            {
+                lambda1 = d->n->lambdagrid[ii];
+            }
+            else
+            {
+                lambda1 = d->n->lambdagrid[d->n->Nsignal-ii];
+            }
 
-        // correct cols
-        for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
-        {
-            SAFEHMPDF(correct_phase1d(d, x+ii,
-                                      d->n->Nsignal/2+1, sgn));
+            for (long jj=0; jj<d->n->Nsignal/2+1; jj++)
+            // loop over short direction (cols)
+            {
+                double lambda2 = d->n->lambdagrid[jj];
+
+                x[ii*(d->n->Nsignal/2+1)+jj]
+                    *= cexp(- (double complex)sgn * _Complex_I
+                              * d->n->signalmin * (lambda1 + lambda2));
+            }
         }
     }
 
@@ -228,7 +237,7 @@ create_phi_indep(hmpdf_obj *d)
         // perform FFT for clustered term
         fftw_execute(plan_c);
         // correct phases
-        SAFEHMPDF(correct_phase1d(d, tempc_comp, 1, 1));
+        SAFEHMPDF(correct_phase1d(d, tempc_comp, 1));
         // write into the output array, subtracting the zero mode
         for (int ii=0; ii<(int)d->n->Nsignal/2+1; ii++)
         {
@@ -238,7 +247,7 @@ create_phi_indep(hmpdf_obj *d)
     // perform FFT for unclustered term
     fftw_execute(plan_u);
     // correct phases
-    SAFEHMPDF(correct_phase1d(d, d->tp->au, 1, 1));
+    SAFEHMPDF(correct_phase1d(d, d->tp->au, 1));
     // subtract zero mode of unclustered contribution
     for (int ii=(int)d->n->Nsignal/2; ii>=0; ii--)
     {
