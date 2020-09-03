@@ -316,10 +316,14 @@ typedef enum
                                    *   Type: double[15]. Default: see src/configs.c.
                                    *   \remark in the python wrapper, pass a 1d numpy array
                                    */
-    hmpdf_noise, /*!< Option to add pixel-wise Gaussian noise of this standard deviation.
-                  *   \par
-                  *   Type: double. Default: None.
-                  */
+    hmpdf_noise_pwr, /*!< Option to add pixel-wise Gaussian noise with this power spectrum.
+                      *   \par
+                      *   Type: #hmpdf_noise_pwr_f. Default: None.
+                      */
+    hmpdf_noise_pwr_params, /*!< To pass custom parameters to the function #hmpdf_noise_pwr.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
                         */
@@ -347,5 +351,15 @@ typedef double (*hmpdf_ell_filter_f)(double,
 typedef double (*hmpdf_k_filter_f)(double,
                                    double,
                                    void *);
+
+/* Function pointer typedef for user-defined noise power spectrum.
+ * Passed to hmpdf_init() as #hmpdf_noise_pwr.
+ * \param ell       angular wavenumber
+ * \param p         pointer that allows user to pass other parameters.
+ *                  Passed to hmpdf_init() as #hmpdf_noise_pwr_params.
+ * \return N(ell)   noise power at ell.
+ */
+typedef double (*hmpdf_noise_pwr_f)(double,
+                                    void *);
 
 #endif

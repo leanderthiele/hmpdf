@@ -33,6 +33,7 @@ typedef enum
     vptr_type, // void *
     lf_type, // hmpdf_ell_filter_f
     kf_type, // hmpdf_k_filter_f
+    np_type, // hmpdf_noise_pwr_f
 }//}}}
 dtype;
 
@@ -52,6 +53,7 @@ dtype;
             case (vptr_type) : expr(void *); break;                \
             case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
             case (kf_type) : expr(hmpdf_k_filter_f); break;        \
+            case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
         }                                                          \
@@ -227,8 +229,10 @@ init_params(hmpdf_obj *d, param *p)
            d->h->Tinker10_params, dptr_type, def.Tinker10_p);
     INIT_P(hmpdf_Battaglia12_tsz_params,
            d->p->Battaglia12_params, dptr_type, def.Battaglia12_p);
-    INIT_P_B(hmpdf_noise,
-             d->ns->noise, dbl_type, def.noise);
+    INIT_P_B(hmpdf_noise_pwr,
+             d->ns->noise_pwr, np_type, def.noise_pwr);
+    INIT_P_B(hmpdf_noise_pwr_params,
+             d->ns->noise_pwr_params, vptr_type, def.noise_pwr_params);
 
     HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 
@@ -349,6 +353,7 @@ assign_def(param *p)
     : (dt==vptr_type) ? "%p"   \
     : (dt==lf_type) ? "%p"     \
     : (dt==kf_type) ? "%p"     \
+    : (dt==np_type) ? "%p"     \
     : "%d"
 
 #ifdef __GNUC__

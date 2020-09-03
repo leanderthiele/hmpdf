@@ -75,6 +75,14 @@
 #define PS_COVINTEGR_N 100
 
 #define COV_STATUS_PERIOD 100
+
+#define NOISE_ELLMIN 1e-2
+#define NOISE_ELLMAX 1e6
+#define NOISE_LIMIT  1000
+#define NOISE_EPSABS 1e-1 // in units of the signal grid spacing
+#define NOISE_EPSREL 1e-3
+#define NOISE_KEY    6
+#define NOISE_ZETAINTERP_N 1000
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
@@ -91,7 +99,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;
                  hmpdf_integr_mode_e Mintegr_type[3]; double Mintegr_alpha; double Mintegr_beta;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p;
-                 double noise[3]; };
+                 hmpdf_noise_pwr_f noise_pwr; void *noise_pwr_params; };
 
 struct DEFAULTS def;
 

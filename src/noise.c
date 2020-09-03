@@ -5,10 +5,14 @@
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_cblas.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_dht.h>
 
+#include "configs.h"
 #include "utils.h"
 #include "object.h"
 #include "numerics.h"
+#include "filter.h"
 #include "noise.h"
 
 #include "hmpdf.h"
@@ -19,6 +23,10 @@ null_noise(hmpdf_obj *d)
     STARTFCT
 
     d->ns->toepl = NULL;
+
+    d->ns->created_zeta_interp = 0;
+    d->ns->zeta_interp = NULL;
+    d->ns->zeta_accel = NULL;
 
     ENDFCT
 }//}}}
@@ -31,11 +39,20 @@ reset_noise(hmpdf_obj *d)
     HMPDFPRINT(2, "\treset_noise\n");
 
     if (d->ns->toepl != NULL) { free(d->ns->toepl); }
+    if (d->ns->zeta_interp != NULL) { gsl_spline_free(d->ns->zeta_interp); }
+    if (d->ns->zeta_accel != NULL)
+    {
+        for (int ii=0; ii<d->ns->Nzeta_accel; ii++)
+        {
+            gsl_interp_accel_free(d->ns->zeta_accel[ii]);
+        }
+        free(d->ns->zeta_accel);
+    }
 
     ENDFCT
 }//}}}
 
-int
+static int
 create_noisy_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
@@ -58,6 +75,139 @@ create_noisy_grids(hmpdf_obj *d)
 }//}}}
 
 int
+create_noise_zeta_interp(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if (d->ns->created_zeta_interp) { return 0; }
+
+    gsl_dht *t;
+    SAFEALLOC(t, gsl_dht_new(NOISE_ZETAINTERP_N, 0, d->n->phimax));
+    double *ell;
+    double *Nell;
+    double *phi;
+    double *zeta;
+    SAFEALLOC(ell,  malloc(NOISE_ZETAINTERP_N * sizeof(double)));
+    SAFEALLOC(Nell, malloc(NOISE_ZETAINTERP_N * sizeof(double)));
+    SAFEALLOC(phi,  malloc((NOISE_ZETAINTERP_N+1) * sizeof(double)));
+    SAFEALLOC(zeta, malloc((NOISE_ZETAINTERP_N+1) * sizeof(double)));
+    phi[0] = 0.0;
+    zeta[0] = d->ns->sigmasq;
+
+    double hankel_norm = gsl_pow_2(gsl_dht_k_sample(t, 0)
+                                   / gsl_dht_x_sample(t, 0));
+
+    // fill the integrand
+    for (int ii=0; ii<NOISE_ZETAINTERP_N; ii++)
+    {
+        ell[ii] = gsl_dht_k_sample(t, ii);
+        Nell[ii] = d->ns->noise_pwr(ell[ii], d->ns->noise_pwr_params);
+        phi[ii+1] = gsl_dht_x_sample(t, ii);
+    }
+
+    // add the filter functions
+    SAFEHMPDF(apply_filters(d, NOISE_ZETAINTERP_N, ell, Nell, Nell,
+                            1, filter_ps, NULL));
+
+    // perform the hankel transform
+    SAFEGSL(gsl_dht_apply(t, Nell, zeta+1));
+    free(ell);
+    free(Nell);
+
+    // fix the normalization
+    for (int ii=1; ii<=NOISE_ZETAINTERP_N; ii++)
+    {
+        zeta[ii] *= 0.5 * M_1_PI * hankel_norm;
+    }
+
+    // interpolate
+    SAFEALLOC(d->ns->zeta_interp,
+              gsl_spline_alloc(gsl_interp_cspline, NOISE_ZETAINTERP_N+1));
+    d->ns->Nzeta_accel = d->Ncores;
+    SAFEALLOC(d->ns->zeta_accel,
+              malloc(d->ns->Nzeta_accel * sizeof(gsl_interp_accel *)));
+    for (int ii=0; ii<d->ns->Nzeta_accel; ii++)
+    {
+        SAFEALLOC(d->ns->zeta_accel[ii], gsl_interp_accel_alloc());
+    }
+    SAFEGSL(gsl_spline_init(d->ns->zeta_interp, phi, zeta, NOISE_ZETAINTERP_N+1));
+
+    free(phi);
+    free(zeta);
+
+    d->ns->created_zeta_interp = 1;
+    
+    ENDFCT
+}//}}}
+
+typedef struct//{{{
+{
+    int status;
+    hmpdf_obj *d;
+}//}}}
+sigmasq_integrand_params;
+
+static double
+sigmasq_integrand(double ell, void *params)
+// if LOGELL is defined, ell = log(ell)
+{//{{{
+    sigmasq_integrand_params *p = (sigmasq_integrand_params *)params;
+    #ifdef LOGELL
+    ell = exp(ell);
+    #endif
+
+    // evaluate the noise power spectrum
+    double temp = ell * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
+
+    // take care of Jacobian if necessary
+    #ifdef LOGELL
+    temp *= ell;
+    #endif
+
+    // apply the other filters
+    p->status = apply_filters(p->d, 1, &ell, &temp, &temp, 1, filter_ps, NULL);
+
+    return temp;
+}//}}}
+
+static int
+create_noise_sigmasq(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+    
+    sigmasq_integrand_params p;
+    p.status = 0;
+    p.d = d;
+
+    gsl_function integrand;
+    integrand.function = &sigmasq_integrand;
+    integrand.params = &p;
+    double err;
+    #ifdef LOGELL
+    double ellmin = log(NOISE_ELLMIN);
+    double ellmax = log(NOISE_ELLMAX);
+    #else
+    double ellmin = NOISE_ELLMIN;
+    double ellmax = NOISE_ELLMAX;
+    #endif
+
+    gsl_integration_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_workspace_alloc(NOISE_LIMIT));
+    SAFEGSL(gsl_integration_qag(&integrand, ellmin, ellmax,
+                                NOISE_EPSABS*(d->n->signalgrid[1]-d->n->signalgrid[0]),
+                                NOISE_EPSREL, NOISE_LIMIT, NOISE_KEY,
+                                ws, &(d->ns->sigmasq), &err));
+    gsl_integration_workspace_free(ws);
+
+    HMPDFCHECK(p.status, "error encountered during integration.");
+
+    // correct normalization
+    d->ns->sigmasq *= 0.5 * M_1_PI;
+
+    ENDFCT
+}//}}}
+
+static int
 create_toepl(hmpdf_obj *d)
 // creates Toeplitz matrix nrows=Nsignal, ncols=Nsignal_noisy
 {//{{{
@@ -68,13 +218,14 @@ create_toepl(hmpdf_obj *d)
     SAFEALLOC(d->ns->toepl, malloc(d->n->Nsignal * d->n->Nsignal_noisy
                                    * sizeof(double)));
     zero_real(d->n->Nsignal*d->n->Nsignal_noisy, d->ns->toepl);
-    double sigma = d->ns->noise
-                   / (d->n->signalgrid[1] - d->n->signalgrid[0]);
+    // dimensionless version of the variance
+    double var = d->ns->sigmasq
+                 / gsl_pow_2(d->n->signalgrid[1] - d->n->signalgrid[0]);
     // fill the first row
     for (int ii= -(int)d->ns->len_kernel; ii<=(int)d->ns->len_kernel; ii++)
     {
-        d->ns->toepl[ii+d->ns->len_kernel] = exp(-0.5*gsl_pow_2((double)(ii)/sigma))
-                                             /sqrt(2.0*M_PI)/sigma;
+        d->ns->toepl[ii+d->ns->len_kernel] = exp(-0.5 * gsl_pow_2((double)(ii)) / var)
+                                             /sqrt(2.0 * M_PI * var);
     }
     // fill the remaining rows
     for (long ii=1; ii<d->n->Nsignal; ii++)
@@ -103,6 +254,7 @@ noise_vect(hmpdf_obj *d, double *in, double *out)
     ENDFCT
 }//}}}
 
+// TODO
 int
 noise_matr(hmpdf_obj *d, double *in, double *out)
 // assumes [in] = Nsignal*Nsignal, [out] = Nsignal_noisy*Nsignal_noisy
@@ -143,10 +295,11 @@ init_noise(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->ns->noise > 0.0)
+    if (d->ns->noise_pwr != NULL)
     {
         HMPDFPRINT(1, "init_noise\n");
 
+        SAFEHMPDF(create_noise_sigmasq(d));
         SAFEHMPDF(create_noisy_grids(d));
         SAFEHMPDF(create_toepl(d));
     }
