@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['hmpdf_10',['HMPDF',['../a00053.html',1,'hmpdf::hmpdf']]],
+  ['hmpdf_10',['HMPDF',['../a00052.html',1,'hmpdf::hmpdf']]],
   ['hmpdf_2eh_11',['hmpdf.h',['../a00020.html',1,'']]],
   ['hmpdf_2epy_12',['hmpdf.py',['../a00044.html',1,'']]],
   ['hmpdf_5fbattaglia12_5ftsz_5fparams_13',['hmpdf_Battaglia12_tsz_params',['../a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c',1,'hmpdf_configs.h']]],
