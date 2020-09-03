@@ -30,6 +30,7 @@ typedef struct//{{{
 
     long Nsignal_noisy;
     double *signalgrid_noisy;
+    double *lambdagrid_noisy;
 
     int Nphi;
     int pixelexactmax;

@@ -25,6 +25,7 @@ null_numerics(hmpdf_obj *d)
     d->n->signalgrid = NULL;
     d->n->signalgrid_noisy = NULL;
     d->n->lambdagrid = NULL;
+    d->n->lambdagrid_noisy = NULL;
     d->n->phigrid = NULL;
     d->n->phiweights = NULL;
 
@@ -45,6 +46,7 @@ reset_numerics(hmpdf_obj *d)
     if (d->n->signalgrid != NULL) { free(d->n->signalgrid); }
     if (d->n->signalgrid_noisy != NULL) { free(d->n->signalgrid_noisy); }
     if (d->n->lambdagrid != NULL) { free(d->n->lambdagrid); }
+    if (d->n->lambdagrid_noisy != NULL) { free(d->n->lambdagrid_noisy); }
     if (d->n->phigrid != NULL) { free(d->n->phigrid); }
     if (d->n->phiweights != NULL) { free(d->n->phiweights); }
 

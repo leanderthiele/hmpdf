@@ -119,6 +119,7 @@ reset_twopoint(hmpdf_obj *d)
 
 static int
 correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
+// FIXME pretty sure there's a bug here with the lambda grid not being extended!!!
 {//{{{
     STARTFCT
 
@@ -130,6 +131,7 @@ correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
             SAFEHMPDF(correct_phase1d(d, x+ii*(d->n->Nsignal/2+1),
                                       1, sgn));
         }
+
         // correct cols
         for (long ii=0; ii<d->n->Nsignal/2+1; ii++)
         {
@@ -603,7 +605,7 @@ prepare_tp(hmpdf_obj *d, double phi)
                d->n->Nsignal * sizeof(double));
     }
 
-    if (d->ns->noise > 0.0)
+    if (d->ns->noise_pwr != NULL)
     {
         SAFEHMPDF(create_noisy_tp(d));
     }

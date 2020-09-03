@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <complex.h>
+
+#include <fftw3.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_cblas.h>
@@ -24,9 +27,13 @@ null_noise(hmpdf_obj *d)
 
     d->ns->toepl = NULL;
 
-    d->ns->created_zeta_interp = 0;
+    d->ns->created_noise_zeta_interp = 0;
     d->ns->zeta_interp = NULL;
     d->ns->zeta_accel = NULL;
+
+    d->ns->conv_buffer_real = NULL;
+    d->ns->pconv_r2c = NULL;
+    d->ns->pconv_c2r = NULL;
 
     ENDFCT
 }//}}}
@@ -42,11 +49,46 @@ reset_noise(hmpdf_obj *d)
     if (d->ns->zeta_interp != NULL) { gsl_spline_free(d->ns->zeta_interp); }
     if (d->ns->zeta_accel != NULL)
     {
-        for (int ii=0; ii<d->ns->Nzeta_accel; ii++)
+        for (int ii=0; ii<d->Ncores; ii++)
         {
             gsl_interp_accel_free(d->ns->zeta_accel[ii]);
         }
         free(d->ns->zeta_accel);
+    }
+    if (d->ns->conv_buffer_real != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->ns->conv_buffer_real[ii] != NULL)
+            {
+                fftw_free(d->ns->conv_buffer_real[ii]);
+            }
+        }
+        free(d->ns->conv_buffer_real);
+    }
+    if (d->ns->pconv_r2c != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->ns->pconv_r2c[ii] != NULL)
+            {
+                fftw_destroy_plan(*(d->ns->pconv_r2c[ii]));
+                free(d->ns->pconv_r2c[ii]);
+            }
+        }
+        free(d->ns->pconv_r2c);
+    }
+    if (d->ns->pconv_c2r != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->ns->pconv_c2r[ii] != NULL)
+            {
+                fftw_destroy_plan(*(d->ns->pconv_c2r[ii]));
+                free(d->ns->pconv_c2r[ii]);
+            }
+        }
+        free(d->ns->pconv_c2r);
     }
 
     ENDFCT
@@ -79,7 +121,7 @@ create_noise_zeta_interp(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->ns->created_zeta_interp) { return 0; }
+    if (d->ns->created_noise_zeta_interp) { return 0; }
 
     gsl_dht *t;
     SAFEALLOC(t, gsl_dht_new(NOISE_ZETAINTERP_N, 0, d->n->phimax));
@@ -123,10 +165,9 @@ create_noise_zeta_interp(hmpdf_obj *d)
     // interpolate
     SAFEALLOC(d->ns->zeta_interp,
               gsl_spline_alloc(gsl_interp_cspline, NOISE_ZETAINTERP_N+1));
-    d->ns->Nzeta_accel = d->Ncores;
     SAFEALLOC(d->ns->zeta_accel,
-              malloc(d->ns->Nzeta_accel * sizeof(gsl_interp_accel *)));
-    for (int ii=0; ii<d->ns->Nzeta_accel; ii++)
+              malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    for (int ii=0; ii<d->Ncores; ii++)
     {
         SAFEALLOC(d->ns->zeta_accel[ii], gsl_interp_accel_alloc());
     }
@@ -135,7 +176,7 @@ create_noise_zeta_interp(hmpdf_obj *d)
     free(phi);
     free(zeta);
 
-    d->ns->created_zeta_interp = 1;
+    d->ns->created_noise_zeta_interp = 1;
     
     ENDFCT
 }//}}}
@@ -238,6 +279,73 @@ create_toepl(hmpdf_obj *d)
 }//}}}
 
 int
+create_noise_matr_conv(hmpdf_obj *d, int Nbuffers)
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(Nbuffers > d->Ncores,
+               "too many buffers requested.");
+
+    SAFEHMPDF(create_noise_zeta_interp(d));
+
+    if (d->ns->conv_buffer_real == NULL)
+    {
+        SAFEALLOC(d->ns->conv_buffer_real,
+                  malloc(d->Ncores * sizeof(double *)));
+        SAFEALLOC(d->ns->conv_buffer_comp,
+                  malloc(d->Ncores * sizeof(double complex *)));
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            d->ns->conv_buffer_real[ii] = NULL;
+        }
+    }
+
+    if (d->ns->pconv_r2c == NULL)
+    {
+        SAFEALLOC(d->ns->pconv_r2c,
+                  malloc(d->Ncores * sizeof(fftw_plan *)));
+        SAFEALLOC(d->ns->pconv_c2r,
+                  malloc(d->Ncores * sizeof(fftw_plan *)));
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            d->ns->pconv_r2c[ii] = NULL;
+            d->ns->pconv_c2r[ii] = NULL;
+        }
+    }
+
+    for (int ii=0; ii<Nbuffers; ii++)
+    {
+        if (d->ns->conv_buffer_real[ii] == NULL)
+        {
+            SAFEALLOC(d->ns->conv_buffer_real[ii],
+                      fftw_malloc((d->n->Nsignal_noisy+2)
+                                  * d->n->Nsignal_noisy
+                                  * sizeof(double)));
+            d->ns->conv_buffer_comp[ii]
+                = (double complex *)d->ns->conv_buffer_real[ii];
+        }
+
+        if (d->ns->pconv_r2c[ii] == NULL)
+        {
+            SAFEALLOC(d->ns->pconv_r2c[ii], malloc(sizeof(fftw_plan)));
+            *(d->ns->pconv_r2c[ii])
+                = fftw_plan_dft_r2c_2d(d->n->Nsignal_noisy, d->n->Nsignal_noisy,
+                                       d->ns->conv_buffer_real[ii],
+                                       d->ns->conv_buffer_comp[ii],
+                                       FFTW_MEASURE);
+            SAFEALLOC(d->ns->pconv_c2r[ii], malloc(sizeof(fftw_plan)));
+            *(d->ns->pconv_c2r[ii])
+                = fftw_plan_dft_c2r_2d(d->n->Nsignal_noisy, d->n->Nsignal_noisy,
+                                       d->ns->conv_buffer_comp[ii],
+                                       d->ns->conv_buffer_real[ii],
+                                       FFTW_MEASURE);
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+int
 noise_vect(hmpdf_obj *d, double *in, double *out)
 // assumes len(in) = Nsignal, len(out) = Nsignal_noisy
 {//{{{
@@ -254,38 +362,108 @@ noise_vect(hmpdf_obj *d, double *in, double *out)
     ENDFCT
 }//}}}
 
-// TODO
-int
-noise_matr(hmpdf_obj *d, double *in, double *out)
-// assumes [in] = Nsignal*Nsignal, [out] = Nsignal_noisy*Nsignal_noisy
+static int
+multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
+// note : this fct includes the FFT normalization
 {//{{{
     STARTFCT
 
-    HMPDFCHECK(d->ns->toepl == NULL, "Toeplitz matrix not computed.");
+    // evaluate pixel-pixel noise correlation function
+    double zeta;
+    SAFEGSL(gsl_spline_eval_e(d->ns->zeta_interp, phi,
+                              d->ns->zeta_accel[this_core()],
+                              &zeta));
 
-    // no aliasing allowed, so we need intermediate storage
-    double *temp;
-    SAFEALLOC(temp, malloc(d->n->Nsignal * d->n->Nsignal_noisy
-                                     * sizeof(double)));
+    // multiply with the Fourier space noise kernel
+    for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
+    // loop over long direction (rows)
+    {
+        // same logic as in the "redundant" function,
+        //      note that the FT of a real Gaussian is real valued
+        //      so conjugation not required
+        double lambda1;
+        if (ii<=d->n->Nsignal_noisy/2)
+        {
+            lambda1 = d->n->lambdagrid_noisy[ii];
+        }
+        else
+        {
+            lambda1 = d->n->lambdagrid_noisy[d->n->Nsignal_noisy-ii];
+        }
 
-    // multiply from the left with Toeplitz matrix
-    cblas_dgemm(CblasRowMajor, CblasTrans/*toepl matrix needs to be transposed*/,
-                CblasNoTrans/*the right matrix is not transposed*/,
-                d->n->Nsignal_noisy/*rows of left matrix & output*/,
-                d->n->Nsignal/*cols of right matrix & output*/,
-                d->n->Nsignal/*cols of left matrix, rows of right matrix*/,
-                1.0/*alpha*/, d->ns->toepl/*left matrix*/,
-                d->n->Nsignal_noisy/*lda*/, in/*right matrix*/,
-                d->n->Nsignal/*ldb*/, 0.0/*beta*/, temp/*output matrix*/,
-                d->n->Nsignal/*ldc*/);
+        for (long jj=0; jj<d->n->Nsignal_noisy/2+1; jj++)
+        // loop over short direction (cols)
+        {
+            double lambda2 = d->n->lambdagrid_noisy[jj];
 
-    // multiply from the right with Toeplitz matrix (transposed)
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                d->n->Nsignal_noisy, d->n->Nsignal_noisy, d->n->Nsignal,
-                1.0, temp, d->n->Nsignal, d->ns->toepl, d->n->Nsignal_noisy,
-                0.0, out, d->n->Nsignal_noisy);
+            // evaluate the Gaussian kernel in Fourier space
+            //     and normalize properly
+            A[ii*(d->n->Nsignal_noisy/2+1) + jj]
+                *= exp( - 0.5 * d->ns->sigmasq * gsl_pow_2(lambda1)
+                        - 0.5 * d->ns->sigmasq * gsl_pow_2(lambda2)
+                        - zeta * lambda1 * lambda2)
+                   / gsl_pow_2(d->n->Nsignal_noisy);
+        }
+    }
 
-    free(temp);
+    ENDFCT
+}//}}}
+
+// TODO
+int
+noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi)
+// assumes [in] = Nsignal*Nsignal if !is_buffered, else (Nsignal+2)*Nsignal,
+//         [out] = Nsignal_noisy*Nsignal_noisy or NULL
+// CAUTION: this function is not thread safe!
+//              (we need too much buffer space for that to make sense)
+//          Need to consider this in any OMP environment it is called from
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(d->ns->conv_buffer_real[this_core()] == NULL,
+               "trying to access uninitialized buffer.");
+
+    zero_real((d->n->Nsignal_noisy+2)*d->n->Nsignal_noisy,
+              d->ns->conv_buffer_real[this_core()]);
+    // copy into the buffer, which is zero padded by d->ns->len_kernel in each direction
+    for (long ii=0; ii<d->n->Nsignal; ii++)
+    {
+        memcpy(d->ns->conv_buffer_real[this_core()]
+                   + (d->ns->len_kernel+ii) * (d->n->Nsignal_noisy+2) // go downwards
+                   + d->ns->len_kernel, // go right
+               in
+                   + ii * ((is_buffered) ? (d->n->Nsignal+2) : d->n->Nsignal),
+               d->n->Nsignal * sizeof(double));
+    }
+
+    HMPDFCHECK(d->ns->pconv_r2c[this_core()] == NULL,
+               "trying to use uninitialized plan.");
+    
+    // perform the forward FFT
+    fftw_execute(*(d->ns->pconv_r2c[this_core()]));
+
+    // apply the filter in Fourier space
+    SAFEHMPDF(multiply_w_gaussian2d(d, phi, d->ns->conv_buffer_comp[this_core()]));
+
+    HMPDFCHECK(d->ns->pconv_c2r[this_core()] == NULL,
+               "trying to use uninitialized plan.");
+
+    // transform back to real space
+    fftw_execute(*(d->ns->pconv_c2r[this_core()]));
+
+    if (out != NULL)
+    {
+        // copy into the output array (which is not buffered)
+        //    and normalize properly
+        for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
+        {
+            memcpy(out
+                       + ii * d->n->Nsignal_noisy,
+                   d->ns->conv_buffer_real[this_core()]
+                       + ii * (d->n->Nsignal_noisy+2),
+                   d->n->Nsignal_noisy * sizeof(double));
+        }
+    }
 
     ENDFCT
 }//}}}
