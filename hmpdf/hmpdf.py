@@ -76,10 +76,8 @@ class _Configs(object) :
                'phi_jitter', ct.c_double, 'phi_pwr', ct.c_double,
                'zintegr_type', _E(_integr), 'zintegr_alpha', ct.c_double, 'zintegr_beta', ct.c_double,
                'Mintegr_type', _E(_integr), 'Mintegr_alpha', ct.c_double, 'Mintegr_beta', ct.c_double,
-               'Duffy08_conc_params', _D(9),
-               'Tinker10_hmf_params', _D(10),
-               'Battaglia12_tsz_params', _D(15),
-               'noise', ct.c_double, ]
+               'Duffy08_conc_params', _D(9), 'Tinker10_hmf_params', _D(10), 'Battaglia12_tsz_params', _D(15),
+               'noise_pwr', _F(1), 'noise_pwr_params', None, ]
     def __init__(self) :
         self.t = [] # keep references to the types
         self.l = []
