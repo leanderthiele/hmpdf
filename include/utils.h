@@ -20,7 +20,7 @@
 static inline int
 hmpdf_status_update(int *status, int result)
 {//{{{
-    *status = result;
+    *status |= result;
     return result;
 }//}}}
 
