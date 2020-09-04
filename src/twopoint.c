@@ -412,7 +412,7 @@ symmetrize(hmpdf_obj *d, double *A)
         for (long jj=0; jj<ii; jj++)
         {
             A[jj*(d->n->Nsignal+2)+ii]
-                = A[ii*(d->n->Nsignal+2)*jj];
+                = A[ii*(d->n->Nsignal+2)+jj];
         }
     }
 
