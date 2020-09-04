@@ -129,12 +129,14 @@ correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
         {
             double lambda1;
             if (ii<=d->n->Nsignal/2)
+            // positive frequency part
             {
                 lambda1 = d->n->lambdagrid[ii];
             }
             else
+            // negative frequency part
             {
-                lambda1 = d->n->lambdagrid[d->n->Nsignal-ii];
+                lambda1 = - d->n->lambdagrid[d->n->Nsignal-ii];
             }
 
             for (long jj=0; jj<d->n->Nsignal/2+1; jj++)
