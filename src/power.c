@@ -336,7 +336,7 @@ corr(hmpdf_obj *d, int z_index, double phi, double *out)
                "\tor check the units.");
 
     SAFEGSL(gsl_spline_eval_e(d->pwr->corr_interp, r,
-                              d->pwr->corr_accel[this_core()],
+                              d->pwr->corr_accel[THIS_THREAD],
                               out));
     *out *= d->c->Dsq[z_index];
     

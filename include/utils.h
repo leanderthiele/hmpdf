@@ -6,6 +6,10 @@
 #include <errno.h>
 #include <complex.h>
 
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
+
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_errno.h>
 
@@ -394,8 +398,11 @@ void tofile(char *fname, int Nlines, int Nvec, ...);
 double **fromfile(char *fname, int *Nlines, int Nvec);
 int isfile(char *fname);
 
-int num_cores(void);
-int this_core(void);
+#ifdef _OPENMP
+#   define THIS_THREAD omp_get_thread_num()
+#else
+#   define THIS_THREAD 0
+#endif
 
 typedef enum//{{{
 {

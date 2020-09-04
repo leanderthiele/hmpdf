@@ -580,7 +580,7 @@ s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
     reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
     interp1d *interp;
     SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
-                           PRINTERP_TYPE, d->p->incr_tgrid_accel[this_core()], &interp));
+                           PRINTERP_TYPE, d->p->incr_tgrid_accel[THIS_THREAD], &interp));
 
     for (int ii=0; ii<Nt; ii++)
     {

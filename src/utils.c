@@ -423,16 +423,6 @@ isfile(char *fname)
     }
 }//}}}
 
-int
-this_core(void)
-{//{{{
-    #ifdef _OPENMP
-    return omp_get_thread_num();
-    #else
-    return 0;
-    #endif
-}//}}}
-
 struct
 interp1d_s
 {//{{{

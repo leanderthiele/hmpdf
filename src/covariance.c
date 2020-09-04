@@ -499,7 +499,7 @@ add_tp_to_cov(hmpdf_obj *d, int phiindex)
             #endif
             d->cov->Cov[ii*d->n->Nsignal+jj]
                 += d->n->phiweights[phiindex]
-                   * d->cov->ws[this_core()]->pdf_real[ii*(d->n->Nsignal+2)+jj];
+                   * d->cov->ws[THIS_THREAD]->pdf_real[ii*(d->n->Nsignal+2)+jj];
         }
     }
 
@@ -516,7 +516,7 @@ add_tp_to_cov(hmpdf_obj *d, int phiindex)
                 #endif
                 d->cov->Cov_noisy[ii*d->n->Nsignal_noisy+jj]
                     += d->n->phiweights[phiindex]
-                       * d->ns->conv_buffer_real[this_core()][ii*(d->n->Nsignal_noisy+2)+jj];
+                       * d->ns->conv_buffer_real[THIS_THREAD][ii*(d->n->Nsignal_noisy+2)+jj];
             }
         }
     }
@@ -602,20 +602,20 @@ create_cov(hmpdf_obj *d)
 
         // create twopoint at this phi
         SAFEHMPDF_NORETURN(create_tp(d, d->n->phigrid[pp],
-                                     d->cov->ws[this_core()]));
+                                     d->cov->ws[THIS_THREAD]));
         CONTINUE_IF_ERR
 
         // compute noisy two-point PDF if necessary
         if (d->ns->have_noise)
         {
-            SAFEHMPDF_NORETURN(noise_matr(d, d->cov->ws[this_core()]->pdf_real,
+            SAFEHMPDF_NORETURN(noise_matr(d, d->cov->ws[THIS_THREAD]->pdf_real,
                                           NULL/*no separate output allocated*/,
                                           1/*is buffered*/, d->n->phigrid[pp]));
         }
         CONTINUE_IF_ERR
         
         // compute the correlation function
-        SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[this_core()],
+        SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[THIS_THREAD],
                                       d->cov->corr_diagn+pp));
         CONTINUE_IF_ERR
         

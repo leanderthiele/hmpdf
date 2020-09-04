@@ -235,7 +235,7 @@ filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard, double *
         ell = log(ell);
         #endif
         SAFEGSL(gsl_spline_eval_e(_d->f->quadraticpixel_interp[m], ell,
-                                  _d->f->quadraticpixel_accel[m][this_core()],
+                                  _d->f->quadraticpixel_accel[m][THIS_THREAD],
                                   out));
     }
 

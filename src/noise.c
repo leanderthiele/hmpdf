@@ -406,7 +406,7 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
     else
     {
         SAFEGSL(gsl_spline_eval_e(d->ns->zeta_interp, phi,
-                                  d->ns->zeta_accel[this_core()],
+                                  d->ns->zeta_accel[THIS_THREAD],
                                   &zeta));
     }
 
@@ -435,8 +435,8 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
             // evaluate the Gaussian kernel in Fourier space
             //     and normalize properly
             double temp = 0.0;
-            SAFEHMPDF(safe_exp_div(0.5 * d->ns->sigmasq * (gsl_pow_2(lambda1)+gsl_pow_2(lambda2))
-                                   + zeta * lambda1 * lambda2,
+            SAFEHMPDF(safe_exp_div(0.5 * d->ns->sigmasq * (gsl_pow_2(lambda1)+gsl_pow_2(lambda2)),
+// FIXME for debugging                                   + zeta * lambda1 * lambda2,
                                    gsl_pow_2((double)d->n->Nsignal_noisy),
                                    &temp));
             A[ii*(d->n->Nsignal_noisy/2+1) + jj]
@@ -457,15 +457,15 @@ noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi)
 {//{{{
     STARTFCT
 
-    HMPDFCHECK(d->ns->conv_buffer_real[this_core()] == NULL,
+    HMPDFCHECK(d->ns->conv_buffer_real[THIS_THREAD] == NULL,
                "trying to access uninitialized buffer.");
 
     zero_real((d->n->Nsignal_noisy+2)*d->n->Nsignal_noisy,
-              d->ns->conv_buffer_real[this_core()]);
+              d->ns->conv_buffer_real[THIS_THREAD]);
     // copy into the buffer, which is zero padded by d->ns->len_kernel in each direction
     for (long ii=0; ii<d->n->Nsignal; ii++)
     {
-        memcpy(d->ns->conv_buffer_real[this_core()]
+        memcpy(d->ns->conv_buffer_real[THIS_THREAD]
                    + (d->ns->len_kernel+ii) * (d->n->Nsignal_noisy+2) // go downwards
                    + d->ns->len_kernel, // go right
                in
@@ -473,20 +473,20 @@ noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi)
                d->n->Nsignal * sizeof(double));
     }
 
-    HMPDFCHECK(d->ns->pconv_r2c[this_core()] == NULL,
+    HMPDFCHECK(d->ns->pconv_r2c[THIS_THREAD] == NULL,
                "trying to use uninitialized plan.");
     
     // perform the forward FFT
-    fftw_execute(*(d->ns->pconv_r2c[this_core()]));
+    fftw_execute(*(d->ns->pconv_r2c[THIS_THREAD]));
 
     // apply the filter in Fourier space
-    SAFEHMPDF(multiply_w_gaussian2d(d, phi, d->ns->conv_buffer_comp[this_core()]));
+    SAFEHMPDF(multiply_w_gaussian2d(d, phi, d->ns->conv_buffer_comp[THIS_THREAD]));
 
-    HMPDFCHECK(d->ns->pconv_c2r[this_core()] == NULL,
+    HMPDFCHECK(d->ns->pconv_c2r[THIS_THREAD] == NULL,
                "trying to use uninitialized plan.");
 
     // transform back to real space
-    fftw_execute(*(d->ns->pconv_c2r[this_core()]));
+    fftw_execute(*(d->ns->pconv_c2r[THIS_THREAD]));
 
     if (out != NULL)
     {
@@ -496,7 +496,7 @@ noise_matr(hmpdf_obj *d, double *in, double *out, int is_buffered, double phi)
         {
             memcpy(out
                        + ii * d->n->Nsignal_noisy,
-                   d->ns->conv_buffer_real[this_core()]
+                   d->ns->conv_buffer_real[THIS_THREAD]
                        + ii * (d->n->Nsignal_noisy+2),
                    d->n->Nsignal_noisy * sizeof(double));
         }

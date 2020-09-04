@@ -193,7 +193,7 @@ c_of_y(hmpdf_obj *d, double y, double *out)
     STARTFCT
 
     SAFEGSL(gsl_spline_eval_e(d->h->c_interp, log(y),
-                              d->h->c_accel[this_core()], out));
+                              d->h->c_accel[THIS_THREAD], out));
     *out = exp(*out);
 
     ENDFCT
