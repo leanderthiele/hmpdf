@@ -179,9 +179,6 @@ create_noise_zeta_interp(hmpdf_obj *d)
     }
     SAFEGSL(gsl_spline_init(d->ns->zeta_interp, phi, zeta, NOISE_ZETAINTERP_N+1));
 
-    // TODO debugging
-    // savetxt("noise_corrfunc.dat", NOISE_ZETAINTERP_N+1, 2, phi, zeta);
-
     free(phi);
     free(zeta);
 
@@ -208,8 +205,7 @@ sigmasq_integrand(double ell, void *params)
     #endif
 
     // evaluate the noise power spectrum
-    // TODO set noise pwr to 1 for debugging purposes
-    double out = ell;// * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
+    double out = ell * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
 
     // take care of Jacobian if necessary
     #ifdef LOGELL
@@ -256,10 +252,6 @@ create_noise_sigmasq(hmpdf_obj *d)
 
     // correct normalization
     d->ns->sigmasq *= 0.5 * M_1_PI;
-
-    // TODO debugging
-    printf("*** should be pixel sidelength: %.8e arcmin\n",
-           180.0*60.0/M_PI/sqrt(d->ns->sigmasq));
 
     ENDFCT
 }//}}}
