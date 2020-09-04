@@ -187,8 +187,8 @@ create_noise_zeta_interp(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-typedef struct//{{{
-{
+typedef struct
+{//{{{
     int status;
     hmpdf_obj *d;
 }//}}}
@@ -269,10 +269,22 @@ create_toepl(hmpdf_obj *d)
     double var = d->ns->sigmasq
                  / gsl_pow_2(d->n->signalgrid[1] - d->n->signalgrid[0]);
     // fill the first row
-    for (int ii= -(int)d->ns->len_kernel; ii<=(int)d->ns->len_kernel; ii++)
+    for (long ii= -d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
     {
-        d->ns->toepl[ii+d->ns->len_kernel] = exp(-0.5 * gsl_pow_2((double)(ii)) / var)
-                                             /sqrt(2.0 * M_PI * var);
+        double exponent = 0.5 * gsl_pow_2((double)(ii)) / var;
+        double divisor  = sqrt(2.0 * M_PI * var);
+
+        // we need to be careful with underflows here
+        if (exponent > - GSL_MAX(0.0, log(divisor)) /* take care of underflow both in exp and division */
+                       - log((double)FLT_RADIX) * (double)DBL_MIN_EXP
+                       - 2.0 /* some extra safety */)
+        {
+            d->ns->toepl[ii+d->ns->len_kernel] = 0.0;
+        }
+        else
+        {
+            d->ns->toepl[ii+d->ns->len_kernel] = exp(-exponent) / divisor;
+        }
     }
     // fill the remaining rows
     for (long ii=1; ii<d->n->Nsignal; ii++)
