@@ -765,7 +765,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
                                                &inrange, &val));
                 val *= gsl_pow_2(d->p->profiles[z_index][M_index][0])
                        * (d->n->signalgrid[1] - d->n->signalgrid[0]);
-                val = fabs(val); // we only the the absolute value of dtheta^2/dsignal,
+                val = fabs(val); // we only need the absolute value of dtheta^2/dsignal,
                                  //     since we only use it as Jacobians
                 break;
             case (t_of_s)    :

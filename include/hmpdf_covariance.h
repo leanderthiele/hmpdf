@@ -19,6 +19,9 @@
  *          has been called on d, the pre-computed result is used and only the binning is performed.
  *  \remark If #hmpdf_verbosity is set to a positive value, status updates with estimated remaining
  *          time will be given during execution.
+ *  \remark The covariance matrix is normalized for a hypothetical all-sky survey.
+ *          You will have to divide by your sky coverage fsky
+ *          to get the correct one on your specific application.
  */
 int hmpdf_get_cov(hmpdf_obj *d,
                   int Nbins,

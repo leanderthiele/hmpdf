@@ -60,7 +60,8 @@ var a00023 =
       [ "hmpdf_Duffy08_conc_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a019378f9941108b49b13dbc58f18f543", null ],
       [ "hmpdf_Tinker10_hmf_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6faee0a5c3a0ade3183faabef5880c93", null ],
       [ "hmpdf_Battaglia12_tsz_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c", null ],
-      [ "hmpdf_noise", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4", null ],
+      [ "hmpdf_noise_pwr", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774", null ],
+      [ "hmpdf_noise_pwr_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2", null ],
       [ "hmpdf_end_configs", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3", null ]
     ] ]
 ];
