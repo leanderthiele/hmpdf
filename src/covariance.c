@@ -717,6 +717,8 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
     ENDFCT
 }//}}}
 
+// The following functions are only necessary for the python wrapper
+
 int
 _get_Nphi(hmpdf_obj *d, int *Nphi)
 {//{{{
