@@ -399,9 +399,16 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
 
     // evaluate pixel-pixel noise correlation function
     double zeta;
-    SAFEGSL(gsl_spline_eval_e(d->ns->zeta_interp, phi,
-                              d->ns->zeta_accel[this_core()],
-                              &zeta));
+    if (phi > 0.5 * d->n->phimax)
+    {
+        zeta = 0.0;
+    }
+    else
+    {
+        SAFEGSL(gsl_spline_eval_e(d->ns->zeta_interp, phi,
+                                  d->ns->zeta_accel[this_core()],
+                                  &zeta));
+    }
 
     // multiply with the Fourier space noise kernel
     for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
