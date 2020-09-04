@@ -134,9 +134,9 @@ phigrid_exact_part_centers(hmpdf_obj *d, double **grid, double **weights, int *b
                                     "expanded buffer too often.");
         }
 
-        *grid[*Nexact] = sqrt((double)(_rsq[ii]))
-                              * d->f->pixelside;
-        *weights[(*Nexact)++] = (double)(4 * ctr);
+        (*grid)[*Nexact] = sqrt((double)(_rsq[ii]))
+                         * d->f->pixelside;
+        (*weights)[(*Nexact)++] = (double)(4 * ctr);
         ii = jj;
     }
     free(_rsq);
@@ -165,17 +165,17 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
         double deltaphi;
         if (ii == 0)
         {
-            deltaphi = *grid[1] - *grid[0];
+            deltaphi = (*grid)[1] - (*grid)[0];
         }
         else if (ii == *Nexact-1)
         {
-            deltaphi = *grid[*Nexact-1] - *grid[*Nexact-2];
+            deltaphi = (*grid)[*Nexact-1] - (*grid)[*Nexact-2];
         }
         else
         {
-            deltaphi = 0.5 * (*grid[ii+1] - *grid[ii-1]);
+            deltaphi = 0.5 * ((*grid)[ii+1] - (*grid)[ii-1]);
         }
-        double rho_here = pow(*grid[ii], 1.0/d->n->phipwr-1.0);
+        double rho_here = pow((*grid)[ii], 1.0/d->n->phipwr-1.0);
         
         int Nphi_here = (int)(ceil(deltaphi * rho0 * rho_here)) - 1;
 
@@ -186,7 +186,7 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
             --Nphi_here;
         }
 
-        *weights[ii] /= (double)(Nphi_here+1);
+        (*weights)[ii] /= (double)(Nphi_here+1);
 
         while (UNLIKELY(end+Nphi_here-1 >= *buflen))
         {
@@ -200,13 +200,13 @@ phigrid_exact_part_jitter(hmpdf_obj *d, double **grid, double **weights, int *bu
 
         for (int jj=1; jj<=Nphi_here/2; jj++)
         {
-            *grid[end+2*jj-2] = *grid[ii]
-                                + deltaphi * d->n->phijitter
-                                  * (double)(jj) / (double)(Nphi_here/2);
-            *grid[end+2*jj-1] = *grid[ii]
-                                - deltaphi * d->n->phijitter
-                                  * (double)(jj) / (double)(Nphi_here/2);
-            *weights[end+2*jj-2] = *weights[end+2*jj-1] = *weights[ii];
+            (*grid)[end+2*jj-2] = (*grid)[ii]
+                                  + deltaphi * d->n->phijitter
+                                    * (double)(jj) / (double)(Nphi_here/2);
+            (*grid)[end+2*jj-1] = (*grid)[ii]
+                                  - deltaphi * d->n->phijitter
+                                    * (double)(jj) / (double)(Nphi_here/2);
+            (*weights)[end+2*jj-2] = (*weights)[end+2*jj-1] = (*weights)[ii];
         }
         end += Nphi_here;
     }
@@ -259,14 +259,14 @@ phigrid_approx_part(hmpdf_obj *d, int Nexact, double **grid, double **weights, i
                                         "expanded buffer too often.");
             }
 
-            *grid[Nexact + *Napprox] = pow(x[ii], d->n->phipwr);
+            (*grid)[Nexact + *Napprox] = pow(x[ii], d->n->phipwr);
             // fix the normalization
-            *weights[Nexact + *Napprox] = w[ii]
-                                          * 2.0 * M_PI * *grid[Nexact + *Napprox]          
-                                          / gsl_pow_2(d->f->pixelside)                 
-                                          // Jacobian of the transformation            
-                                          * d->n->phipwr                               
-                                          * pow(x[ii], d->n->phipwr-1.0);          
+            (*weights)[Nexact + *Napprox] = w[ii]
+                                            * 2.0 * M_PI * (*grid)[Nexact + *Napprox]          
+                                            / gsl_pow_2(d->f->pixelside)                 
+                                            // Jacobian of the transformation            
+                                            * d->n->phipwr                               
+                                            * pow(x[ii], d->n->phipwr-1.0);          
             ++(*Napprox);
         }
     }
