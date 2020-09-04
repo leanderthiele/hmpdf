@@ -82,7 +82,7 @@
 #define NOISE_EPSABS 1e-1 // in units of the signal grid spacing
 #define NOISE_EPSREL 1e-3
 #define NOISE_KEY    6
-#define NOISE_ZETAINTERP_N 10000
+#define NOISE_ZETAINTERP_N 1000
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
