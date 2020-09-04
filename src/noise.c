@@ -419,12 +419,14 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
         //      so conjugation not required
         double lambda1;
         if (ii<=d->n->Nsignal_noisy/2)
+        // positive frequency part
         {
             lambda1 = d->n->lambdagrid_noisy[ii];
         }
         else
+        // negative frequency part
         {
-            lambda1 = d->n->lambdagrid_noisy[d->n->Nsignal_noisy-ii];
+            lambda1 = - d->n->lambdagrid_noisy[d->n->Nsignal_noisy-ii];
         }
 
         for (long jj=0; jj<d->n->Nsignal_noisy/2+1; jj++)
@@ -435,8 +437,8 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
             // evaluate the Gaussian kernel in Fourier space
             //     and normalize properly
             double temp = 0.0;
-            SAFEHMPDF(safe_exp_div(0.5 * d->ns->sigmasq * (gsl_pow_2(lambda1)+gsl_pow_2(lambda2)),
-// FIXME for debugging                                   + zeta * lambda1 * lambda2,
+            SAFEHMPDF(safe_exp_div(0.5 * d->ns->sigmasq * (gsl_pow_2(lambda1)+gsl_pow_2(lambda2))
+                                   + zeta * lambda1 * lambda2,
                                    gsl_pow_2((double)d->n->Nsignal_noisy),
                                    &temp));
             A[ii*(d->n->Nsignal_noisy/2+1) + jj]
