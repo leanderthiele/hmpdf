@@ -202,22 +202,23 @@ sigmasq_integrand(double ell, void *params)
 // if LOGELL is defined, ell = log(ell)
 {//{{{
     sigmasq_integrand_params *p = (sigmasq_integrand_params *)params;
+
     #ifdef LOGELL
     ell = exp(ell);
     #endif
 
     // evaluate the noise power spectrum
-    double temp = ell * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
+    double out = ell * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
 
     // take care of Jacobian if necessary
     #ifdef LOGELL
-    temp *= ell;
+    out *= ell;
     #endif
 
     // apply the other filters
-    p->status = apply_filters(p->d, 1, &ell, &temp, &temp, 1, filter_ps, NULL);
+    p->status = apply_filters(p->d, 1, &ell, &out, &out, 1, filter_ps, NULL);
 
-    return temp;
+    return out;
 }//}}}
 
 static int
@@ -244,7 +245,8 @@ create_noise_sigmasq(hmpdf_obj *d)
     gsl_integration_workspace *ws;
     SAFEALLOC(ws, gsl_integration_workspace_alloc(NOISE_LIMIT));
     SAFEGSL(gsl_integration_qag(&integrand, ellmin, ellmax,
-                                NOISE_EPSABS*(d->n->signalgrid[1]-d->n->signalgrid[0]),
+                                NOISE_EPSABS
+                                    * gsl_pow_2(d->n->signalgrid[1]-d->n->signalgrid[0]),
                                 NOISE_EPSREL, NOISE_LIMIT, NOISE_KEY,
                                 ws, &(d->ns->sigmasq), &err));
     gsl_integration_workspace_free(ws);
@@ -253,6 +255,9 @@ create_noise_sigmasq(hmpdf_obj *d)
 
     // correct normalization
     d->ns->sigmasq *= 0.5 * M_1_PI;
+
+    // TODO debugging
+    printf("sigma = %.8e\n", sqrt(d->ns->sigmasq));
 
     ENDFCT
 }//}}}

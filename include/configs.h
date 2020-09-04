@@ -77,7 +77,7 @@
 #define COV_STATUS_PERIOD 100
 
 #define NOISE_ELLMIN 1e-2
-#define NOISE_ELLMAX 1e6
+#define NOISE_ELLMAX 1e10
 #define NOISE_LIMIT  1000
 #define NOISE_EPSABS 1e-1 // in units of the signal grid spacing
 #define NOISE_EPSREL 1e-3
