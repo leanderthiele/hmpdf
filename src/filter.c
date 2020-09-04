@@ -66,7 +66,7 @@ reset_filters(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-static double
+static inline double
 sinc(double x)
 {//{{{
     if (x > 1e-4)
@@ -100,7 +100,9 @@ static double
 (*Bell[])(double, void *) = {Bell_pdf, Bell_ps};
 
 static int
-_quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
+create_quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
+// produces interpolator for the quadratic pixel window function
+//     with unit pixel sidelength
 {//{{{
     STARTFCT
 
@@ -217,8 +219,8 @@ filter_quadraticpixel(void *d, double ell, filter_mode m, int *discard, double *
     STARTFCT
 
     hmpdf_obj *_d = (hmpdf_obj *)d;
-    // rescale ell to unit half pixel sidelength
-    ell *= 0.5 * _d->f->pixelside;
+    // rescale ell to unit pixel sidelength
+    ell *= _d->f->pixelside;
     if (ell < _d->f->quadraticpixel_ellmin[m])
     {
         *out = 1.0;
@@ -385,8 +387,8 @@ init_filters(hmpdf_obj *d)
                   malloc(2 * sizeof(double)));
         SAFEALLOC(d->f->quadraticpixel_ellmax,
                   malloc(2 * sizeof(double)));
-        SAFEHMPDF(_quadraticpixelinterp(d, filter_pdf));
-        SAFEHMPDF(_quadraticpixelinterp(d, filter_ps));
+        SAFEHMPDF(create_quadraticpixelinterp(d, filter_pdf));
+        SAFEHMPDF(create_quadraticpixelinterp(d, filter_ps));
         d->f->ffilters[d->f->Nfilters] = &filter_quadraticpixel;
         d->f->z_dependent[d->f->Nfilters] = 0;
         ++d->f->Nfilters;

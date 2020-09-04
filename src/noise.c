@@ -208,7 +208,8 @@ sigmasq_integrand(double ell, void *params)
     #endif
 
     // evaluate the noise power spectrum
-    double out = ell * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
+    // TODO set noise pwr to 1 for debugging purposes
+    double out = ell;// * p->d->ns->noise_pwr(ell, p->d->ns->noise_pwr_params);
 
     // take care of Jacobian if necessary
     #ifdef LOGELL
@@ -257,7 +258,8 @@ create_noise_sigmasq(hmpdf_obj *d)
     d->ns->sigmasq *= 0.5 * M_1_PI;
 
     // TODO debugging
-    printf("sigma = %.8e\n", sqrt(d->ns->sigmasq));
+    printf("*** should be pixel sidelength: %.8e arcmin\n",
+           180.0*60.0/M_PI/sqrt(d->ns->sigmasq));
 
     ENDFCT
 }//}}}
