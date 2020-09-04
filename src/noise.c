@@ -254,6 +254,26 @@ create_noise_sigmasq(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
+static inline int
+safe_exp_div(double exponent, double divisor, double *out)
+// computes exp(-exponent)/divisor in an underflow-safe way
+{//{{{
+    STARTFCT
+
+    if (exponent > - GSL_MAX(0.0, log(divisor))
+                   - log((double)FLT_RADIX) * (double)DBL_MIN_EXP
+                   - 2.0)
+    {
+        *out = 0.0;
+    }
+    else
+    {
+        *out = exp(-exponent)/divisor;
+    }
+
+    ENDFCT
+}//}}}
+
 static int
 create_toepl(hmpdf_obj *d)
 // creates Toeplitz matrix nrows=Nsignal, ncols=Nsignal_noisy
@@ -271,20 +291,9 @@ create_toepl(hmpdf_obj *d)
     // fill the first row
     for (long ii= -d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
     {
-        double exponent = 0.5 * gsl_pow_2((double)(ii)) / var;
-        double divisor  = sqrt(2.0 * M_PI * var);
-
-        // we need to be careful with underflows here
-        if (exponent > - GSL_MAX(0.0, log(divisor)) /* take care of underflow both in exp and division */
-                       - log((double)FLT_RADIX) * (double)DBL_MIN_EXP
-                       - 2.0 /* some extra safety */)
-        {
-            d->ns->toepl[ii+d->ns->len_kernel] = 0.0;
-        }
-        else
-        {
-            d->ns->toepl[ii+d->ns->len_kernel] = exp(-exponent) / divisor;
-        }
+        SAFEHMPDF(safe_exp_div(0.5 * gsl_pow_2((double)(ii)) / var,
+                               sqrt(2.0 * M_PI * var),
+                               d->ns->toepl + ii + d->ns->len_kernel));
     }
     // fill the remaining rows
     for (long ii=1; ii<d->n->Nsignal; ii++)
@@ -416,11 +425,13 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
 
             // evaluate the Gaussian kernel in Fourier space
             //     and normalize properly
+            double temp = 0.0;
+            SAFEHMPDF(safe_exp_div(0.5 * d->ns->sigmasq * (gsl_pow_2(lambda1)+gsl_pow_2(lambda2))
+                                   + zeta * lambda1 * lambda2,
+                                   gsl_pow_2((double)d->n->Nsignal_noisy),
+                                   &temp));
             A[ii*(d->n->Nsignal_noisy/2+1) + jj]
-                *= exp( - 0.5 * d->ns->sigmasq * gsl_pow_2(lambda1)
-                        - 0.5 * d->ns->sigmasq * gsl_pow_2(lambda2)
-                        - zeta * lambda1 * lambda2)
-                   / gsl_pow_2(d->n->Nsignal_noisy);
+                *= temp;
         }
     }
 
