@@ -615,7 +615,7 @@ prepare_tp(hmpdf_obj *d, double phi)
                d->n->Nsignal * sizeof(double));
     }
 
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         SAFEHMPDF(create_noise_matr_conv(d, 1/*need only one buffer*/));
         SAFEHMPDF(create_noisy_tp(d, phi));

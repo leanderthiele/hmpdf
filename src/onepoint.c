@@ -283,7 +283,7 @@ prepare_op(hmpdf_obj *d)
     }
     SAFEHMPDF(create_segments(d));
     SAFEHMPDF(create_op(d));
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     // include gaussian noise
     {
         SAFEHMPDF(create_noisy_op(d));
@@ -297,7 +297,7 @@ pdf_check_user_input(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], int nois
 {//{{{
     STARTFCT
 
-    HMPDFCHECK(noisy && d->ns->noise_pwr==NULL,
+    HMPDFCHECK(noisy && !(d->ns->have_noise),
                "noisy output requested but no/invalid noise power spectrum passed.");
 
     HMPDFCHECK(not_monotonic(Nbins+1, binedges, 1),

@@ -503,7 +503,7 @@ add_tp_to_cov(hmpdf_obj *d, int phiindex)
         }
     }
 
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         // add to noisy covariance matrix
         for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
@@ -544,7 +544,7 @@ subtract_op_from_cov(hmpdf_obj *d)
         }
     }
 
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         for (long ii=0; ii<d->n->Nsignal_noisy; ii++)
         {
@@ -572,7 +572,7 @@ create_cov(hmpdf_obj *d)
     SAFEALLOC(d->cov->Cov, malloc(d->n->Nsignal
                                   * d->n->Nsignal
                                   * sizeof(double)));
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         SAFEALLOC(d->cov->Cov_noisy, malloc(d->n->Nsignal_noisy
                                             * d->n->Nsignal_noisy
@@ -582,7 +582,7 @@ create_cov(hmpdf_obj *d)
 
     // zero covariance
     zero_real(d->n->Nsignal * d->n->Nsignal, d->cov->Cov);
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         zero_real(d->n->Nsignal_noisy * d->n->Nsignal_noisy,
                   d->cov->Cov_noisy);
@@ -606,7 +606,7 @@ create_cov(hmpdf_obj *d)
         CONTINUE_IF_ERR
 
         // compute noisy two-point PDF if necessary
-        if (d->ns->noise_pwr != NULL)
+        if (d->ns->have_noise)
         {
             SAFEHMPDF_NORETURN(noise_matr(d, d->cov->ws[this_core()]->pdf_real,
                                           NULL/*no separate output allocated*/,
@@ -663,7 +663,7 @@ prepare_cov(hmpdf_obj *d)
 
     SAFEHMPDF(create_op(d));
 
-    if (d->ns->noise_pwr != NULL)
+    if (d->ns->have_noise)
     {
         SAFEHMPDF(create_noisy_op(d));
         SAFEHMPDF(create_noise_matr_conv(d, d->Ncores));

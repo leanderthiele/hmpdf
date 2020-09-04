@@ -14,6 +14,8 @@
 
 typedef struct
 {//{{{
+    int have_noise;
+
     hmpdf_noise_pwr_f noise_pwr;
     void *noise_pwr_params;
 

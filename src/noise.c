@@ -514,9 +514,15 @@ init_noise(hmpdf_obj *d)
     {
         HMPDFPRINT(1, "init_noise\n");
 
+        d->ns->have_noise = 1;
+
         SAFEHMPDF(create_noise_sigmasq(d));
         SAFEHMPDF(create_noisy_grids(d));
         SAFEHMPDF(create_toepl(d));
+    }
+    else
+    {
+        d->ns->have_noise = 0;
     }
 
     ENDFCT
