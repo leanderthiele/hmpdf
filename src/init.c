@@ -287,19 +287,19 @@ assign_set(param *p, va_list *valist)
             {                                              \
                 WPEDANTICOFF                               \
                 if (*((dt*)(p->target)) < *((dt*)(p->lo))) \
-                WPEDANTICON                                \
                 {                                          \
                     *invalid_param = 1;                    \
                 }                                          \
+                WPEDANTICON                                \
             }                                              \
             if (p->hi != NULL)                             \
             {                                              \
                 WPEDANTICOFF                               \
                 if (*((dt*)(p->target)) > *((dt*)(p->hi))) \
-                WPEDANTICON                                \
                 {                                          \
                     *invalid_param = 1;                    \
                 }                                          \
+                WPEDANTICON                                \
             }                                              \
         }                                                  \
     } while (0)
