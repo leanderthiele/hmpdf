@@ -2,6 +2,7 @@ var a00023 =
 [
     [ "hmpdf_ell_filter_f", "a00023.html#a7a44e2a9bed611ed03ff9e9562889ecd", null ],
     [ "hmpdf_k_filter_f", "a00023.html#ab6eff32b2c4e8683eef46fdd72c2c9bb", null ],
+    [ "hmpdf_noise_pwr_f", "a00023.html#a69c88da0bada53144a3d1146b108e110", null ],
     [ "hmpdf_mdef_e", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8", [
       [ "hmpdf_mdef_c", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8ab75c5e756a302fb1e6182629f0d8ffe9", null ],
       [ "hmpdf_mdef_v", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8a8bc157256dc9a78fae3f64b30022b23e", null ],

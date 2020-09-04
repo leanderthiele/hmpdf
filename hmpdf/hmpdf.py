@@ -111,6 +111,7 @@ class HMPDF(object) :
          + passing custom ell- and k-space filters works differently,
            see the @ref examples. The options #hmpdf_custom_ell_filter_params
            and #hmpdf_custom_k_filter_params are not supported.
+           Analogous for the noise power spectrum (and #hmpdf_noise_pwr_params).
 
     Best used in a context manager.
     """

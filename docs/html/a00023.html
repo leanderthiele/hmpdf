@@ -106,6 +106,8 @@ Typedefs</h2></td></tr>
 <tr class="separator:a7a44e2a9bed611ed03ff9e9562889ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00023.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>) (double, double, void *)</td></tr>
 <tr class="separator:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69c88da0bada53144a3d1146b108e110"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00023.html#a69c88da0bada53144a3d1146b108e110">hmpdf_noise_pwr_f</a>) (double, void *)</td></tr>
+<tr class="separator:a69c88da0bada53144a3d1146b108e110"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -233,6 +235,28 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
+<a id="a69c88da0bada53144a3d1146b108e110"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69c88da0bada53144a3d1146b108e110">&#9670;&nbsp;</a></span>hmpdf_noise_pwr_f</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef double(* hmpdf_noise_pwr_f) (double, void *)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Function pointer typedef for user-defined noise power spectrum. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ell</td><td>angular wavenumber </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2">hmpdf_noise_pwr_params</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>N(ell) noise power at ell. </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a5a2e2fcf33b67b716093720bc876e7d8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5a2e2fcf33b67b716093720bc876e7d8">&#9670;&nbsp;</a></span>hmpdf_mdef_e</h2>
@@ -325,7 +349,7 @@ Enumerations</h2></td></tr>
 <p>Frequently used options:</p><ul>
 <li>pixelization: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></li>
 <li>ell space filters: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>)</li>
-<li>pixel-wise Gaussian noise: #hmpdf_noise</li>
+<li>Gaussian noise: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2">hmpdf_noise_pwr_params</a>)</li>
 <li>multithreading: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></li>
 </ul>
 <p>Less frequently used options:</p><ul>
@@ -460,7 +484,7 @@ if, however, numerical instability is encountered, results can get more accurate
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c"></a>hmpdf_Battaglia12_tsz_params&#160;</td><td class="fielddoc"><p>Fit parameters in the <a href="https://arxiv.org/abs/1109.3711">Battaglia+2012</a> pressure profile model. </p><dl class="section user"><dt></dt><dd>Type: double[15]. Default: see src/configs.c. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>in the python wrapper, pass a 1d numpy array </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774"></a>hmpdf_noise_pwr&#160;</td><td class="fielddoc"><p>Option to add pixel-wise Gaussian noise with this power spectrum. </p><dl class="section user"><dt></dt><dd>Type: #hmpdf_noise_pwr_f. Default: None. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774"></a>hmpdf_noise_pwr&#160;</td><td class="fielddoc"><p>Option to add pixel-wise Gaussian noise with this power spectrum. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00023.html#a69c88da0bada53144a3d1146b108e110">hmpdf_noise_pwr_f</a>. Default: None. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2"></a>hmpdf_noise_pwr_params&#160;</td><td class="fielddoc"><p>To pass custom parameters to the function <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>. </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
 </td></tr>

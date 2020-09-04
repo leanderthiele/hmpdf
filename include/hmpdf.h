@@ -77,7 +77,7 @@
  *      + pixelization: #hmpdf_pixel_side
  *      + ell space filters: #hmpdf_tophat_radius, #hmpdf_gaussian_fwhm,
  *                           #hmpdf_custom_ell_filter (and #hmpdf_custom_ell_filter_params)
- *      + pixel-wise Gaussian noise: #hmpdf_noise
+ *      + Gaussian noise: #hmpdf_noise_pwr (and #hmpdf_noise_pwr_params)
  *      + multithreading: #hmpdf_N_threads
  *
  *  See the documentation of #hmpdf_configs_e for all options.

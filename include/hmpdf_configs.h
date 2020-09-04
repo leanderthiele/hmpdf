@@ -62,7 +62,7 @@ typedef enum
  *      + pixelization: #hmpdf_pixel_side
  *      + ell space filters: #hmpdf_tophat_radius, #hmpdf_gaussian_fwhm,
  *                           #hmpdf_custom_ell_filter (and #hmpdf_custom_ell_filter_params)
- *      + pixel-wise Gaussian noise: #hmpdf_noise
+ *      + Gaussian noise: #hmpdf_noise_pwr (and #hmpdf_noise_pwr_params)
  *      + multithreading: #hmpdf_N_threads
  *  
  *  Less frequently used options:
@@ -352,12 +352,12 @@ typedef double (*hmpdf_k_filter_f)(double,
                                    double,
                                    void *);
 
-/* Function pointer typedef for user-defined noise power spectrum.
- * Passed to hmpdf_init() as #hmpdf_noise_pwr.
- * \param ell       angular wavenumber
- * \param p         pointer that allows user to pass other parameters.
- *                  Passed to hmpdf_init() as #hmpdf_noise_pwr_params.
- * \return N(ell)   noise power at ell.
+/*! Function pointer typedef for user-defined noise power spectrum.
+ *  Passed to hmpdf_init() as #hmpdf_noise_pwr.
+ *  \param ell       angular wavenumber
+ *  \param p         pointer that allows user to pass other parameters.
+ *                   Passed to hmpdf_init() as #hmpdf_noise_pwr_params.
+ *  \return N(ell)   noise power at ell.
  */
 typedef double (*hmpdf_noise_pwr_f)(double,
                                     void *);
