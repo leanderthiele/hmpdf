@@ -25,6 +25,10 @@
  *  A setting is passed as a pair \<name\>, \<value\>, where \<name\> is one of
  *  #hmpdf_configs_e, and \<value\> must have the type given in the documentation
  *  for that specific \<name\>.
+ *  \attention In this context, be careful with literals passed as \<value\>,
+ *             as the compiler will be unable to figure out any necessary casts.
+ *             For example, if passing a literal as #hmpdf_N_signal,
+ *             it needs to be an explicit long.
  *  
  *  For example, to perform a weak lensing calculation with source redshift 1
  *  and all configurations at default except for the number of threads and the
