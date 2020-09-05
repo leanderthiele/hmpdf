@@ -6,6 +6,7 @@
 #include "hmpdf_configs.h"
 
 /*! Initializes the #hmpdf_obj and computes data that is needed for all outputs.
+ *  This is a convenience macro wrapping hmpdf_init_fct().
  *
  *  \param[in,out] d        created with hmpdf_new()
  *  \param[in] class_ini    path to a CLASS .ini file
