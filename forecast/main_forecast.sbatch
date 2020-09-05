@@ -15,7 +15,7 @@ module purge
 module load gsl/2.6
 module load fftw/gcc/3.3.4
 
-cd $USER/hmpdf/forecast
+cd $HOME/hmpdf/forecast
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:..
 export OMP_NUM_THREADS=4
