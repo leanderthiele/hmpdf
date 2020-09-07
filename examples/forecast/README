@@ -1,0 +1,32 @@
+This directory contains the necessary ingredients
+to produce all input for the Fisher forecast
+as performed in Thiele, Hill, Smith 2020.
+
+1) Compile the driver code with
+    sh compile.sh
+
+2) Adapt main_forecast.sbatch to your specific system
+    (it may be necessary to load differently named modules)
+
+3) Run the array job with
+    sbatch main_forecast.sbatch
+
+4) Feed the results found in the results/ directory
+   into your Fisher code.
+   They are plain text files with the naming convention
+     <prefix><param><p/m>_<Nbins>_<type>(_<noisy>)
+   where
+     <prefix> a book-keeping name defined in main_forecast.c
+     <param>  the varied parameter,
+                 As, Om, Mn (cosmology)
+                 A,  B,  C  (concentration model)
+     <p/m>    either p or m for plus and minus variations
+              The specific parameter values can be found in the
+              CLASS .ini files in cosmologies/
+     [there is also one where instead of <param><p/m> you just
+      have "fid", this is the fiducial run.]
+     <Nbins>  an integer giving the number of bins the PDF was
+              binned into
+     <type>   either pdf or cov
+     (_noisy) the versions including noise, as specified by the
+              power spectrum Nell in main_forecast.c

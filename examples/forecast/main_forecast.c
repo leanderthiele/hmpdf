@@ -4,10 +4,13 @@
  * This code computes PDFs and covariance matrix for the fiducial model
  * and varied cosmological and concentration model parameters.
  *
- * The code takes one command line argument, integer IDX :
+ * The executable takes one command line argument, integer IDX :
  *      IDX = 0     fid       -- fiducial model
  *            1..6  varcosmo  -- varied cosmological parameters
  *            7..12 varconc   -- varied concentration model parameters
+ *            
+ *            (we have 3 parameters on the cosmology and concentration side
+ *             respectively, each with variations plus and minus)
  */
 
 #include <stdlib.h>
@@ -21,12 +24,12 @@
 #define KMIN -0.03 // minimum kappa 
 #define KMAX 0.3   // maximum kappa
 #define SN   0.3   // shape noise parameter
-#define NGAL 13.25 // galaxy density per arcmin^2
+#define NGAL 45.0  // galaxy density per arcmin^2
 
 // prefix to read .ini files from
 #define INI_PATH "./cosmologies/"
 // prefix to put output
-#define OUT_PATH "./results/Sep4_"
+#define OUT_PATH "./results/productionrun_"
 // Wiener filter file
 #define WIENER_FILE "./Wiener_filter.txt"
 // CLASS precision file
@@ -43,19 +46,20 @@ const int binnings[] = {100, 200, 400};
                hmpdf_class_pre, PRE_FILE,         \
                hmpdf_N_threads, 4,                \
                hmpdf_pixel_side, 0.41,            \
-               hmpdf_signal_max, 1.0,             \
+               hmpdf_signal_max, 0.4,             \
                hmpdf_N_theta, 500,                \
                hmpdf_M_max, 1e17,                 \
                hmpdf_N_M, 80,                     \
                hmpdf_N_z, 80,                     \
-               hmpdf_N_signal, 2048L,             \
-               hmpdf_N_phi, 1000,                 \
-               hmpdf_rout_scale, 2.0,             \
+               hmpdf_N_signal, 1024L,             \
+               hmpdf_N_phi, 2000,                 \
+               hmpdf_rout_scale, 1.6,             \
                hmpdf_custom_ell_filter, &Well,    \
                hmpdf_custom_ell_filter_params, p, \
                hmpdf_noise_pwr, &Nell,            \
                ##__VA_ARGS__)
 // note : dealing with empty __VA_ARGS__ this way is an extension
+//        not supported by every compiler (but gcc does)
 
 // Wiener filter interpolator
 double Well(double ell, void *p)
