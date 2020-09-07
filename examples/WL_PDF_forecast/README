@@ -14,7 +14,7 @@ as performed in Thiele, Hill, Smith 2020.
 4) Feed the results found in the results/ directory
    into your Fisher code.
    They are plain text files with the naming convention
-     <prefix><param><p/m>_<Nbins>_<type>(_<noisy>)
+     <prefix><param><p/m>_<Nbins>_<type>(_noisy)
    where
      <prefix> a book-keeping name defined in main_forecast.c
      <param>  the varied parameter,
