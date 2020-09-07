@@ -138,6 +138,10 @@
  *
  *  We can also do this in python:
  *  \snippet example.py example_ell_filter_use
+ *
+ *  For a more involved example, in examples/forecast/ you can find all ingredients
+ *  to reproduce the Fisher forecast from the WL convergence PDF
+ *  (see the README there).
  */
 
 #include "hmpdf_object.h"
