@@ -28,5 +28,6 @@ as performed in Thiele, Hill, Smith 2020.
      <Nbins>  an integer giving the number of bins the PDF was
               binned into
      <type>   either pdf or cov
+              (the covariance matrix is stored as flattened array)
      (_noisy) the versions including noise, as specified by the
               power spectrum Nell in main_forecast.c
