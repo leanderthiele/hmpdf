@@ -22,11 +22,11 @@ class _C(object) : # char pointer
 
 class _E(object) : # enumeration class
 #{{{
-    _integr = ['legendre', 'chebyshev', 'gegenbauer', 'jacobi', 'laguerre',
+    integr = ['legendre', 'chebyshev', 'gegenbauer', 'jacobi', 'laguerre',
               'hermite', 'exponential', 'rational', 'chebyshev2']
-    _stypes = ['kappa', 'tsz']
-    _mdefs = ['mdef_c', 'mdef_v', 'mdef_m', ]
-    _corr_types = ['onehalo', 'twohalo', 'total']
+    stypes = ['kappa', 'tsz']
+    mdefs = ['mdef_c', 'mdef_v', 'mdef_m', ]
+    corr_types = ['onehalo', 'twohalo', 'total']
     def __init__(self, names) :
         self.names = names
     def __call__(self, name) :
@@ -64,14 +64,14 @@ class _Configs(object) :
                'N_z', ct.c_int, 'z_min', ct.c_double, 'z_max', ct.c_double,
                'N_M', ct.c_int, 'M_min', ct.c_double, 'M_max', ct.c_double,
                'N_signal', ct.c_long, 'signal_min', ct.c_double, 'signal_max', ct.c_double,
-               'N_theta', ct.c_int, 'rout_scale', ct.c_double, 'rout_rdef', _E(_E._mdefs),
+               'N_theta', ct.c_int, 'rout_scale', ct.c_double, 'rout_rdef', _E(_E.mdefs),
                'pixel_side', ct.c_double, 'tophat_radius', ct.c_double, 'gaussian_fwhm', ct.c_double,
                'custom_ell_filter', _F(1), 'custom_ell_filter_params', None,
                'custom_k_filter', _F(2), 'custom_k_filter_params', None,
                'N_phi', ct.c_int, 'phi_max', ct.c_double, 'pixelexact_max', ct.c_int,
                'phi_jitter', ct.c_double, 'phi_pwr', ct.c_double,
-               'zintegr_type', _E(_E._integr), 'zintegr_alpha', ct.c_double, 'zintegr_beta', ct.c_double,
-               'Mintegr_type', _E(_E._integr), 'Mintegr_alpha', ct.c_double, 'Mintegr_beta', ct.c_double,
+               'zintegr_type', _E(_E.integr), 'zintegr_alpha', ct.c_double, 'zintegr_beta', ct.c_double,
+               'Mintegr_type', _E(_E.integr), 'Mintegr_alpha', ct.c_double, 'Mintegr_beta', ct.c_double,
                'Duffy08_conc_params', _D(9), 'Tinker10_hmf_params', _D(10), 'Battaglia12_tsz_params', _D(15),
                'noise_pwr', _F(1), 'noise_pwr_params', None, ]
     def __init__(self) :
@@ -120,7 +120,7 @@ class HMPDF(object) :
         PATHTOHMPDF = f.readline().rstrip()
     try :
         __libhmpdf = ct.CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
-    except OSError : # try to read the shared library from LD_LINKER_PATH
+    except OSError : # try to read the shared library from LD_LIBRARY_PATH
         __libhmpdf = ct.CDLL('libhmpdf.so')
     __new = __libhmpdf.hmpdf_new
     __new.restype = ct.POINTER(ct.c_int)
@@ -245,7 +245,7 @@ class HMPDF(object) :
         if stype == 'kappa' :
             arglist.insert(0, ct.c_double(zsource))
         err = HMPDF.__init(self.__d, _C()(class_ini),
-                           _E(_E._stypes)(stype), *arglist)
+                           _E(_E.stypes)(stype), *arglist)
         return self.__ret(err, 'init()')
     #}}}
 
@@ -314,7 +314,7 @@ class HMPDF(object) :
     #{{{
         out = np.empty(len(ell))
         err = HMPDF.__get_Cell(self.__d, len(ell), ell, out,
-                               _E(_E._corr_types)(mode))
+                               _E(_E.corr_types)(mode))
         return self.__ret(err, 'get_Cell()', out)
     #}}}
 
@@ -330,7 +330,7 @@ class HMPDF(object) :
     #{{{
         out = np.empty(len(phi))
         err = HMPDF.__get_Cphi(self.__d, len(phi), phi, out,
-                               _E(_E._corr_types)(mode))
+                               _E(_E.corr_types)(mode))
         return self.__ret(err, 'get_Cphi()', out)
     #}}}
 
