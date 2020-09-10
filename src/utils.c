@@ -24,7 +24,7 @@
 
 void
 new_gsl_error_handler(const char *reason, const char *file,
-                      int line, int gsl_errno)
+                      int line, UNUSED int gsl_errno)
 {//{{{
     #ifdef DEBUG
     fprintf(stderr, "***GSL error: %s in %s line %d\n", reason, file, line);

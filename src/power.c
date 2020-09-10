@@ -225,7 +225,7 @@ create_ssq(hmpdf_obj *d)
 }//}}}
 
 static double
-autocorr_kernel(double k, void *params)
+autocorr_kernel(double k, UNUSED void *params)
 {//{{{
     #ifdef LOGK
     return M_PI * exp(-k);

@@ -224,7 +224,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
-//CHECKINIT
+//CHECKINIT{{{
 #ifdef DEBUG
 #   define CHECKINIT                                         \
         do {                                                 \
@@ -236,6 +236,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #   define CHECKINIT \
         do { } while (0)
 #endif
+//}}}
 
 //STARTFCT -- no semicolon!{{{
 #ifdef DEBUG
@@ -372,6 +373,13 @@ new_gsl_error_handler(const char *reason, const char *file,
 #   define CONTINUE_IF_ERR
 #endif
 //}}}
+
+// UNUSED
+#ifdef __GNUC__
+#   define UNUSED __attribute__((unused))
+#else
+#   define UNUSED
+#endif
 
 int ispwr2(int N, int *k);
 
