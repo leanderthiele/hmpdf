@@ -5,8 +5,7 @@ ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
 CFLAGS = --std=gnu99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Winline -DHAVE_INLINE -DDEBUG
-#OPTFLAGS = -O4 -ffast-math
-OPTFLAGS = -O3 -g3 -ffast-math
+OPTFLAGS = -O4 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
