@@ -374,12 +374,13 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
-// UNUSED
+// UNUSED{{{
 #ifdef __GNUC__
-#   define UNUSED __attribute__((unused))
+#   define UNUSED(x) x##_UNUSED __attribute__((unused))
 #else
-#   define UNUSED
+#   define UNUSED(x) x
 #endif
+//}}}
 
 int ispwr2(int N, int *k);
 

@@ -213,7 +213,7 @@ _tophatsq(double x, double *out)
 }//}}}
 
 static int
-filter_quadraticpixel(void *d, double ell, filter_mode m, UNUSED int *discard, double *out)
+filter_quadraticpixel(void *d, double ell, filter_mode m, int UNUSED(*discard), double *out)
 // assumes called with the physical reci_theta, i.e. reci_theta = j_n_0/theta_out
 {//{{{
     STARTFCT
@@ -243,7 +243,7 @@ filter_quadraticpixel(void *d, double ell, filter_mode m, UNUSED int *discard, d
 }//}}}
 
 static int
-filter_tophat(void *d, double ell, filter_mode m, UNUSED int *discard, double *out)
+filter_tophat(void *d, double ell, filter_mode m, int UNUSED(*discard), double *out)
 {//{{{
     STARTFCT
 
@@ -264,7 +264,7 @@ filter_tophat(void *d, double ell, filter_mode m, UNUSED int *discard, double *o
 }//}}}
 
 static int
-filter_gaussian(void *d, double ell, filter_mode m, UNUSED int *discard, double *out)
+filter_gaussian(void *d, double ell, filter_mode m, int UNUSED(*discard), double *out)
 {//{{{
     STARTFCT
 
@@ -285,7 +285,7 @@ filter_gaussian(void *d, double ell, filter_mode m, UNUSED int *discard, double 
 }//}}}
 
 static int
-filter_custom_ell(void *d, double ell, filter_mode m, UNUSED int *discard, double *out)
+filter_custom_ell(void *d, double ell, filter_mode m, int UNUSED(*discard), double *out)
 {//{{{
     STARTFCT
 
