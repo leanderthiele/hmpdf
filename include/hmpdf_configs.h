@@ -52,7 +52,7 @@ typedef enum
 
 /*! Options to hmpdf_init().
  *
- *  The variable argument list in hmpdf_init() can be used to pass non-default options.
+ *  The variadic argument list in hmpdf_init() can be used to pass non-default options.
  *  [syntax is explained in the documentation for hmpdf_init()].
  *
  *  There is a large number of options, many of which the typical user will not need to use.
