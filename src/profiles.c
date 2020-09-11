@@ -168,6 +168,7 @@ create_angle_grids(hmpdf_obj *d)
 
     SAFEALLOC(d->p->incr_tgrid_accel,
               malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->p->incr_tgrid_accel, d->Ncores);
     for (int ii=0; ii<d->Ncores; ii++)
     {
         SAFEALLOC(d->p->incr_tgrid_accel[ii], gsl_interp_accel_alloc());
@@ -356,6 +357,7 @@ create_profiles(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_profiles\n");
     
     SAFEALLOC(d->p->profiles, malloc(d->n->Nz * sizeof(double **)));
+    SETARRNULL(d->p->profiles, d->n->Nz);
     #ifdef _OPENMP
     #   pragma omp parallel for num_threads(d->Ncores)
     #endif
@@ -363,6 +365,7 @@ create_profiles(hmpdf_obj *d)
     {
         CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)));
+        SETARRNULL(d->p->profiles[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             CONTINUE_IF_ERR
@@ -393,6 +396,7 @@ create_conj_profiles(hmpdf_obj *d)
     // prepare the Hankel transform work space
     SAFEALLOC(d->p->dht_ws, gsl_dht_new(d->p->Ntheta, 0, 1.0));
     SAFEALLOC(d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)));
+    SETARRNULL(d->p->conj_profiles, d->n->Nz);
     #ifdef _OPENMP
     #   pragma omp parallel for num_threads(d->Ncores)
     #endif
@@ -407,11 +411,13 @@ create_conj_profiles(hmpdf_obj *d)
         SAFEALLOC_NORETURN(d->p->conj_profiles[z_index],
                            malloc(d->n->NM * sizeof(double *)));
         CONTINUE_IF_ERR
+        SETARRNULL(d->p->conj_profiles[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             CONTINUE_IF_ERR
             SAFEALLOC_NORETURN(d->p->conj_profiles[z_index][M_index],
                                malloc((d->p->Ntheta+1) * sizeof(double)));
+            CONTINUE_IF_ERR
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, temp);
             // dht_ws is const under gsl_dht_apply, so this is thread safe
             SAFEGSL_NORETURN(gsl_dht_apply(d->p->dht_ws, temp,
@@ -502,6 +508,7 @@ create_segments(hmpdf_obj *d)
 
     SAFEALLOC(d->p->segment_boundaries,
               malloc(d->n->Nz * sizeof(int **)));
+    SETARRNULL(d->p->segment_boundaries, d->n->Nz);
     #ifdef _OPENMP
     #   pragma omp parallel for num_threads(d->Ncores)
     #endif
@@ -511,6 +518,7 @@ create_segments(hmpdf_obj *d)
         SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index],
                            malloc(d->n->NM * sizeof(int *)));
         CONTINUE_IF_ERR
+        SETARRNULL(d->p->segment_boundaries[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
             CONTINUE_IF_ERR
@@ -686,7 +694,7 @@ remove_duplicates(int *N, double *x, double *y, double eps)
 void
 delete_batch(batch_t *b)
 {//{{{
-    if (b->len > 0)
+    if (b->data != NULL)
     {
         free(b->data);
     }
@@ -703,6 +711,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     STARTFCT
 
     b->len = 0;
+    b->data = NULL;
 
     int end   = abs(d->p->segment_boundaries[z_index][M_index][segment+2]);
     int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);

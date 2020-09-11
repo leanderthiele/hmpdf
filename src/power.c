@@ -52,7 +52,10 @@ reset_power(hmpdf_obj *d)
     {
         for (int ii=0; ii<d->pwr->Ncorr_accel; ii++)
         {
-            gsl_interp_accel_free(d->pwr->corr_accel[ii]);
+            if (d->pwr->corr_accel[ii] != NULL)
+            {
+                gsl_interp_accel_free(d->pwr->corr_accel[ii]);
+            }
         }
         free(d->pwr->corr_accel);
     }
@@ -212,7 +215,8 @@ create_ssq(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_ssq\n");
 
-    SAFEALLOC(d->pwr->ssq, malloc(d->n->NM * sizeof(double*)));
+    SAFEALLOC(d->pwr->ssq, malloc(d->n->NM * sizeof(double *)));
+    SETARRNULL(d->pwr->ssq, d->n->NM);
     for (int M_index=0; M_index<d->n->NM; M_index++)
     {
         SAFEALLOC(d->pwr->ssq[M_index], malloc(2 * sizeof(double)));
@@ -309,6 +313,7 @@ create_corr(hmpdf_obj *d)
     d->pwr->Ncorr_accel = d->Ncores;
     SAFEALLOC(d->pwr->corr_accel,
               malloc(d->pwr->Ncorr_accel * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->pwr->corr_accel, d->pwr->Ncorr_accel);
     for (int ii=0; ii<d->pwr->Ncorr_accel; ii++)
     {
         SAFEALLOC(d->pwr->corr_accel[ii], gsl_interp_accel_alloc());

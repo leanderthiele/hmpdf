@@ -51,7 +51,10 @@ reset_noise(hmpdf_obj *d)
     {
         for (int ii=0; ii<d->Ncores; ii++)
         {
-            gsl_interp_accel_free(d->ns->zeta_accel[ii]);
+            if (d->ns->zeta_accel[ii] != NULL)
+            {
+                gsl_interp_accel_free(d->ns->zeta_accel[ii]);
+            }
         }
         free(d->ns->zeta_accel);
     }
@@ -173,6 +176,7 @@ create_noise_zeta_interp(hmpdf_obj *d)
               gsl_spline_alloc(gsl_interp_cspline, NOISE_ZETAINTERP_N+1));
     SAFEALLOC(d->ns->zeta_accel,
               malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->ns->zeta_accel, d->Ncores);
     for (int ii=0; ii<d->Ncores; ii++)
     {
         SAFEALLOC(d->ns->zeta_accel[ii], gsl_interp_accel_alloc());
@@ -321,25 +325,19 @@ create_noise_matr_conv(hmpdf_obj *d, int Nbuffers)
     {
         SAFEALLOC(d->ns->conv_buffer_real,
                   malloc(d->Ncores * sizeof(double *)));
+        SETARRNULL(d->ns->conv_buffer_real, d->Ncores);
         SAFEALLOC(d->ns->conv_buffer_comp,
                   malloc(d->Ncores * sizeof(double complex *)));
-        for (int ii=0; ii<d->Ncores; ii++)
-        {
-            d->ns->conv_buffer_real[ii] = NULL;
-        }
     }
 
     if (d->ns->pconv_r2c == NULL)
     {
         SAFEALLOC(d->ns->pconv_r2c,
                   malloc(d->Ncores * sizeof(fftw_plan *)));
+        SETARRNULL(d->ns->pconv_r2c, d->Ncores);
         SAFEALLOC(d->ns->pconv_c2r,
                   malloc(d->Ncores * sizeof(fftw_plan *)));
-        for (int ii=0; ii<d->Ncores; ii++)
-        {
-            d->ns->pconv_r2c[ii] = NULL;
-            d->ns->pconv_c2r[ii] = NULL;
-        }
+        SETARRNULL(d->ns->pconv_c2r, d->Ncores);
     }
 
     for (int ii=0; ii<Nbuffers; ii++)

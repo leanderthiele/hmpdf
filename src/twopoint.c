@@ -165,8 +165,11 @@ create_phi_indep(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_phi_indep\n");
     
     SAFEALLOC(d->tp->dtsq, malloc(d->n->Nz * sizeof(batch_t **)));
+    SETARRNULL(d->tp->dtsq, d->n->Nz);
     SAFEALLOC(d->tp->t,    malloc(d->n->Nz * sizeof(batch_t **)));
+    SETARRNULL(d->tp->t,    d->n->Nz);
     SAFEALLOC(d->tp->ac,   malloc(d->n->Nz * sizeof(double complex *)));
+    SETARRNULL(d->tp->ac,   d->n->Nz);
     SAFEALLOC(d->tp->au,   fftw_malloc((d->n->Nsignal/2+1) * sizeof(double complex)));
     double *au_real = (double *)(d->tp->au);
 
@@ -184,7 +187,9 @@ create_phi_indep(hmpdf_obj *d)
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         SAFEALLOC(d->tp->dtsq[z_index], malloc(d->n->NM * sizeof(batch_t *)));
+        SETARRNULL(d->tp->dtsq[z_index], d->n->NM);
         SAFEALLOC(d->tp->t[z_index],    malloc(d->n->NM * sizeof(batch_t *)));
+        SETARRNULL(d->tp->t[z_index],    d->n->NM);
         SAFEALLOC(d->tp->ac[z_index],   malloc((d->n->Nsignal/2+1) * sizeof(double complex)));
 
         // zero the FFT array
@@ -530,17 +535,17 @@ create_noisy_tp(hmpdf_obj *d, double phi)
 
 // convenience macro which cleans up if memory allocation fails,
 // since we do not consider this a critical error.
-#define NEWTPWS_SAFEALLOC(var, expr)                                \
-    do {                                                            \
-    var = expr;                                                     \
-    if (UNLIKELY(!(var)))                                           \
-    {                                                               \
-        if (ws->pdf_real != NULL) { fftw_free(ws->pdf_real); }      \
-        if (ws->bc != NULL) { free(ws->bc); }                  \
-        if (ws->tempc_real != NULL) { fftw_free(ws->tempc_real); }  \
-        free(*out);                                                 \
-        return 1;                                                   \
-    }                                                               \
+#define NEWTPWS_SAFEALLOC(var, expr)                                    \
+    do {                                                                \
+        var = expr;                                                     \
+        if (UNLIKELY(!(var)))                                           \
+        {                                                               \
+            if (ws->pdf_real != NULL) { fftw_free(ws->pdf_real); }      \
+            if (ws->bc != NULL) { free(ws->bc); }                       \
+            if (ws->tempc_real != NULL) { fftw_free(ws->tempc_real); }  \
+            free(*out);                                                 \
+            return 1;                                                   \
+        }                                                               \
     } while (0)
 
 int
@@ -557,20 +562,23 @@ new_tp_ws(long N, twopoint_workspace **out)
     ws->bc = NULL;
     ws->tempc_real = NULL;
 
+    // do the allocs first so we don't have to worry
+    // about whether fftw_plans have already been computed and need
+    // to be destroyed if an alloc fails
     NEWTPWS_SAFEALLOC(ws->pdf_real, fftw_malloc(N * (N+2) * sizeof(double)));
-
     ws->pdf_comp = (double complex *)(ws->pdf_real);
+
+    NEWTPWS_SAFEALLOC(ws->bc, malloc(N * (N/2+1) * sizeof(double complex)));
+
+    NEWTPWS_SAFEALLOC(ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)));
+    ws->tempc_comp = (double complex *)(ws->tempc_real);
+
     ws->pu_r2c = fftw_plan_dft_r2c_2d(N, N, ws->pdf_real,
                                       ws->pdf_comp, PU_R2C_MODE);
     ws->ppdf_c2r = fftw_plan_dft_c2r_2d(N, N, ws->pdf_comp,
                                         ws->pdf_real, PPDF_C2R_MODE);
-    
-    NEWTPWS_SAFEALLOC(ws->bc, malloc(N * (N/2+1) * sizeof(double complex)));
-
-    NEWTPWS_SAFEALLOC(ws->tempc_real, fftw_malloc(N * (N+2) * sizeof(double)));
-
-    ws->tempc_comp = (double complex *)(ws->tempc_real);
-    ws->pc_r2c = fftw_plan_dft_r2c_2d(N, N, ws->tempc_real, ws->tempc_comp, PC_R2C_MODE);
+    ws->pc_r2c = fftw_plan_dft_r2c_2d(N, N, ws->tempc_real,
+                                      ws->tempc_comp, PC_R2C_MODE);
 
     ENDFCT
 }//}}}

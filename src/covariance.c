@@ -383,6 +383,7 @@ create_tp_ws(hmpdf_obj *d)
     HMPDFPRINT(3, "\t\ttrying to allocate workspaces for %d threads.\n", d->Ncores);
     
     SAFEALLOC(d->cov->ws, malloc(d->Ncores * sizeof(twopoint_workspace *)));
+    SETARRNULL(d->cov->ws, d->Ncores);
     d->cov->Nws = 0;
     // allocate workspaces until we run out of memory
     for (int ii=0; ii<d->Ncores; ii++)
@@ -392,17 +393,14 @@ create_tp_ws(hmpdf_obj *d)
                           // a critical error, which is why we don't go through
                           // the usual error handling system
         {
+            // set to NULL explicitly
+            d->cov->ws[ii] = NULL;
             break;
         }
         else
         {
             ++d->cov->Nws;
         }
-    }
-    // NULL the remaining workspaces
-    for (int ii=d->cov->Nws; ii<d->Ncores; ii++)
-    {
-        d->cov->ws[ii] = NULL;
     }
 
     if (d->cov->Nws < d->Ncores)

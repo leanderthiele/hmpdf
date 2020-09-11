@@ -382,6 +382,16 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
+#define SETARRNULL(arr, len)    \
+    do {                        \
+        for (int arridx=0;      \
+             arridx < len;      \
+             arridx++)          \
+        {                       \
+            arr[arridx] = NULL; \
+        }                       \
+    } while(0)
+
 int ispwr2(int N, int *k);
 
 int linspace(int N, double xmin, double xmax, double *x);

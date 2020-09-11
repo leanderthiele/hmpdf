@@ -41,8 +41,13 @@ reset_filters(hmpdf_obj *d)
     if (d->f->ffilters != NULL) { free(d->f->ffilters); }
     if (d->f->quadraticpixel_interp != NULL)
     {
-        if (d->f->quadraticpixel_interp[0] != NULL) { gsl_spline_free(d->f->quadraticpixel_interp[0]); }
-        if (d->f->quadraticpixel_interp[1] != NULL) { gsl_spline_free(d->f->quadraticpixel_interp[1]); }
+        for (int ii=0; ii<2; ii++)
+        {
+            if (d->f->quadraticpixel_interp[ii] != NULL)
+            {
+                gsl_spline_free(d->f->quadraticpixel_interp[ii]);
+            }
+        }
         free(d->f->quadraticpixel_interp);
     }
     if (d->f->quadraticpixel_accel != NULL)
@@ -53,7 +58,10 @@ reset_filters(hmpdf_obj *d)
             {
                 for (int jj=0; jj<d->Ncores; jj++)
                 {
-                    gsl_interp_accel_free(d->f->quadraticpixel_accel[ii][jj]);
+                    if (d->f->quadraticpixel_accel[ii][jj] != NULL)
+                    {
+                        gsl_interp_accel_free(d->f->quadraticpixel_accel[ii][jj]);
+                    }
                 }
                 free(d->f->quadraticpixel_accel[ii]);
             }
@@ -142,6 +150,7 @@ create_quadraticpixelinterp(hmpdf_obj *d, filter_mode mode)
               gsl_spline_alloc(gsl_interp_cspline, Nell));
     SAFEALLOC(d->f->quadraticpixel_accel[mode],
               malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->f->quadraticpixel_accel[mode], d->Ncores);
     for (int ii=0; ii<d->Ncores; ii++)
     {
         SAFEALLOC(d->f->quadraticpixel_accel[mode][ii],
@@ -381,8 +390,10 @@ init_filters(hmpdf_obj *d)
 
         SAFEALLOC(d->f->quadraticpixel_interp,
                   malloc(2 * sizeof(gsl_spline *)));
+        SETARRNULL(d->f->quadraticpixel_interp, 2);
         SAFEALLOC(d->f->quadraticpixel_accel,
                   malloc(2 * sizeof(gsl_interp_accel **)));
+        SETARRNULL(d->f->quadraticpixel_accel, 2);
         SAFEALLOC(d->f->quadraticpixel_ellmin,
                   malloc(2 * sizeof(double)));
         SAFEALLOC(d->f->quadraticpixel_ellmax,

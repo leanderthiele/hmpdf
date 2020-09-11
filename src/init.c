@@ -249,9 +249,9 @@ init_params(hmpdf_obj *d, param *p)
 // assign parameter to value passed by user,
 //     check for validity if bounds are present
 //ASSIGN_SET{{{
-#define ASSIGN_SET(dt)                         \
-    do {                                       \
-    *((dt*)(p->target)) = va_arg(*valist, dt); \
+#define ASSIGN_SET(dt)                             \
+    do {                                           \
+        *((dt*)(p->target)) = va_arg(*valist, dt); \
     } while (0)
 //}}}
 
@@ -511,7 +511,7 @@ hmpdf_init_fct(hmpdf_obj *d, char *class_ini, hmpdf_signaltype_e stype, ...)
 
         ++read;
         HMPDFCHECK(read > hmpdf_end_configs,
-                   "You likely forgot to end the variable argument list "
+                   "You likely forgot to end the variadic argument list "
                    "with the mandatory argument hmpdf_end_configs, "
                    "or you passed options twice.");
     }

@@ -174,6 +174,7 @@ create_c_of_y(hmpdf_obj *d)
     }
     SAFEALLOC(d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC));
     SAFEALLOC(d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->h->c_accel, d->Ncores);
     for (int ii=0; ii<d->Ncores; ii++)
     {
         SAFEALLOC(d->h->c_accel[ii], gsl_interp_accel_alloc());
@@ -276,7 +277,9 @@ create_dndlogM(hmpdf_obj *d)
     HMPDFPRINT(2, "\tcreate_dndlogM\n");
 
     SAFEALLOC(d->h->hmf,  malloc(d->n->Nz * sizeof(double *)));
+    SETARRNULL(d->h->hmf, d->n->Nz);
     SAFEALLOC(d->h->bias, malloc(d->n->Nz * sizeof(double *)));
+    SETARRNULL(d->h->hmf, d->n->Nz);
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
         SAFEALLOC(d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)));
