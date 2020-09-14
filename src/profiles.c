@@ -580,6 +580,7 @@ create_segments(hmpdf_obj *d)
 int
 s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
+// t is in physical units (rad) -- NOT in the rescaled units!
 {//{{{
     STARTFCT
 
@@ -592,7 +593,9 @@ s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
 
     for (int ii=0; ii<Nt; ii++)
     {
-        SAFEHMPDF(interp1d_eval(interp, t[ii], s+ii));
+        SAFEHMPDF(interp1d_eval(interp,
+                                t[ii]/d->p->profiles[z_index][M_index][0],
+                                s+ii));
     }
     free(temp);
     delete_interp1d(interp);
@@ -717,7 +720,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
     int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);
     int len = end - start;
     int sgn = GSL_SIGN(d->p->segment_boundaries[z_index][M_index][segment+1]);
-    int min_size = gsl_interp_type_min_size(interp1d_type(PRINTERP_TYPE));
+    int min_size = gsl_interp_type_min_size(interp1d_type(INVPRINTERP_TYPE));
 
     // check if there is anything interesting here
     if (all_zero(len, d->p->profiles[z_index][M_index]+start,
@@ -754,7 +757,7 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
 
     interp1d *interp;
     SAFEHMPDF(new_interp1d(len, temp, ordinate,
-                           0.0, 0.0, PRINTERP_TYPE, NULL, &interp));
+                           0.0, 0.0, INVPRINTERP_TYPE, NULL, &interp));
 
     // auxiliary variables to keep track of current state
     int inbatch = 0;

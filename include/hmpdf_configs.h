@@ -324,6 +324,17 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
+    hmpdf_map_fsky, /*! If you want to use the stochastic map-mapmaking algorithm
+                     *  (simplified simulations), this is a required setting.
+                     *  It is the sky fraction spanned by the map.
+                     *  \par
+                     *  Type: double. Default: None.
+                     */
+    hmpdf_map_pixelgrid, /*! Increasing this value yields a more accurate averaging of the
+                          *  signal profiles in each pixel.
+                          *  \par
+                          *  Type: int. Default: 3.
+                          */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
                         */

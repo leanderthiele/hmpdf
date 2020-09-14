@@ -22,6 +22,7 @@ null_data(hmpdf_obj *d)
     SAFEHMPDF(null_twopoint(d));
     SAFEHMPDF(null_powerspectrum(d));
     SAFEHMPDF(null_covariance(d));
+    SAFEHMPDF(null_maps(d));
 
     ENDFCT
 }//}}}
@@ -56,6 +57,7 @@ hmpdf_new(void)
     HMPDFNEW_ALLOC(d->tp,  malloc(sizeof(twopoint_t)));
     HMPDFNEW_ALLOC(d->ps,  malloc(sizeof(powerspectrum_t)));
     HMPDFNEW_ALLOC(d->cov, malloc(sizeof(covariance_t)));
+    HMPDFNEW_ALLOC(d->m,   malloc(sizeof(maps_t)));
 
     int status = null_data(d);
     
@@ -88,6 +90,7 @@ reset_obj(hmpdf_obj *d)
     SAFEHMPDF(reset_powerspectrum(d));
     SAFEHMPDF(reset_covariance(d));
     SAFEHMPDF(reset_profiles(d));
+    SAFEHMPDF(reset_maps(d));
 
     SAFEHMPDF(null_data(d));
 
@@ -115,6 +118,7 @@ hmpdf_delete(hmpdf_obj *d)
     free(d->tp);
     free(d->ps);
     free(d->cov);
+    free(d->m);
 
     free(d);
      
