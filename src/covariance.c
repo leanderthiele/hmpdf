@@ -592,7 +592,7 @@ create_cov(hmpdf_obj *d)
     
     // loop over phi values
     #ifdef _OPENMP
-    #   pragma omp parallel for num_threads(d->cov->Nws)
+    #   pragma omp parallel for num_threads(d->cov->Nws) schedule(dynamic)
     #endif
     for (int pp=0; pp<d->n->Nphi; pp++)
     {

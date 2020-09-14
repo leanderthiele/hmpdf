@@ -578,9 +578,9 @@ create_segments(hmpdf_obj *d)
 }//}}}
 
 int
-s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
+s_of_t(hmpdf_obj *d, int z_index, int M_index, long Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
-// t is in physical units (rad) -- NOT in the rescaled units!
+// t is in the rescaled units (by outer radius)
 {//{{{
     STARTFCT
 
@@ -591,11 +591,9 @@ s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
     SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
                            PRINTERP_TYPE, d->p->incr_tgrid_accel[THIS_THREAD], &interp));
 
-    for (int ii=0; ii<Nt; ii++)
+    for (long ii=0; ii<Nt; ii++)
     {
-        SAFEHMPDF(interp1d_eval(interp,
-                                t[ii]/d->p->profiles[z_index][M_index][0],
-                                s+ii));
+        SAFEHMPDF(interp1d_eval(interp, t[ii], s+ii));
     }
     free(temp);
     delete_interp1d(interp);

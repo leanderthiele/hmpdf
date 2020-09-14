@@ -73,7 +73,7 @@ int create_conj_profiles(hmpdf_obj *d);
 int create_filtered_profiles(hmpdf_obj *d);
 int create_segments(hmpdf_obj *d);
 
-int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
+int s_of_t(hmpdf_obj *d, int z_index, int M_index, long Nt, double *t, double *s);
 int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
 int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
                 inv_profile_e mode, batch_t *b);
