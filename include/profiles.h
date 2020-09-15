@@ -32,6 +32,7 @@ typedef struct//{{{
     double ***conj_profiles; // each profile has as zero entry the rescaling such that reci_thetagrid -> ell
 
     int created_filtered_profiles;
+    double ***filtered_profiles;
 
     int created_segments;
     int ***segment_boundaries;

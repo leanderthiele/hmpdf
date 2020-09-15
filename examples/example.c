@@ -77,7 +77,7 @@ int example_ell_filter_use(void)
 
 int example_tsz_map(void)
 {
-    int Nbins = 10; double ymin=0.0; double ymax=1e-4;
+    int Nbins = 50; double ymin=0.0; double ymax=1e-4;
     double binedges[Nbins+1];
     for (int ii=0; ii<=Nbins; ii++)
         binedges[ii] = ymin + (double)(ii)*(ymax-ymin)/(double)(Nbins);
@@ -91,23 +91,28 @@ int example_tsz_map(void)
                    hmpdf_verbosity, 5,
                    hmpdf_M_min, 1e11,
 
-                   hmpdf_N_z, 20,
-                   hmpdf_N_M, 20,
+                   hmpdf_N_z, 40,
+                   hmpdf_N_M, 40,
                    hmpdf_N_theta, 30,
                    hmpdf_map_pixelgrid, 1,
                    
                    hmpdf_pixel_side, 1.0,
-                   hmpdf_map_fsky, 1e-2))
+                   hmpdf_map_fsky, 1e-1))
+        return -1;
+
+    double map_op[Nbins];
+    if (hmpdf_get_map_op(d, Nbins, binedges, map_op, 1))
         return -1;
 
     double op[Nbins];
-    if (hmpdf_get_map_op(d, Nbins, binedges, op, 1))
+    if (hmpdf_get_op(d, Nbins, binedges, op, 1, 0))
         return -1;
 
     if (hmpdf_delete(d))
         return -1;
 
-    savetxt("test_map_op", Nbins, 1, op);
+    savetxt("test_map_op", Nbins, 1, map_op);
+    savetxt("test_op", Nbins, 1, op);
 
     return 0;
 }
