@@ -573,8 +573,6 @@ loop_no_z_dependence(hmpdf_obj *d)
     {
         CONTINUE_IF_ERR
 
-        // TODO write status updates (similar to covariance.c)
-
         int z_index = bins[ii] / d->n->NM;
         int M_index = bins[ii] % d->n->NM;
         SAFEHMPDF_NORETURN(do_this_bin(d, z_index, M_index,
@@ -627,18 +625,29 @@ loop_w_z_dependence(hmpdf_obj *d)
 
     HMPDFPRINT(3, "\t\tloop_w_z_dependence\n");
 
-    int *bins;
-    SAFEALLOC(bins, malloc(d->n->NM * sizeof(int)));
+    int *zbins;
+    SAFEALLOC(zbins, malloc(d->n->Nz * sizeof(int)));
+    for (int ii=0; ii<d->n->Nz; ii++)
+    {
+        zbins[ii] = ii;
+    }
+    // shuffle for more representative status updates
+    gsl_ran_shuffle(d->m->ws[0]->rng, zbins, d->n->Nz, sizeof(int));
+
+    int *Mbins;
+    SAFEALLOC(Mbins, malloc(d->n->NM * sizeof(int)));
     for (int ii=0; ii<d->n->NM; ii++)
     {
-        bins[ii] = ii;
+        Mbins[ii] = ii;
     }
 
     // status
     time_t start_time = time(NULL);
 
-    for (int z_index=0; z_index<d->n->Nz; z_index++)
+    for (int zz=0; zz<d->n->Nz; zz++)
     {
+        int z_index = zbins[zz];
+
         // reset the workspaces
         for (int ii=0; ii<d->m->Nws; ii++)
         {
@@ -646,14 +655,15 @@ loop_w_z_dependence(hmpdf_obj *d)
         }
 
         // shuffle to equalize load
-        gsl_ran_shuffle(d->m->ws[0]->rng, bins, d->n->NM, sizeof(int));
+        gsl_ran_shuffle(d->m->ws[0]->rng, Mbins, d->n->NM, sizeof(int));
 
         #ifdef _OPENMP
         #   pragma omp parallel for num_threads(d->m->Nws) schedule(dynamic)
         #endif
-        for (int ii=0; ii<d->n->NM; ii++)
+        for (int mm=0; mm<d->n->NM; mm++)
         {
-            int M_index = bins[ii];
+            CONTINUE_IF_ERR
+            int M_index = Mbins[mm];
             SAFEHMPDF_NORETURN(do_this_bin(d, z_index, M_index,
                                            d->m->ws[THIS_THREAD]));
         }
@@ -683,15 +693,16 @@ loop_w_z_dependence(hmpdf_obj *d)
             d->m->map_comp[ii] += d->m->ws[0]->map_comp[ii];
         }
 
-        if (((z_index+1)%MAPWZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
+        if (((zz+1)%MAPWZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
         {
-            SAFEHMPDF_NORETURN(status_update(d, start_time,
-                                             z_index+1, d->n->Nz,
-                                             "create_map"));
+            SAFEHMPDF(status_update(d, start_time,
+                                    zz+1, d->n->Nz,
+                                    "create_map"));
         }
     }
 
-    free(bins);
+    free(Mbins);
+    free(zbins);
 
     ENDFCT
 }//}}}
