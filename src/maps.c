@@ -472,19 +472,11 @@ add_grf(hmpdf_obj *d, double (*pwr_spec)(double, void *), void *pwr_spec_params)
         for (long ii=0; ii<d->m->Nside; ii++)
         // loop over the long direction (rows)
         {
-            double ell1;
-            if (ii<=d->m->Nside/2)
-            {
-                ell1 = d->m->ellgrid[ii];
-            }
-            else
-            {
-                ell1 = - d->m->ellgrid[d->m->Nside-ii];
-            }
+            double ell1 = WAVENR(d->m->Nside, d->m->ellgrid, ii);
 
             for (long jj=0; jj<d->m->Nside/2+1; jj++)
             {
-                double ell2 = d->m->ellgrid[jj];
+                double ell2 = WAVENR(d->m->Nside, d->m->ellgrid, jj);
                 double ellmod = hypot(ell1, ell2);
 
                 double Cl = pwr_spec(ellmod, pwr_spec_params);
@@ -525,21 +517,12 @@ filter_map(hmpdf_obj *d, double complex *map_comp, int *z_index)
     for (long ii=0; ii<d->m->Nside; ii++)
     // loop over long direction (rows)
     {
-        double ell1;
-        if (ii<=d->m->Nside/2)
-        {
-            ell1 = d->m->ellgrid[ii];
-        }
-        else
-        {
-            ell1 = - d->m->ellgrid[d->m->Nside-ii];
-        }
+        double ell1 = WAVENR(d->m->Nside, d->m->ellgrid, ii);
 
         for (long jj=0; jj<d->m->Nside/2+1; jj++)
         // loop over short direction (cols)
         {
-            double ell2 = d->m->ellgrid[jj];
-
+            double ell2 = WAVENR(d->m->Nside, d->m->ellgrid, jj);
             ellmod[jj] = hypot(ell1, ell2);
         }
 
@@ -548,6 +531,8 @@ filter_map(hmpdf_obj *d, double complex *map_comp, int *z_index)
                                     map_comp + ii * (d->m->Nside/2+1),
                                     z_index));
     }
+
+    free(ellmod);
 
     ENDFCT
 }//}}}

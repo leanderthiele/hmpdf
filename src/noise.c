@@ -444,22 +444,12 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
         // same logic as in the "redundant" function,
         //      note that the FT of a real Gaussian is real valued
         //      so conjugation not required
-        double lambda1;
-        if (ii<=d->n->Nsignal_noisy/2)
-        // positive frequency part
-        {
-            lambda1 = d->n->lambdagrid_noisy[ii];
-        }
-        else
-        // negative frequency part
-        {
-            lambda1 = - d->n->lambdagrid_noisy[d->n->Nsignal_noisy-ii];
-        }
+        double lambda1 = WAVENR(d->n->Nsignal_noisy, d->n->lambdagrid_noisy, ii);
 
         for (long jj=0; jj<d->n->Nsignal_noisy/2+1; jj++)
         // loop over short direction (cols)
         {
-            double lambda2 = d->n->lambdagrid_noisy[jj];
+            double lambda2 = WAVENR(d->n->Nsignal_noisy, d->n->lambdagrid_noisy, jj);
 
             // evaluate the Gaussian kernel in Fourier space
             //     and normalize properly

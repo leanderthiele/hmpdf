@@ -382,6 +382,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
+//SETARRNULL{{{
 #define SETARRNULL(arr, len)    \
     do {                        \
         for (int arridx=0;      \
@@ -391,6 +392,7 @@ new_gsl_error_handler(const char *reason, const char *file,
             arr[arridx] = NULL; \
         }                       \
     } while(0)
+//}}}
 
 int ispwr2(int N, int *k);
 
@@ -401,6 +403,9 @@ void zero_comp(long N, double complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);
+
+#define WAVENR(N, grid, idx) \
+    (idx <= N/2) ? grid[idx] : -grid[N-idx]
 
 int wait(void);
 
