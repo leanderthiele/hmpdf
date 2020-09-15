@@ -25,7 +25,6 @@ covariance_t;
 
 int null_covariance(hmpdf_obj *d);
 int reset_covariance(hmpdf_obj *d);
-int status_update(hmpdf_obj *d, time_t t0, int done, int tot, char *fctname);
 int hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbins*Nbins], int noisy);
 int hmpdf_get_cov_diagnostics(hmpdf_obj *d, int *Nphi, double **phi,
                               double **phiweights, double **corr_diagn);

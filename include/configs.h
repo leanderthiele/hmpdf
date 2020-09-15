@@ -29,7 +29,7 @@
 #define CINTERP_CMAX 100.0
 #define CINTERP_TYPE interp_cspline
 
-#define PRINTERP_TYPE interp_linear
+#define PRINTERP_TYPE    interp_steffen
 #define INVPRINTERP_TYPE interp_steffen // ensure monotonicity is preserved
 
 #define CORRINTERP_N 1000

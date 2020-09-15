@@ -16,7 +16,6 @@ typedef struct//{{{
                  //    includes all objects handled by a specific thread
     double complex *map_comp;
     fftw_plan *p_r2c;
-    fftw_plan *p_c2r;
 
     long bufside; // sidelength of this specific buffer
     double *pos;  // angular separation from object center

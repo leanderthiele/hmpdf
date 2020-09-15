@@ -75,18 +75,6 @@ int example_ell_filter_use(void)
 }
 /*! [example_ell_filter_use] */
 
-double noisepwr(double ell, void *p)
-{
-    // this is a good testing value for tSZ
-    //return 1e-17;
-    return 0.0;
-}
-
-double kfilter(double k, double z, void *p)
-{
-    return 1.0;
-}
-
 int example_tsz_map(void)
 {
     int Nbins = 50; double ymin=0.0; double ymax=1e-4;
@@ -99,7 +87,7 @@ int example_tsz_map(void)
         return -1;
 
     if (hmpdf_init(d, "example.ini", hmpdf_tsz,
-                   hmpdf_N_threads, 4,
+                   hmpdf_N_threads, 8,
                    hmpdf_verbosity, 5,
                    hmpdf_M_min, 1e11,
                    hmpdf_N_signal, 2048,
@@ -108,25 +96,26 @@ int example_tsz_map(void)
                    hmpdf_N_M, 40,
                    hmpdf_N_theta, 200,
 
-                   hmpdf_custom_k_filter, &kfilter,
-                   
-                   hmpdf_map_pixelgrid, 2,
+                   hmpdf_map_pixelgrid, 4,
                    hmpdf_map_poisson, 0,
                    
                    hmpdf_pixel_side, 1.0,
                    hmpdf_map_fsky, 1e-2))
         return -1;
 
+    /*
     double op[Nbins];
     if (hmpdf_get_op(d, Nbins, binedges, op, 0, 0))
         return -1;
 
     savetxt("test_op", Nbins, 1, op);
+    */
 
     double map_op[Nbins];
     if (hmpdf_get_map_op(d, Nbins, binedges, map_op, 0))
         return -1;
 
+    /*
     double *map;
     long Nside;
     if (hmpdf_get_map(d, &map, &Nside, 0))
@@ -136,6 +125,7 @@ int example_tsz_map(void)
     tofile("test_map", Nside*Nside, 1, map);
 
     free(map);
+    */
 
     if (hmpdf_delete(d))
         return -1;

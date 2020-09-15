@@ -19,7 +19,6 @@
 #include "filter.h"
 #include "profiles.h"
 #include "onepoint.h"
-#include "covariance.h"
 #include "maps.h"
 
 #include "hmpdf.h"
@@ -93,11 +92,6 @@ reset_maps(hmpdf_obj *d)
                     fftw_destroy_plan(*(d->m->ws[ii]->p_r2c));
                     free(d->m->ws[ii]->p_r2c);
                 }
-                if (d->m->ws[ii]->p_c2r != NULL)
-                {
-                    fftw_destroy_plan(*(d->m->ws[ii]->p_c2r));
-                    free(d->m->ws[ii]->p_c2r);
-                }
                 free(d->m->ws[ii]);
             }
         }
@@ -127,7 +121,7 @@ reset_maps(hmpdf_obj *d)
 
 static int
 new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
-// allocates a new map workspace
+// allocates a new map workspace and creates fft if necessary
 {//{{{
     STARTFCT
 
@@ -141,7 +135,6 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     ws->buf = NULL;
     ws->rng = NULL;
     ws->p_r2c = NULL;
-    ws->p_c2r = NULL;
 
     if (idx == 0 && d->f->has_z_dependent)
     {
@@ -156,6 +149,10 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
                                        * sizeof(double)));
     NEWMAPWS_SAFEALLOC(ws->buf, malloc(d->m->buflen
                                        * sizeof(double)));
+
+    // the performance of the random number generator can actually
+    //     turn out to be a bottle neck, so we use a relatively
+    //     fast one
     NEWMAPWS_SAFEALLOC(ws->rng, gsl_rng_alloc(gsl_rng_taus));
 
     if (ws->for_fft)
@@ -164,11 +161,8 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
                                                 * sizeof(double)));
         ws->map_comp = (double complex *)ws->map;
         NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
-        NEWMAPWS_SAFEALLOC(ws->p_c2r, malloc(sizeof(fftw_plan)));
         *(ws->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
                                             ws->map, ws->map_comp, FFTW_MEASURE);
-        *(ws->p_c2r) = fftw_plan_dft_c2r_2d(d->m->Nside, d->m->Nside,
-                                            ws->map_comp, ws->map, FFTW_MEASURE);
     }
     else
     {
@@ -585,9 +579,7 @@ loop_no_z_dependence(hmpdf_obj *d)
             ++Nstatus;
             if ((Nstatus%MAPNOZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
             {
-                SAFEHMPDF_NORETURN(status_update(d, start_time,
-                                                 Nstatus, d->n->Nz * d->n->NM,
-                                                 "create_map"));
+                TIMEREMAIN(Nstatus, d->n->Nz * d->n->NM, "create_map");
             }
         }
     }
@@ -610,6 +602,8 @@ loop_no_z_dependence(hmpdf_obj *d)
     if (d->m->need_ft)
     {
         // transform to conjugate space
+        HMPDFCHECK(d->m->p_r2c == NULL,
+                   "trying to execute an fftw_plan that has not been initialized.");
         fftw_execute(*(d->m->p_r2c));
     }
 
@@ -682,6 +676,8 @@ loop_w_z_dependence(hmpdf_obj *d)
         }
 
         // transform to conjugate space
+        HMPDFCHECK(d->m->ws[0]->p_r2c == NULL,
+                   "trying to execute an fftw_plan that has not been initialized.");
         fftw_execute(*(d->m->ws[0]->p_r2c));
 
         // apply the z-dependent filters
@@ -695,9 +691,7 @@ loop_w_z_dependence(hmpdf_obj *d)
 
         if (((zz+1)%MAPWZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
         {
-            SAFEHMPDF(status_update(d, start_time,
-                                    zz+1, d->n->Nz,
-                                    "create_map"));
+            TIMEREMAIN(zz+1, d->n->Nz, "create_map");
         }
     }
 
@@ -737,10 +731,15 @@ create_mem(hmpdf_obj *d)
     {
         d->m->map_comp = (double complex *)d->m->map_real;
 
-        SAFEALLOC(d->m->p_r2c, malloc(sizeof(fftw_plan)));
-        *(d->m->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
-                                              d->m->map_real, d->m->map_comp,
-                                              FFTW_MEASURE);
+        if (!(d->f->has_z_dependent))
+        // if there are z-dependent filters, the 0th workspace
+        //     handles the r2c FFTs (one for each redshift)
+        {
+            SAFEALLOC(d->m->p_r2c, malloc(sizeof(fftw_plan)));
+            *(d->m->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
+                                                  d->m->map_real, d->m->map_comp,
+                                                  FFTW_MEASURE);
+        }
 
         SAFEALLOC(d->m->p_c2r, malloc(sizeof(fftw_plan)));
         *(d->m->p_c2r) = fftw_plan_dft_c2r_2d(d->m->Nside, d->m->Nside,
@@ -774,13 +773,6 @@ get_map_mean(hmpdf_obj *d)
 
 static int
 create_map(hmpdf_obj *d)
-// loops in parallel over flattened, shuffled array of (z_index, M_index)
-// for each step, call do_this_bin
-//
-// performs r2c FFT
-// multiplies with filters (CAREFUL: do not include the pixel window fct!)
-// adds random GRF realization with the given noise power spectrum
-// performs c2r FFT
 {//{{{
     STARTFCT
 
@@ -803,14 +795,18 @@ create_map(hmpdf_obj *d)
 
     if (d->m->need_ft)
     {
-        // TODO in which order do the next two operations happen???
         // add the Gaussian random field
+        //     it is assumed that the noise power spectrum does NOT
+        //     already contain the convolution with the other potential
+        //     filters --> we do this first
         SAFEHMPDF(add_grf(d, d->ns->noise_pwr, d->ns->noise_pwr_params));
 
         // apply the filters (not z-dependent)
         SAFEHMPDF(filter_map(d, d->m->map_comp, NULL));
 
         // transform back to real space
+        HMPDFCHECK(d->m->p_c2r == NULL,
+                   "trying to execute an fftw_plan that has not been initialized.");
         fftw_execute(*(d->m->p_c2r));
 
         // normalize properly
