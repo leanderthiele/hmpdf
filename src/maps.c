@@ -495,7 +495,9 @@ add_grf(hmpdf_obj *d, double (*pwr_spec)(double, void *), void *pwr_spec_params)
                     = gsl_ran_gaussian(d->m->ws[0]->rng, 1.0)
                       + _Complex_I * gsl_ran_gaussian(d->m->ws[0]->rng, 1.0);
                 ampl *= sqrt(0.5 * Cl) / d->f->pixelside
-                        * (double)(d->m->Nside * d->m->Nside); // TODO check this normalization!
+                        * (double)(d->m->Nside);
+
+                d->m->map_comp[ii*(d->m->Nside/2+1)+jj] += ampl;
             }
         }
     }

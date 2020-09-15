@@ -228,6 +228,8 @@ create_noise_sigmasq(hmpdf_obj *d)
 {//{{{
     STARTFCT
     
+    HMPDFPRINT(3, "\t\tcreate_noise_sigmasq\n");
+    
     sigmasq_integrand_params p;
     p.status = 0;
     p.d = d;
