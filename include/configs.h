@@ -75,7 +75,10 @@
 #define CPHI_INTERP_TYPE interp_cspline
 #define PS_COVINTEGR_N 100
 
-#define COV_STATUS_PERIOD 100
+#define COV_STATUS_PERIOD    100
+#define MAPNOZ_STATUS_PERIOD 400
+#define MAPWZ_STATUS_PERIOD  8
+
 
 #define NOISE_ELLMIN 1e-2
 #define NOISE_ELLMAX 1e12

@@ -19,6 +19,7 @@
 #include "filter.h"
 #include "profiles.h"
 #include "onepoint.h"
+#include "covariance.h"
 #include "maps.h"
 
 #include "hmpdf.h"
@@ -251,7 +252,8 @@ reset_map_ws(hmpdf_obj *d, map_ws *ws)
                          + (unsigned long)rand()
                          + (unsigned long)(ws->buf));
 
-    zero_real(d->m->Nside * d->m->Nside, ws->map);
+    long ldmap = (ws->for_fft) ? (d->m->Nside+2) : d->m->Nside;
+    zero_real(ldmap * d->m->Nside, ws->map);
 
     ENDFCT
 }//}}}
@@ -506,10 +508,6 @@ filter_map(hmpdf_obj *d, double complex *map_comp, int *z_index)
     {
         HMPDFPRINT(3, "\t\tapplying filters to the map\n");
     }
-    else
-    {
-        HMPDFPRINT(4, "\t\t\tapplying redshift dependent filters to the map\n");
-    }
 
     double *ellmod;
     SAFEALLOC(ellmod, malloc((d->m->Nside/2+1) * sizeof(double)));
@@ -563,6 +561,10 @@ loop_no_z_dependence(hmpdf_obj *d)
     // shuffle to equalize load
     gsl_ran_shuffle(d->m->ws[0]->rng, bins, d->n->Nz * d->n->NM, sizeof(int));
 
+    // status
+    int Nstatus = 0;
+    time_t start_time = time(NULL);
+
     // perform the loop
     #ifdef _OPENMP
     #   pragma omp parallel for num_threads(d->m->Nws) schedule(dynamic)
@@ -577,6 +579,19 @@ loop_no_z_dependence(hmpdf_obj *d)
         int M_index = bins[ii] % d->n->NM;
         SAFEHMPDF_NORETURN(do_this_bin(d, z_index, M_index,
                                        d->m->ws[THIS_THREAD]));
+
+        #ifdef _OPENMP
+        #   pragma omp critical(StatusMapNoz)
+        #endif
+        {
+            ++Nstatus;
+            if ((Nstatus%MAPNOZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
+            {
+                SAFEHMPDF_NORETURN(status_update(d, start_time,
+                                                 Nstatus, d->n->Nz * d->n->NM,
+                                                 "create_map"));
+            }
+        }
     }
 
     free(bins);
@@ -618,6 +633,9 @@ loop_w_z_dependence(hmpdf_obj *d)
     {
         bins[ii] = ii;
     }
+
+    // status
+    time_t start_time = time(NULL);
 
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -663,6 +681,13 @@ loop_w_z_dependence(hmpdf_obj *d)
         for (long ii=0; ii<d->m->Nside * (d->m->Nside/2+1); ii++)
         {
             d->m->map_comp[ii] += d->m->ws[0]->map_comp[ii];
+        }
+
+        if (((z_index+1)%MAPWZ_STATUS_PERIOD == 0) && (d->verbosity > 0))
+        {
+            SAFEHMPDF_NORETURN(status_update(d, start_time,
+                                             z_index+1, d->n->Nz,
+                                             "create_map"));
         }
     }
 
