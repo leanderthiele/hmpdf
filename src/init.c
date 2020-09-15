@@ -237,6 +237,8 @@ init_params(hmpdf_obj *d, param *p)
              d->m->area, dbl_type, def.fsky);
     INIT_P_B(hmpdf_map_pixelgrid,
              d->m->pxlgrid, int_type, def.pxlgrid);
+    INIT_P(hmpdf_map_poisson,
+           d->m->mappoisson, int_type, def.mappoisson);
 
     HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 

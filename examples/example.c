@@ -90,22 +90,30 @@ int example_tsz_map(void)
                    hmpdf_N_threads, 4,
                    hmpdf_verbosity, 5,
                    hmpdf_M_min, 1e11,
+                   hmpdf_N_signal, 2048,
 
                    hmpdf_N_z, 40,
                    hmpdf_N_M, 40,
-                   hmpdf_N_theta, 30,
-                   hmpdf_map_pixelgrid, 1,
+                   hmpdf_N_theta, 200,
+                   
+                   hmpdf_map_pixelgrid, 2,
+                   hmpdf_map_poisson, 0,
                    
                    hmpdf_pixel_side, 1.0,
-                   hmpdf_map_fsky, 1e-1))
-        return -1;
-
-    double map_op[Nbins];
-    if (hmpdf_get_map_op(d, Nbins, binedges, map_op, 1))
+                   hmpdf_map_fsky, 1e-2))
         return -1;
 
     double op[Nbins];
     if (hmpdf_get_op(d, Nbins, binedges, op, 1, 0))
+        return -1;
+
+    double map_op[Nbins];
+    if (hmpdf_get_map_op(d, Nbins, binedges, map_op, 0))
+        return -1;
+
+    double *map;
+    long Nside;
+    if (hmpdf_get_map(d, &map, &Nside, 0))
         return -1;
 
     if (hmpdf_delete(d))
@@ -113,6 +121,9 @@ int example_tsz_map(void)
 
     savetxt("test_map_op", Nbins, 1, map_op);
     savetxt("test_op", Nbins, 1, op);
+    tofile("test_map", Nside*Nside, 1, map);
+
+    free(map);
 
     return 0;
 }

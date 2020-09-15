@@ -268,59 +268,59 @@ fill_buf(hmpdf_obj *d, int z_index, int M_index, map_ws *ws)
 
     // compute how large this specific map needs to be
     //     the map is of size (2*w+1)^2
-    long w = (long)round(tout) + 1;
+    long w = (long)ceil(tout);
     ws->bufside = 2 * w + 1;
+    long pixside = 2 * d->m->pxlgrid + 1;
 
     // draw random displacement of the center of the halo
     double dx = gsl_rng_uniform(ws->rng) - 0.5;
     double dy = gsl_rng_uniform(ws->rng) - 0.5;
 
-    // compute the dimensions of the buffer
-    //     buf = [ w, w, ld, ld ]
-    long ld = 2 * d->m->pxlgrid + 1; // innermost
-
-    // safety check
-    HMPDFCHECK(ws->bufside * ws->bufside * ld * ld >= d->m->buflen,
-               "did not allocate enough buffer memory, "
-               "%lu >= %lu", ws->bufside * ws->bufside * ld * ld, d->m->buflen);
-
-    // fill the position grid
-    long idx = 0;
-    for (long xx= -w; xx<= w; xx++)
+    long Npix_filled = 0;
+    while (Npix_filled < ws->bufside * ws->bufside)
     {
-        for (long yy= -w; yy<= w; yy++)
+        long Npix_here
+            = GSL_MIN(ws->bufside * ws->bufside - Npix_filled,           // physical constraint
+                      (d->m->buflen - Npix_filled) / (pixside*pixside)); // memory constraint
+        HMPDFCHECK(Npix_here <= 0, "no buffer left. this is a bug.");
+        
+        long posidx = 0;
+        // fill the position buffer
+        for (long ii=0; ii<Npix_here; ii++)
         {
-            for (long xp= -d->m->pxlgrid;
-                 xp<= d->m->pxlgrid; xp++)
+            // figure out pixel coordinates in the map
+            long xx = (ii + Npix_filled) / ws->bufside - w;
+            long yy = (ii + Npix_filled) % ws->bufside - w;
+
+            // loop over sample points within the pixel
+            for (long xp= -d->m->pxlgrid; xp<= d->m->pxlgrid; xp++)
             {
-                for (long yp= -d->m->pxlgrid;
-                     yp<= d->m->pxlgrid; yp++)
+                for (long yp= -d->m->pxlgrid; yp<= d->m->pxlgrid; yp++, posidx++)
                 {
-                    double xpos = (double)xx + (double)(2*xp)/(double)ld + dx;
-                    double ypos = (double)yy + (double)(2*yp)/(double)ld + dy;
-                    // compute distance from center in units of the outer radius
-                    ws->pos[idx] = hypot(xpos, ypos) / tout;
-                    ++idx;
+                    double xpos = (double)xx + (double)(2*xp)/(double)pixside + dx;
+                    double ypos = (double)yy + (double)(2*yp)/(double)pixside + dy;
+                    ws->pos[posidx] = hypot(xpos, ypos) / tout;
                 }
             }
         }
-    }
 
-    // evaluate the profile interpolator
-    SAFEHMPDF(s_of_t(d, z_index, M_index,
-                     ws->bufside * ws->bufside * ld * ld,
-                     ws->pos, ws->buf));
+        // evaluate the profile interpolator
+        SAFEHMPDF(s_of_t(d, z_index, M_index, posidx, ws->pos, ws->buf+Npix_filled));
 
-    // compute the average over pixels
-    for (long ii=0; ii< ws->bufside * ws->bufside; ii++)
-    {
-        double avg = 0.0;
-        for (long jj=0; jj< ld * ld; jj++)
+        posidx = 0;
+        // perform the average
+        for (long ii=0; ii<Npix_here; ii++)
         {
-            avg += ws->buf[ii*ld*ld + jj];
+            double temp = 0.0;
+            for (long jj=0; jj<pixside*pixside; jj++, posidx++)
+            {
+                temp += ws->buf[Npix_filled + posidx];
+            }
+            temp /= (double)(pixside*pixside);
+            ws->buf[Npix_filled + ii] = temp;
         }
-        avg /= (double)(ld * ld);
-        ws->buf[ii] = avg;
+
+        Npix_filled +=  Npix_here;
     }
 
     ENDFCT
@@ -404,11 +404,20 @@ draw_N_halos(hmpdf_obj *d, int z_index, int M_index, map_ws *ws, unsigned *N)
                * d->n->Mweights[M_index]
                * d->m->area;
 
-    // use this funny construct because this function
-    //    frequently sets errno (due to underflows I think)
-    //    which is not critical but would be caught
-    //    by ENDFCT
-    SAFEGSL((*N = gsl_ran_poisson(ws->rng, n), 0));
+    if (d->m->mappoisson)
+    {
+        // use this funny construct because this function
+        //    frequently sets errno (due to underflows I think)
+        //    which is not critical but would be caught
+        //    by ENDFCT
+        SAFEGSL((*N = gsl_ran_poisson(ws->rng, n), 0));
+    }
+    else
+    {
+        double r = gsl_rng_uniform(ws->rng);
+        double w_ceil = n - floor(n);
+        *N = (unsigned)round((r < w_ceil) ? ceil(n) : floor(n));
+    }
 
     ENDFCT
 }//}}}
@@ -586,14 +595,13 @@ loop_no_z_dependence(hmpdf_obj *d)
     free(bins);
 
     // add to the total map
-    long ldmap = (d->m->need_ft) ? (d->m->Nside+2) : d->m->Nside;
     for (int ii=0; ii<d->m->Nws; ii++)
     {
         for (long jj=0; jj<d->m->Nside; jj++)
         {
             for (long kk=0; kk<d->m->Nside; kk++)
             {
-                d->m->map_real[jj*ldmap + kk]
+                d->m->map_real[jj*d->m->ldmap + kk]
                     += d->m->ws[ii]->map[jj*d->m->Nside+kk];
             }
         }
@@ -689,17 +697,21 @@ create_mem(hmpdf_obj *d)
                            //     which is more accurate
         || d->ns->have_noise)
     {
+        d->m->ldmap = d->m->Nside + 2;
         d->m->need_ft = 1;
     }
     else
     {
+        d->m->ldmap = d->m->Nside;
         d->m->need_ft = 0;
     }
 
+    SAFEALLOC(d->m->map_real, ((d->m->need_ft) ?
+                               fftw_malloc : malloc)(d->m->Nside * d->m->ldmap
+                                                     * sizeof(double)));
+
     if (d->m->need_ft)
     {
-        SAFEALLOC(d->m->map_real, fftw_malloc(d->m->Nside * (d->m->Nside+2)
-                                              * sizeof(double)));
         d->m->map_comp = (double complex *)d->m->map_real;
 
         SAFEALLOC(d->m->p_r2c, malloc(sizeof(fftw_plan)));
@@ -712,11 +724,6 @@ create_mem(hmpdf_obj *d)
                                               d->m->map_comp, d->m->map_real,
                                               FFTW_MEASURE);
     }
-    else
-    {
-        SAFEALLOC(d->m->map_real, malloc(d->m->Nside * d->m->Nside
-                                         * sizeof(double)));
-    }
 
     d->m->created_mem = 1;
 
@@ -728,13 +735,12 @@ get_map_mean(hmpdf_obj *d)
 {//{{{
     STARTFCT
     
-    long ldmap = (d->m->need_ft) ? (d->m->Nside+2) : d->m->Nside;
     double sum = 0.0;
     for (long ii=0; ii<d->m->Nside; ii++)
     {
         for (long jj=0; jj<d->m->Nside; jj++)
         {
-            sum += d->m->map_real[ii*ldmap+jj];
+            sum += d->m->map_real[ii*d->m->ldmap+jj];
         }
     }
     
@@ -759,6 +765,9 @@ create_map(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_map\n");
 
+    // zero the map
+    zero_real(d->m->Nside * d->m->ldmap, d->m->map_real);
+
     // run the loop
     if (d->f->has_z_dependent)
     {
@@ -769,15 +778,15 @@ create_map(hmpdf_obj *d)
         SAFEHMPDF(loop_no_z_dependence(d));
     }
 
-    // TODO in which order do the next two operations happen???
-    // add the Gaussian random field
-    SAFEHMPDF(add_grf(d, d->ns->noise_pwr, d->ns->noise_pwr_params));
-
-    // apply the filters (not z-dependent)
-    SAFEHMPDF(filter_map(d, d->m->map_comp, NULL));
-
     if (d->m->need_ft)
     {
+        // TODO in which order do the next two operations happen???
+        // add the Gaussian random field
+        SAFEHMPDF(add_grf(d, d->ns->noise_pwr, d->ns->noise_pwr_params));
+
+        // apply the filters (not z-dependent)
+        SAFEHMPDF(filter_map(d, d->m->map_comp, NULL));
+
         // transform back to real space
         fftw_execute(*(d->m->p_c2r));
 
@@ -823,8 +832,9 @@ create_sidelengths(hmpdf_obj *d)
     long temp = (long)round(max_t_out/d->f->pixelside);
     temp *= 2;
     temp += 4; // some safety buffer
-    temp *= (long)(2*d->m->pxlgrid+1);
-    d->m->buflen = temp * temp;
+    d->m->buflen = 2 * temp * temp; // not sufficient to do all halos
+                                    // in one go, but long enough that it
+                                    // is reasonably efficient
 
     d->m->created_sidelengths = 1;
 
@@ -832,8 +842,7 @@ create_sidelengths(hmpdf_obj *d)
                   d->m->Nside, d->m->Nside,
                   1e-9 * (double)(d->m->Nside * d->m->Nside
                                   * sizeof(double)));
-    HMPDFPRINT(3, "\t\tbuffer = %ld x %ld <=> %g GB\n",
-                  temp, temp,
+    HMPDFPRINT(3, "\t\tbuffer <=> %g GB\n",
                   1e-9 * (double)(d->m->buflen * sizeof(double)));
 
     ENDFCT
@@ -900,12 +909,11 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     SAFEGSL(gsl_histogram_set_ranges(h, _binedges, Nbins+1));
 
     // accumulate the histogram
-    long ldmap = (d->m->need_ft) ? (d->m->Nside+2) : d->m->Nside;
     for (long ii=0; ii<d->m->Nside; ii++)
     {
         for (long jj=0; jj<d->m->Nside; jj++)
         {
-            double val = d->m->map_real[ii*ldmap+jj];
+            double val = d->m->map_real[ii*d->m->ldmap+jj];
             if (val < _binedges[0] || val >= _binedges[Nbins])
             {
                 continue;
@@ -927,6 +935,34 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     }
 
     gsl_histogram_free(h);
+
+    ENDFCT
+}//}}}
+
+int
+hmpdf_get_map(hmpdf_obj *d, double **map, long *Nside, int new_map)
+{//{{{
+    STARTFCT
+
+    SAFEHMPDF(common_input_processing(d, new_map));
+
+    SAFEALLOC(*map, malloc(d->m->Nside * d->m->Nside * sizeof(double)));
+    for (long ii=0; ii<d->m->Nside; ii++)
+    {
+        memcpy(*map + ii*d->m->Nside,
+               d->m->map_real + ii*d->m->ldmap,
+               d->m->Nside * sizeof(double));
+    }
+
+    if (d->p->stype == hmpdf_kappa)
+    {
+        for (long ii=0; ii<d->m->Nside*d->m->Nside; ii++)
+        {
+            (*map)[ii] -= d->m->mean;
+        }
+    }
+
+    *Nside = d->m->Nside;
 
     ENDFCT
 }//}}}

@@ -31,6 +31,8 @@ typedef struct//{{{
 {
     double area; // in physical units (rad^2)
 
+    int mappoisson;
+
     int pxlgrid;
 
     int created_mem;
@@ -44,6 +46,7 @@ typedef struct//{{{
     long buflen;
 
     int created_map;
+    long ldmap;
     double *map_real;
     double complex *map_comp;
     fftw_plan *p_r2c;
@@ -59,5 +62,6 @@ maps_t;
 int null_maps(hmpdf_obj *d);
 int reset_maps(hmpdf_obj *d);
 int hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int new_map);
+int hmpdf_get_map(hmpdf_obj *d, double **map, long *Nside, int new_map);
 
 #endif

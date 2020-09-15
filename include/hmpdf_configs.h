@@ -335,6 +335,14 @@ typedef enum
                           *  \par
                           *  Type: int. Default: 3.
                           */
+    hmpdf_map_poisson, /*! If set to zero, the number of halos will not be drawn from the Poisson
+                        *  distribution but rather from a much more concentrated one.
+                        *  In that case, the mean (i.e. the averaged one-point PDF) is correctly
+                        *  and much faster approached, while the scatter of individual histograms
+                        *  will not be correct.
+                        *  \par
+                        *  Type: int. Default: 1.
+                        */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
                         */
