@@ -150,5 +150,6 @@
 #include "hmpdf_twopoint.h"
 #include "hmpdf_covariance.h"
 #include "hmpdf_powerspectrum.h"
+#include "hmpdf_maps.h"
 
 #endif

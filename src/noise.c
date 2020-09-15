@@ -217,7 +217,8 @@ sigmasq_integrand(double ell, void *params)
     #endif
 
     // apply the other filters
-    p->status = apply_filters(p->d, 1, &ell, &out, &out, 1, filter_ps, NULL);
+    p->status = apply_filters(p->d, 1, &ell, &out, &out, 1,
+                              filter_ps, NULL);
 
     return out;
 }//}}}

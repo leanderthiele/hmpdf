@@ -424,8 +424,8 @@ unit_conversions(hmpdf_obj *d)
     d->n->phimax         *= RADPERARCMIN;
     d->f->pixelside      *= RADPERARCMIN;
     d->f->tophat_radius  *= RADPERARCMIN;
-    d->f->gaussian_sigma *= RADPERARCMIN/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
-    d->m->area           *= 4.0*M_PI; // convert fsky to area
+    d->f->gaussian_sigma *= RADPERARCMIN / sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+    d->m->area           *= 4.0 * M_PI; // convert fsky to area
 
     ENDFCT
 }//}}}

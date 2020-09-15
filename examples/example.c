@@ -3,6 +3,7 @@
 /*! [compile] */
 #include <stdio.h>
 
+#include "utils.h"
 #include "hmpdf.h"
 
 /*! [example_kappa_onepoint] */
@@ -74,9 +75,46 @@ int example_ell_filter_use(void)
 }
 /*! [example_ell_filter_use] */
 
+int example_tsz_map(void)
+{
+    int Nbins = 10; double ymin=0.0; double ymax=1e-4;
+    double binedges[Nbins+1];
+    for (int ii=0; ii<=Nbins; ii++)
+        binedges[ii] = ymin + (double)(ii)*(ymax-ymin)/(double)(Nbins);
+
+    hmpdf_obj *d = hmpdf_new();
+    if (!(d))
+        return -1;
+
+    if (hmpdf_init(d, "example.ini", hmpdf_tsz,
+                   hmpdf_N_threads, 4,
+                   hmpdf_verbosity, 5,
+                   hmpdf_M_min, 1e11,
+
+                   hmpdf_N_z, 20,
+                   hmpdf_N_M, 20,
+                   hmpdf_N_theta, 30,
+                   hmpdf_map_pixelgrid, 1,
+                   
+                   hmpdf_pixel_side, 1.0,
+                   hmpdf_map_fsky, 1e-2))
+        return -1;
+
+    double op[Nbins];
+    if (hmpdf_get_map_op(d, Nbins, binedges, op, 1))
+        return -1;
+
+    if (hmpdf_delete(d))
+        return -1;
+
+    savetxt("test_map_op", Nbins, 1, op);
+
+    return 0;
+}
+
 int main(void)
 {
-    if (example_kappa_onepoint())
+    if (example_tsz_map())
     {
         fprintf(stderr, "failed\n");
         return -1;
