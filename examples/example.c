@@ -78,7 +78,8 @@ int example_ell_filter_use(void)
 double noisepwr(double ell, void *p)
 {
     // this is a good testing value for tSZ
-    return 1e-17;
+    //return 1e-17;
+    return 0.0;
 }
 
 int example_tsz_map(void)

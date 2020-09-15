@@ -301,20 +301,34 @@ create_toepl(hmpdf_obj *d)
     // fill the first row
     for (long ii= -d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
     {
+        // we do this carefully to take care of the case
+        //     when the user has set the noise power to an essentially
+        //     zero value
+        double exponent;
         if (ii == 0)
         {
-            continue;
+            if (var < 10.0 * DBL_MIN)
+            {
+                d->ns->toepl[d->ns->len_kernel+ii] = 1.0;
+                continue;
+            }
+            else
+            {
+                exponent = 0.0;
+            }
         }
-        else if (var / (0.5 * gsl_pow_2((double)ii)) < 10.0 * DBL_MIN)
+        else if (var < 10.0 * DBL_MIN * gsl_pow_2((double)ii))
         {
+            d->ns->toepl[d->ns->len_kernel+ii] = 0.0;
             continue;
         }
         else
         {
-            SAFEHMPDF(safe_exp_div(0.5 * gsl_pow_2((double)ii) / var,
-                                   sqrt(2.0 * M_PI * var),
-                                   d->ns->toepl + ii + d->ns->len_kernel));
+            exponent = 0.5 * gsl_pow_2((double)ii) / var;
         }
+        SAFEHMPDF(safe_exp_div(exponent,
+                               sqrt(2.0 * M_PI * var),
+                               d->ns->toepl + ii + d->ns->len_kernel));
     }
     // fill the remaining rows
     for (long ii=1; ii<d->n->Nsignal; ii++)
