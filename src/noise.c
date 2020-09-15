@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <complex.h>
 
 #include <fftw3.h>
@@ -300,9 +301,20 @@ create_toepl(hmpdf_obj *d)
     // fill the first row
     for (long ii= -d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
     {
-        SAFEHMPDF(safe_exp_div(0.5 * gsl_pow_2((double)(ii)) / var,
-                               sqrt(2.0 * M_PI * var),
-                               d->ns->toepl + ii + d->ns->len_kernel));
+        if (ii == 0)
+        {
+            continue;
+        }
+        else if (var / (0.5 * gsl_pow_2((double)ii)) < 10.0 * DBL_MIN)
+        {
+            continue;
+        }
+        else
+        {
+            SAFEHMPDF(safe_exp_div(0.5 * gsl_pow_2((double)ii) / var,
+                                   sqrt(2.0 * M_PI * var),
+                                   d->ns->toepl + ii + d->ns->len_kernel));
+        }
     }
     // fill the remaining rows
     for (long ii=1; ii<d->n->Nsignal; ii++)
