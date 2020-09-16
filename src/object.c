@@ -10,6 +10,10 @@ null_data(hmpdf_obj *d)
 
     d->inited = 0;
 
+    // if user calls hmpdf_delete directly after hmpdf_new,
+    //     we would like this to have a defined value
+    d->verbosity = 0;
+
     SAFEHMPDF(null_numerics(d));
     SAFEHMPDF(null_class_interface(d));
     SAFEHMPDF(null_cosmology(d));

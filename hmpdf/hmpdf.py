@@ -4,7 +4,8 @@ from os.path import join
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_ctypes
 from typing import Optional, Tuple, Union, Sequence
-from pkg_resources import resource_filename
+from pkg_resources import resource_string
+from sys import stdout
 
 ## \cond
 class _C(object) : # char pointer
@@ -116,11 +117,12 @@ class HMPDF(object) :
     # interaction with the DLL
     #{{{
     # locate the shared library
-    __pathtohmpdf_name = resource_filename('hmpdf', 'PATHTOHMPDF.txt')
-    with open(__pathtohmpdf_name, 'r') as f :
-        PATHTOHMPDF = f.readline().rstrip()
+    __PATHTOHMPDF = resource_string('hmpdf', 'PATHTOHMPDF.txt')
+    __PATHTOHMPDF = __PATHTOHMPDF.rstrip()
+    if isinstance(__PATHTOHMPDF, bytes) :
+        __PATHTOHMPDF = str(__PATHTOHMPDF, encoding=stdout.encoding)
     try :
-        __libhmpdf = ct.CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
+        __libhmpdf = ct.CDLL(join(__PATHTOHMPDF, 'libhmpdf.so'))
     except OSError : # try to read the shared library from LD_LIBRARY_PATH
         __libhmpdf = ct.CDLL('libhmpdf.so')
     
