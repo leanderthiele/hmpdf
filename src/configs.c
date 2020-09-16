@@ -51,3 +51,31 @@ struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .noise_pwr=NULL, .noise_pwr_params=NULL,
                         .fsky={-1.0,0.0,1.0}, .pxlgrid={3,1,20}, .mappoisson=1, };
 
+// The following is only needed for more reliable interaction
+//     with the python wrapper
+
+#define CHECK_EQU_SIZE(dtype)                         \
+    do {                                              \
+        if (sizeof(hmpdf_configs_e) == sizeof(dtype)) \
+        {                                             \
+            sprintf(out, #dtype);                     \
+            return 0;                                 \
+        }                                             \
+    } while (0)
+
+int enum_size_for_py(char *out)
+// a simple helper function to find out which
+//     C data type has the same size as an enum
+//     on this platform,
+//     so the python wrapper can pass objects of
+//     the correct size
+{
+    CHECK_EQU_SIZE(short);
+    CHECK_EQU_SIZE(int); 
+    CHECK_EQU_SIZE(long);
+    CHECK_EQU_SIZE(long long);
+
+    return 1;
+}
+
+#undef CHECK_EQU_SIZE

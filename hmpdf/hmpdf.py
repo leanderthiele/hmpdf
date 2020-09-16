@@ -14,11 +14,11 @@ class _C(object) : # char pointer
         pass
     def __call__(self, name) :
         if isinstance(name, str) :
-            return ct.c_char_p(name.encode('utf-8'))
+            return ct.c_char_p(name.encode(stdout.encoding))
         elif isinstance(name, bytes) :
             return ct.c_char_p(name)
         else :
-            raise TypeError('Not a string.')
+            raise TypeError('Not a string or bytes object.')
 #}}}
 
 class _E(object) : # enumeration class
@@ -31,7 +31,7 @@ class _E(object) : # enumeration class
     def __init__(self, names) :
         self.names = names
     def __call__(self, name) :
-        return ct.c_int(self.names.index(name))
+        return HMPDF.enum(self.names.index(name))
 #}}}
 
 class _D(object) : # double pointer from numpy array
@@ -86,11 +86,11 @@ class _Configs(object) :
             raise NotImplementedError('Configuration option %s not '\
                                       'supported in the python wrapper'%key)
         pos = _Configs.configs.index(key)
-        self.l.append(ct.c_int(pos//2))
+        self.l.append(HMPDF.enum(pos//2))
         self.t.append(_Configs.configs[pos+1])
         self.l.append(self.t[-1](value))
     def __call__(self) :
-        self.l.append(ct.c_int(len(_Configs.configs)//2)) # corresponds to end_configs
+        self.l.append(HMPDF.enum(len(_Configs.configs)//2)) # corresponds to end_configs
         return self.l
 #}}}
 ## \endcond
@@ -125,6 +125,11 @@ class HMPDF(object) :
         __libhmpdf = ct.CDLL(join(__PATHTOHMPDF, 'libhmpdf.so'))
     except OSError : # try to read the shared library from LD_LIBRARY_PATH
         __libhmpdf = ct.CDLL('libhmpdf.so')
+    
+    # helper function
+    __enum_size = __libhmpdf.enum_size_for_py
+    __enum_size.restype = ct.c_int
+    __enum_size.argtypes = [ct.c_char_p, ]
     
     # hmpdf_object.h
     __new = __libhmpdf.hmpdf_new
@@ -202,6 +207,16 @@ class HMPDF(object) :
 
     # global error message format
     __errmsg = '%s completed with non-zero exit code'
+
+    # figure out how large an enum is
+    __int_like_types = {'short'    : ct.c_short,
+                        'int'      : ct.c_int,
+                        'long'     : ct.c_long,
+                        'long long': ct.c_longlong, }
+    __liketype = ct.create_string_buffer(256)
+    if __enum_size(__liketype) :
+        raise ImportError('enum_size_for_py failed, no data type was found matching enum in size.')
+    enum = __int_like_types[__liketype.value.decode()]
     #}}}
 
     def __ret(self, err, callname, *args) :
