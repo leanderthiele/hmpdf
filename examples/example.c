@@ -100,7 +100,7 @@ int example_tsz_map(void)
                    hmpdf_map_poisson, 0,
                    
                    hmpdf_pixel_side, 1.0,
-                   hmpdf_map_fsky, 1e-2))
+                   hmpdf_map_fsky, 0.3e-1))
         return -1;
 
     /*

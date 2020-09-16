@@ -139,10 +139,12 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     if (idx == 0 && d->f->has_z_dependent)
     {
         ws->for_fft = 1;
+        ws->ldmap = d->m->Nside+2;
     }
     else
     {
         ws->for_fft = 0;
+        ws->ldmap = d->m->Nside;
     }
 
     NEWMAPWS_SAFEALLOC(ws->pos, malloc(d->m->buflen
@@ -155,19 +157,17 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     //     fast one
     NEWMAPWS_SAFEALLOC(ws->rng, gsl_rng_alloc(gsl_rng_taus));
 
+    NEWMAPWS_SAFEALLOC(ws->map, ((ws->for_fft) ?
+                                 fftw_malloc
+                                 : malloc)(ws->ldmap * d->m->Nside
+                                           * sizeof(double)));
+
     if (ws->for_fft)
     {
-        NEWMAPWS_SAFEALLOC(ws->map, fftw_malloc(d->m->Nside * (d->m->Nside+2)
-                                                * sizeof(double)));
         ws->map_comp = (double complex *)ws->map;
         NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
         *(ws->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
                                             ws->map, ws->map_comp, FFTW_MEASURE);
-    }
-    else
-    {
-        NEWMAPWS_SAFEALLOC(ws->map, malloc(d->m->Nside * d->m->Nside
-                                           * sizeof(double)));
     }
 
     ENDFCT
@@ -242,12 +242,12 @@ reset_map_ws(hmpdf_obj *d, map_ws *ws)
 
     // seed the random number generator
     //     be careful that the seed is as close to random as possible
-    gsl_rng_set(ws->rng, (unsigned long)time(NULL)
-                         + (unsigned long)rand()
+    gsl_rng_set(ws->rng, (unsigned long)(time(NULL))
+                         + (unsigned long)(clock())
+                         + (unsigned long)(rand())
                          + (unsigned long)(ws->buf));
 
-    long ldmap = (ws->for_fft) ? (d->m->Nside+2) : d->m->Nside;
-    zero_real(ldmap * d->m->Nside, ws->map);
+    zero_real(ws->ldmap * d->m->Nside, ws->map);
 
     ENDFCT
 }//}}}
@@ -324,14 +324,12 @@ fill_buf(hmpdf_obj *d, int z_index, int M_index, map_ws *ws)
 
 // convenience macro to reduce typing
 #define INNERLOOP_OP                      \
-    ws->map[ixx*ldmap + iyy]              \
+    ws->map[ixx*ws->ldmap + iyy]          \
         += ws->buf[xx * ws->bufside + yy];
 
 static inline void 
 add_buf_inner_loop(hmpdf_obj *d, map_ws *ws, long y0, long xx, long ixx)
 {//{{{
-    long ldmap = (ws->for_fft) ? (d->m->Nside+2) : d->m->Nside;
-
     for (long yy=0, iyy=y0;
          yy< GSL_MIN(ws->bufside, d->m->Nside - y0);
          yy++, iyy++)
@@ -346,7 +344,7 @@ add_buf_inner_loop(hmpdf_obj *d, map_ws *ws, long y0, long xx, long ixx)
     }
 }//}}}
 
-#define OUTERLOOP_OP                        \
+#define OUTERLOOP_OP \
     add_buf_inner_loop(d, ws, y0, xx, ixx);
 
 static int 
@@ -572,6 +570,7 @@ loop_no_z_dependence(hmpdf_obj *d)
         SAFEHMPDF_NORETURN(do_this_bin(d, z_index, M_index,
                                        d->m->ws[THIS_THREAD]));
 
+        /*
         #ifdef _OPENMP
         #   pragma omp critical(StatusMapNoz)
         #endif
@@ -582,7 +581,10 @@ loop_no_z_dependence(hmpdf_obj *d)
                 TIMEREMAIN(Nstatus, d->n->Nz * d->n->NM, "create_map");
             }
         }
+        */
     }
+
+    TIMEELAPSED("create_map");
 
     free(bins);
 
@@ -695,6 +697,8 @@ loop_w_z_dependence(hmpdf_obj *d)
         }
     }
 
+    TIMEELAPSED("create_map");
+
     free(Mbins);
     free(zbins);
 
@@ -714,13 +718,13 @@ create_mem(hmpdf_obj *d)
                            //     which is more accurate
         || d->ns->have_noise)
     {
-        d->m->ldmap = d->m->Nside + 2;
         d->m->need_ft = 1;
+        d->m->ldmap = d->m->Nside + 2;
     }
     else
     {
-        d->m->ldmap = d->m->Nside;
         d->m->need_ft = 0;
+        d->m->ldmap = d->m->Nside;
     }
 
     SAFEALLOC(d->m->map_real, ((d->m->need_ft) ?

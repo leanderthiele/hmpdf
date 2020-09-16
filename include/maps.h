@@ -12,6 +12,7 @@
 typedef struct//{{{
 {
     int for_fft;
+    long ldmap;
     double *map; // the complete map in this work space
                  //    includes all objects handled by a specific thread
     double complex *map_comp;
