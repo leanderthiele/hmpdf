@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <complex.h>
 
 #include <fftw3.h>
@@ -217,7 +218,8 @@ sigmasq_integrand(double ell, void *params)
     #endif
 
     // apply the other filters
-    p->status = apply_filters(p->d, 1, &ell, &out, &out, 1, filter_ps, NULL);
+    p->status = apply_filters(p->d, 1, &ell, &out, &out, 1,
+                              filter_ps, NULL);
 
     return out;
 }//}}}
@@ -226,6 +228,8 @@ static int
 create_noise_sigmasq(hmpdf_obj *d)
 {//{{{
     STARTFCT
+    
+    HMPDFPRINT(3, "\t\tcreate_noise_sigmasq\n");
     
     sigmasq_integrand_params p;
     p.status = 0;
@@ -297,7 +301,32 @@ create_toepl(hmpdf_obj *d)
     // fill the first row
     for (long ii= -d->ns->len_kernel; ii<=d->ns->len_kernel; ii++)
     {
-        SAFEHMPDF(safe_exp_div(0.5 * gsl_pow_2((double)(ii)) / var,
+        // we do this carefully to take care of the case
+        //     when the user has set the noise power to an essentially
+        //     zero value
+        double exponent;
+        if (ii == 0)
+        {
+            if (var < 10.0 * DBL_MIN)
+            {
+                d->ns->toepl[d->ns->len_kernel+ii] = 1.0;
+                continue;
+            }
+            else
+            {
+                exponent = 0.0;
+            }
+        }
+        else if (var < 10.0 * DBL_MIN * gsl_pow_2((double)ii))
+        {
+            d->ns->toepl[d->ns->len_kernel+ii] = 0.0;
+            continue;
+        }
+        else
+        {
+            exponent = 0.5 * gsl_pow_2((double)ii) / var;
+        }
+        SAFEHMPDF(safe_exp_div(exponent,
                                sqrt(2.0 * M_PI * var),
                                d->ns->toepl + ii + d->ns->len_kernel));
     }
@@ -415,22 +444,12 @@ multiply_w_gaussian2d(hmpdf_obj *d, double phi, double complex *A)
         // same logic as in the "redundant" function,
         //      note that the FT of a real Gaussian is real valued
         //      so conjugation not required
-        double lambda1;
-        if (ii<=d->n->Nsignal_noisy/2)
-        // positive frequency part
-        {
-            lambda1 = d->n->lambdagrid_noisy[ii];
-        }
-        else
-        // negative frequency part
-        {
-            lambda1 = - d->n->lambdagrid_noisy[d->n->Nsignal_noisy-ii];
-        }
+        double lambda1 = WAVENR(d->n->Nsignal_noisy, d->n->lambdagrid_noisy, ii);
 
         for (long jj=0; jj<d->n->Nsignal_noisy/2+1; jj++)
         // loop over short direction (cols)
         {
-            double lambda2 = d->n->lambdagrid_noisy[jj];
+            double lambda2 = WAVENR(d->n->Nsignal_noisy, d->n->lambdagrid_noisy, jj);
 
             // evaluate the Gaussian kernel in Fourier space
             //     and normalize properly

@@ -233,6 +233,12 @@ init_params(hmpdf_obj *d, param *p)
            d->ns->noise_pwr, np_type, def.noise_pwr);
     INIT_P(hmpdf_noise_pwr_params,
            d->ns->noise_pwr_params, vptr_type, def.noise_pwr_params);
+    INIT_P_B(hmpdf_map_fsky,
+             d->m->area, dbl_type, def.fsky);
+    INIT_P_B(hmpdf_map_pixelgrid,
+             d->m->pxlgrid, int_type, def.pxlgrid);
+    INIT_P(hmpdf_map_poisson,
+           d->m->mappoisson, int_type, def.mappoisson);
 
     HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 
@@ -420,7 +426,8 @@ unit_conversions(hmpdf_obj *d)
     d->n->phimax         *= RADPERARCMIN;
     d->f->pixelside      *= RADPERARCMIN;
     d->f->tophat_radius  *= RADPERARCMIN;
-    d->f->gaussian_sigma *= RADPERARCMIN/sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+    d->f->gaussian_sigma *= RADPERARCMIN / sqrt(8.0*M_LN2); // convert FWHM (input) to sigma
+    d->m->area           *= 4.0 * M_PI; // convert fsky to area
 
     ENDFCT
 }//}}}

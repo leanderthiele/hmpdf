@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <complex.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_integration.h>
@@ -338,7 +339,7 @@ filter_custom_k(void *d, double ell, filter_mode m, int *z_index, double *out)
 int
 apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
               int stride, filter_mode mode, int *z_index)
-// (1) if *z_index == NULL, applies only the z-independent filters
+// (1) if *z_index == NULL, applies only the z-independent filters                    
 // (2) if *z_index != NULL and mode == filter_pdf, apply all filters
 // (3)                     and mode == filter_ps,  apply only the z-dependent filters
 // NOTE : function is safe if in and out point to same memory
@@ -353,7 +354,8 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
     {
         // check if we need to apply this filter
         if ((z_index == NULL && d->f->z_dependent[ii]) // case (1)
-            || (z_index != NULL && mode == filter_ps && !(d->f->z_dependent[ii]))) // case (3)
+            || (z_index != NULL && mode == filter_ps
+                && !(d->f->z_dependent[ii]))) // case (3)
         {
             continue;
         }
@@ -362,8 +364,47 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
             for (int jj=0; jj<N; jj++)
             {
                 double temp;
-                SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], mode, z_index, &temp));
+                SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], mode,
+                                                  z_index, &temp));
                 out[jj*stride] *= temp;
+            }
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+int
+apply_filters_map(hmpdf_obj *d, long N, double *ell, double complex *in, double complex *out,
+                  int *z_index)
+// (1) if z_index == NULL, applies only z-independent filters
+// (2) if z_index != NULL, applies only z-dependent filters
+// (3) excludes the pixel window function
+{//{{{
+    STARTFCT
+
+    if (in != out)
+    {
+        memcpy(out, in, N * sizeof(double complex));
+    }
+
+    for (int ii=0; ii<d->f->Nfilters; ii++)
+    {
+        // check if we need to apply this filter
+        if ((z_index == NULL && d->f->z_dependent[ii]) // case (1)
+            || (z_index != NULL && !(d->f->z_dependent[ii])) // case (2)
+            || (ii == d->f->pixelfilter_idx)) // case (3)
+        {
+            continue;
+        }
+        else
+        {
+            for (long jj=0; jj<N; jj++)
+            {
+                double temp;
+                SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], filter_pdf,
+                                                  z_index, &temp));
+                out[jj] *= temp;
             }
         }
     }
@@ -383,6 +424,8 @@ init_filters(hmpdf_obj *d)
     SAFEALLOC(d->f->ffilters,    malloc(10 * sizeof(filter_fct)));
     SAFEALLOC(d->f->z_dependent, malloc(10 * sizeof(int)));
     d->f->Nfilters = 0;
+    d->f->pixelfilter_idx = -1;
+    d->f->has_z_dependent = 0;
 
     if (d->f->pixelside > 0.0)
     {//{{{
@@ -402,6 +445,7 @@ init_filters(hmpdf_obj *d)
         SAFEHMPDF(create_quadraticpixelinterp(d, filter_ps));
         d->f->ffilters[d->f->Nfilters] = &filter_quadraticpixel;
         d->f->z_dependent[d->f->Nfilters] = 0;
+        d->f->pixelfilter_idx = d->f->Nfilters;
         ++d->f->Nfilters;
     }//}}}
     if (d->f->tophat_radius > 0.0)
@@ -434,6 +478,7 @@ init_filters(hmpdf_obj *d)
 
         d->f->ffilters[d->f->Nfilters] = &filter_custom_k;
         d->f->z_dependent[d->f->Nfilters] = 1;
+        d->f->has_z_dependent = 1;
         ++d->f->Nfilters;
     }//}}}
 

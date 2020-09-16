@@ -382,6 +382,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
+//SETARRNULL{{{
 #define SETARRNULL(arr, len)    \
     do {                        \
         for (int arridx=0;      \
@@ -391,6 +392,45 @@ new_gsl_error_handler(const char *reason, const char *file,
             arr[arridx] = NULL; \
         }                       \
     } while(0)
+//}}}
+
+// produces int hrs, min, sec
+#define TIMESPLIT(t)                             \
+    do {                                         \
+        hrs = (int)floor(t/60.0/60.0);           \
+        min = (int)floor(t/60.0                  \
+                         - 60.0*(double)hrs);    \
+        sec = (int)round(t                       \
+                         - 60.0*60.0*(double)hrs \
+                         - 60.0*(double)min);    \
+    } while (0)
+
+// assumes hmpdf_obj *d and time_t start_time are in scope
+#define TIMEREMAIN(done, tot, fctname)                        \
+    do {                                                      \
+        time_t t1 = time(NULL);                               \
+        double delta_time = difftime(t1, start_time);         \
+        double remains = delta_time/(double)done              \
+                         *(double)(tot - done);               \
+        int done_perc = (int)round(100.0*(double)(done)       \
+                                   / (double)(tot));          \
+        int hrs, min, sec;                                    \
+        TIMESPLIT(remains);                                   \
+        HMPDFPRINT(1, "\t\t%3d %% done, "                     \
+                      "%.2d hrs %.2d min %.2d sec remaining " \
+                      "in "fctname".\n",                      \
+                      done_perc, hrs, min, sec);              \
+    } while (0)
+#define TIMEELAPSED(fctname)                                  \
+    do {                                                      \
+        time_t t1 = time(NULL);                               \
+        double elapsed = difftime(t1, start_time);            \
+        int hrs, min, sec;                                    \
+        TIMESPLIT(elapsed);                                   \
+        HMPDFPRINT(1, "\t\tspent %.2d hrs %.2d min %.2d sec " \
+                      "in "fctname".\n",                      \
+                      hrs, min, sec);                         \
+    } while (0)
 
 int ispwr2(int N, int *k);
 
@@ -401,6 +441,9 @@ void zero_comp(long N, double complex *x);
 void reverse(int N, double *in, double *out);
 int not_monotonic(int N, double *x, int sgn);
 int all_zero(int N, double *x, double threshold);
+
+#define WAVENR(N, grid, idx) \
+    (idx <= N/2) ? grid[idx] : -grid[N-idx]
 
 int wait(void);
 

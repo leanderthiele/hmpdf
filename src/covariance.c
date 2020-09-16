@@ -437,24 +437,6 @@ corr_diagn(hmpdf_obj *d, twopoint_workspace *ws, double *out)
 }//}}}
 
 static int
-status_update(hmpdf_obj *d, time_t t0, int done, int tot)
-{//{{{
-    STARTFCT
-
-    time_t t1 = time(NULL);
-    double delta_time = difftime(t1, t0);
-    double remains = delta_time/(double)done
-                     *(double)(tot - done);
-    int hrs = (int)floor(remains/60.0/60.0);
-    int min = (int)round(remains/60.0 - 60.0*(double)(hrs));
-    int done_perc = (int)round(100.0*(double)(done)/(double)(tot));
-    HMPDFPRINT(1, "\t\t%3d %% done, %.2d hrs %.2d min remaining "
-                  "in create_cov.\n", done_perc, hrs, min);
-
-    ENDFCT
-}//}}}
-
-static int
 add_shotnoise_diag(int N, double *cov, double *p)
 {//{{{
     STARTFCT
@@ -623,13 +605,13 @@ create_cov(hmpdf_obj *d)
 
         // status update
         #ifdef _OPENMP
-        #   pragma omp critical(Status)
+        #   pragma omp critical(StatusCov)
         #endif
         {
             ++Nstatus;
             if ((Nstatus%COV_STATUS_PERIOD == 0) && (d->verbosity > 0))
             {
-                SAFEHMPDF_NORETURN(status_update(d, start_time, Nstatus, d->n->Nphi));
+                TIMEREMAIN(Nstatus, d->n->Nphi, "create_cov");
             }
         }
         CONTINUE_IF_ERR
@@ -714,8 +696,6 @@ hmpdf_get_cov(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double cov[Nbin
 
     ENDFCT
 }//}}}
-
-// The following functions are only necessary for the python wrapper
 
 int
 _get_Nphi(hmpdf_obj *d, int *Nphi)

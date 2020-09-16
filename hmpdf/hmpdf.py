@@ -73,7 +73,8 @@ class _Configs(object) :
                'zintegr_type', _E(_E.integr), 'zintegr_alpha', ct.c_double, 'zintegr_beta', ct.c_double,
                'Mintegr_type', _E(_E.integr), 'Mintegr_alpha', ct.c_double, 'Mintegr_beta', ct.c_double,
                'Duffy08_conc_params', _D(9), 'Tinker10_hmf_params', _D(10), 'Battaglia12_tsz_params', _D(15),
-               'noise_pwr', _F(1), 'noise_pwr_params', None, ]
+               'noise_pwr', _F(1), 'noise_pwr_params', None,
+               'map_fsky', ct.c_double, 'map_pixelgrid', ct.c_int, 'map_poisson', ct.c_int, ]
     def __init__(self) :
         self.t = [] # keep references to the types
         self.l = []
@@ -122,31 +123,52 @@ class HMPDF(object) :
         __libhmpdf = ct.CDLL(join(PATHTOHMPDF, 'libhmpdf.so'))
     except OSError : # try to read the shared library from LD_LIBRARY_PATH
         __libhmpdf = ct.CDLL('libhmpdf.so')
+    
+    # hmpdf_object.h
     __new = __libhmpdf.hmpdf_new
     __new.restype = ct.POINTER(ct.c_int)
     __delete = __libhmpdf.hmpdf_delete
     __delete.restype = ct.c_int
     __delete.argtypes = [ct.c_void_p, ]
+
+    # hmpdf_init.h
     __init = __libhmpdf.hmpdf_init_fct
     __init.restype = ct.c_int
+
+    # hmpdf_onepoint.h
     __get_op = __libhmpdf.hmpdf_get_op
     __get_op.restype = ct.c_int
     __get_op.argtypes = [ct.c_void_p, ct.c_int,
                          ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                          ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                          ct.c_int, ct.c_int, ]
+
+    # hmpdf_twopoint.h
     __get_tp = __libhmpdf.hmpdf_get_tp
     __get_tp.restype = ct.c_int
     __get_tp.argtypes = [ct.c_void_p, ct.c_double, ct.c_int,
                          ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                          ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                          ct.c_int, ]
+
+    # hmpdf_covariance.h
     __get_cov = __libhmpdf.hmpdf_get_cov
     __get_cov.restype = ct.c_int
     __get_cov.argtypes = [ct.c_void_p, ct.c_int,
                           ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                           ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                           ct.c_int, ]
+    __get_Nphi = __libhmpdf._get_Nphi
+    __get_Nphi.restype = ct.c_int
+    __get_Nphi.argtypes = [ct.c_void_p, ct.POINTER(ct.c_int), ]
+    __get_cov_diagnostics = __libhmpdf.hmpdf_get_cov_diagnostics1
+    __get_cov_diagnostics.restype = ct.c_int
+    __get_cov_diagnostics.argtypes = [ct.c_void_p,
+                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
+                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1), ]
+    
+    # hmpdf_powerspectrum.h
     __get_Cell = __libhmpdf.hmpdf_get_Cell
     __get_Cell.restype = ct.c_int
     __get_Cell.argtypes = [ct.c_void_p, ct.c_int,
@@ -159,17 +181,27 @@ class HMPDF(object) :
                            ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                            ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
                            ct.c_int, ]
-    __get_Nphi = __libhmpdf._get_Nphi
-    __get_Nphi.restype = ct.c_int
-    __get_Nphi.argtypes = [ct.c_void_p, ct.POINTER(ct.c_int), ]
-    __get_cov_diagnostics = __libhmpdf.hmpdf_get_cov_diagnostics1
-    __get_cov_diagnostics.restype = ct.c_int
-    __get_cov_diagnostics.argtypes = [ct.c_void_p,
-                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
-                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
-                                      ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1), ]
+
+    # hmpdf_maps.h
+    __get_map_op = __libhmpdf.hmpdf_get_map_op
+    __get_map_op.restype = ct.c_int
+    __get_map_op.argtypes = [ct.c_void_p, ct.c_int,
+                             ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
+                             ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
+                             ct.c_int, ]
+    __get_Nside = __libhmpdf._get_Nside
+    __get_Nside.restype = ct.c_int
+    __get_Nside.argtypes = [ct.c_void_p, ct.POINTER(ct.c_long), ]
+    __get_map = __libhmpdf.hmpdf_get_map1
+    __get_map.restype = ct.c_int
+    __get_map.argtypes = [ct.c_void_p,
+                          ndpointer(ct.c_double, flags='C_CONTIGUOUS', ndim=1),
+                          ct.c_int, ]
+
+    # global error message format
     __errmsg = '%s completed with non-zero exit code'
     #}}}
+
     def __ret(self, err, callname, *args) :
     #{{{
         if err :
@@ -261,8 +293,9 @@ class HMPDF(object) :
         @return the binned PDF (1d)
         """
     #{{{
-        out = np.empty(len(binedges)-1)
-        err = HMPDF.__get_op(self.__d, len(binedges)-1, binedges, out,
+        Nbins = len(binedges) - 1
+        out = np.empty(Nbins)
+        err = HMPDF.__get_op(self.__d, Nbins, binedges, out,
                              incl_2h, noisy)
         return self.__ret(err, 'get_op()', out)
     #}}}
@@ -279,9 +312,10 @@ class HMPDF(object) :
         @return the binned PDF (2d)
         """
     #{{{
-        out = np.empty((len(binedges)-1)*(len(binedges)-1))
-        err = HMPDF.__get_tp(self.__d, phi, len(binedges)-1, binedges, out, noisy)
-        out = out.reshape((len(binedges)-1, len(binedges)-1))
+        Nbins = len(binedges) - 1
+        out = np.empty(Nbins * Nbins)
+        err = HMPDF.__get_tp(self.__d, phi, Nbins, binedges, out, noisy)
+        out = out.reshape((Nbins, Nbins))
         return self.__ret(err, 'get_tp()', out)
     #}}}
 
@@ -345,10 +379,50 @@ class HMPDF(object) :
         if err :
             return self.__ret(err, 'get_cov_diagnostics()',
                               None, None, None)
+        Nphi = Nphi.value
         phi = np.empty(Nphi)
         phiweights = np.empty(Nphi)
         corr_diagn = np.empty(Nphi)
         err = HMPDF.__get_cov_diagnostics(self.__d, phi, phiweights, corr_diagn)
-        return self.__ret(err, 'get_cov_diagnostics',
+        return self.__ret(err, 'get_cov_diagnostics()',
                           phi, phiweights, corr_diagn)
+    #}}}}
+
+    def get_map_op(self,
+                   binedges: Union[Sequence[float], np.ndarray],
+                   new_map: bool=True) -> np.ndarray :
+        """! Get the histogram of pixel values in a simplified simulation [calls hmpdf_get_map_op()]
+
+        @param binedges     1d, defines how the histogram is binned
+        @param new_map      whether to rerun the simulation
+                            (even if a map has already been computed)
+        @return the histogram (normalized, 1d)
+        """
+    #{{{{
+        Nbins = len(binedges) - 1
+        out = np.empty(Nbins)
+        err = HMPDF.__get_map_op(self.__d, Nbins, binedges, out,
+                                 new_map)
+        return self.__ret(err, 'get_map_op()', out)
     #}}}
+
+    def get_map(self,
+                new_map: bool=True) -> np.ndarray :
+        """! Get a map from the simplified simulation [calls hmpdf_get_map()]
+
+        @param new_map      whether to rerun the simulation
+                            (even if a map has already been computed)
+        @return the map (2d)
+        """
+    #{{{
+        Nside = ct.c_long(0)
+        err = HMPDF.__get_Nside(self.__d, ct.byref(Nside))
+        if err :
+            return self.__ret(err, 'get_map()', None)
+        Nside = Nside.value
+        arr = np.empty(Nside * Nside)
+        err = HMPDF.__get_map(self.__d, arr, new_map)
+        arr = arr.reshape((Nside, Nside))
+        return self.__ret(err, 'get_map()', arr)
+    #}}}
+#}}}

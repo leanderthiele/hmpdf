@@ -150,7 +150,7 @@ op_zint(hmpdf_obj *d, double complex *pu_comp, double complex *pc_comp) // p is 
             // subtract the zero modes, square the clustered mass integral
             double complex tempu = au_comp[ii] - au_comp[0];
             double complex tempc = (ac_comp[ii] - ac_comp[0])
-                            * (ac_comp[ii] - ac_comp[0]);
+                                   * (ac_comp[ii] - ac_comp[0]);
             // multiply with the prefactors
             tempu *= gsl_pow_2(d->c->comoving[z_index])
                      / d->c->hubble[z_index];

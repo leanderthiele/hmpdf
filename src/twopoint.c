@@ -127,22 +127,12 @@ correct_phase2d(hmpdf_obj *d, double complex *x, int sgn)
         for (long ii=0; ii<d->n->Nsignal; ii++)
         // loop over long direction (rows)
         {
-            double lambda1;
-            if (ii<=d->n->Nsignal/2)
-            // positive frequency part
-            {
-                lambda1 = d->n->lambdagrid[ii];
-            }
-            else
-            // negative frequency part
-            {
-                lambda1 = - d->n->lambdagrid[d->n->Nsignal-ii];
-            }
+            double lambda1 = WAVENR(d->n->Nsignal, d->n->lambdagrid, ii);
 
             for (long jj=0; jj<d->n->Nsignal/2+1; jj++)
             // loop over short direction (cols)
             {
-                double lambda2 = d->n->lambdagrid[jj];
+                double lambda2 = WAVENR(d->n->Nsignal, d->n->lambdagrid, jj);
 
                 x[ii*(d->n->Nsignal/2+1)+jj]
                     *= cexp(- (double complex)sgn * _Complex_I

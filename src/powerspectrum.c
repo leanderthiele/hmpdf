@@ -158,9 +158,11 @@ ps_zint(hmpdf_obj *d, double *oneh, double *twoh)
 
         // apply z-dependent filters
         SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
-                                twoh_z, twoh_z, 1, filter_ps, &z_index));
+                                twoh_z, twoh_z, 1,
+                                filter_ps, &z_index));
         SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
-                                oneh_z, oneh_z, 1, filter_ps, &z_index));
+                                oneh_z, oneh_z, 1,
+                                filter_ps, &z_index));
 
         for (int ii=0; ii<d->ps->Nell; ii++)
         {
@@ -208,12 +210,15 @@ create_Cell(hmpdf_obj *d)
         d->ps->Cell_tot[ii] = d->ps->Cell_1h[ii] + d->ps->Cell_2h[ii];
     }
     // filter (z-independent)
-    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_1h,
-                            d->ps->Cell_1h, 1, filter_ps, NULL));
-    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_2h,
-                            d->ps->Cell_2h, 1, filter_ps, NULL));
-    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell, d->ps->Cell_tot,
-                            d->ps->Cell_tot, 1, filter_ps, NULL));
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
+                            d->ps->Cell_1h, d->ps->Cell_1h, 1,
+                            filter_ps, NULL));
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
+                            d->ps->Cell_2h, d->ps->Cell_2h, 1,
+                            filter_ps, NULL));
+    SAFEHMPDF(apply_filters(d, d->ps->Nell, d->ps->ell,
+                            d->ps->Cell_tot, d->ps->Cell_tot, 1,
+                            filter_ps, NULL));
 
     d->ps->created_Cell = 1;
 
