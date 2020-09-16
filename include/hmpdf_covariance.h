@@ -12,7 +12,7 @@
  *  \param[out] cov     the binned covariance matrix will be written into the first Nbins*Nbins elements of 
  *                      this output array
  *  \param[in] noisy    if set to non-zero, the covariance matrix will include Gaussian noise
- *                      of standard deviation #hmpdf_noise
+ *                      with power spectrum #hmpdf_noise_pwr.
  *  \return error code
  *
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()

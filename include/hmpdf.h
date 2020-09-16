@@ -61,7 +61,8 @@
  *         this will also compute the data needed for all outputs.
  *         See #hmpdf_configs_e for optional inputs.
  *      3. get your output [hmpdf_get_op(), hmpdf_get_tp(), hmpdf_get_cov(),
- *                          hmpdf_get_Cell(), hmpdf_get_Cphi()].
+ *                          hmpdf_get_Cell(), hmpdf_get_Cphi(),
+ *                          hmpdf_get_map(), hmpdf_get_map_op()].
  *      4. go to (3.) if you require any other outputs;
  *         go to (2.) if you want to re-run the code with different options.
  *      5. free the memory associated with the #hmpdf_obj with hmpdf_delete().
@@ -85,7 +86,7 @@
  *  \section time Runtime
  *
  *  The following were found with default settings on a laptop.
- *  All functions scale as #hmpdf_N_M x #hmpdf_N_z, this is omitted in the following:
+ *  These functions scale as #hmpdf_N_M x #hmpdf_N_z, this is omitted in the following:
  *      + hmpdf_init(): a few seconds (depends strongly on the configuration)
  *                      \par
  *                      scales as #hmpdf_N_theta to #hmpdf_N_theta^2.
@@ -100,9 +101,14 @@
  *
  *  .
  *
+ *  The simplified simulations (maps) scale as #hmpdf_map_fsky / #hmpdf_pixel_side^2.
+ *
  *  Other functions are fast in comparison to hmpdf_init().
- *  hmpdf_init() and hmpdf_get_cov() are parallelized in critical parts,
+ *  hmpdf_init(), hmpdf_get_cov(), hmpdf_get_map(), hmpdf_get_map_op()
+ *  are parallelized in critical parts,
  *  while hmpdf_get_tp() does not get faster if #hmpdf_N_threads is increased.
+ *  The simplified simulations can easily become memory throughput-limited,
+ *  in which case speed does not scale well with #hmpdf_N_threads.
  *
  *  \section errrors Error handling
  *
@@ -136,7 +142,8 @@
  *  typedef #hmpdf_ell_filter_f:
  *  \snippet example.c example_ell_filter
  *
- *  We can also do this in python:
+ *  We can also do this in python (note, however, that due to the overhead in calling the
+ *  python lambda this will be slower than in C):
  *  \snippet example.py example_ell_filter_use
  *
  *  For a more involved example, in examples/WL_PDF_forecast/ you can find all ingredients

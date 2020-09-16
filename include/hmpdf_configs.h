@@ -73,6 +73,9 @@ typedef enum
  *                                   #hmpdf_Battaglia12_tsz_params
  *      + k space filter: #hmpdf_custom_k_filter (and #hmpdf_custom_k_filter_params)
  *      + PDF internal sampling points: #hmpdf_N_signal, #hmpdf_signal_min, #hmpdf_signal_max
+ *      + settings for simplified simulations: #hmpdf_map_fsky,
+ *                                             #hmpdf_map_pixelgrid,
+ *                                             #hmpdf_map_poisson
  *  
  *  Integration grids:
  *      + redshift integration: #hmpdf_N_z, #hmpdf_z_min, #hmpdf_z_max,
@@ -324,24 +327,24 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
-    hmpdf_map_fsky, /*! If you want to use the stochastic map-mapmaking algorithm
-                     *  (simplified simulations), this is a required setting.
-                     *  It is the sky fraction spanned by the map.
-                     *  \par
-                     *  Type: double. Default: None.
+    hmpdf_map_fsky, /*!< If you want to use the stochastic map-mapmaking algorithm
+                     *   (simplified simulations), this is a required setting.
+                     *   It is the sky fraction spanned by the map.
+                     *   \par
+                     *   Type: double. Default: None.
                      */
-    hmpdf_map_pixelgrid, /*! Increasing this value yields a more accurate averaging of the
-                          *  signal profiles in each pixel.
-                          *  \par
-                          *  Type: int. Default: 3.
+    hmpdf_map_pixelgrid, /*!< Increasing this value yields a more accurate averaging of the
+                          *   signal profiles in each pixel.
+                          *   \par
+                          *   Type: int. Default: 3.
                           */
-    hmpdf_map_poisson, /*! If set to zero, the number of halos will not be drawn from the Poisson
-                        *  distribution but rather from a much more concentrated one.
-                        *  In that case, the mean (i.e. the averaged one-point PDF) is correctly
-                        *  and much faster approached, while the scatter of individual histograms
-                        *  will not be correct.
-                        *  \par
-                        *  Type: int. Default: 1.
+    hmpdf_map_poisson, /*!< If set to zero, the number of halos will not be drawn from the Poisson
+                        *   distribution but rather from a much more concentrated one.
+                        *   In that case, the mean (i.e. the averaged one-point PDF) is correctly
+                        *   and much faster approached, while the scatter of individual histograms
+                        *   will not be correct.
+                        *   \par
+                        *   Type: int. Default: 1.
                         */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.

@@ -14,7 +14,7 @@
  *  \param[in] incl_2h  if set to non-zero, the two-halo term (i.e. halo clustering)
  *                      will be included in the output PDF
  *  \param[in] noisy    if set to non-zero, the one-point PDF will be convolved with a Gaussian
- *                      of standard deviation #hmpdf_noise
+ *                      of standard deviation computed from #hmpdf_noise_pwr
  *  \return error code
  *
  *  \remark if the one-point PDF has already been computed and since then no hmpdf_init()

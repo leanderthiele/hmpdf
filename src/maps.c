@@ -570,7 +570,6 @@ loop_no_z_dependence(hmpdf_obj *d)
         SAFEHMPDF_NORETURN(do_this_bin(d, z_index, M_index,
                                        d->m->ws[THIS_THREAD]));
 
-        /*
         #ifdef _OPENMP
         #   pragma omp critical(StatusMapNoz)
         #endif
@@ -581,7 +580,6 @@ loop_no_z_dependence(hmpdf_obj *d)
                 TIMEREMAIN(Nstatus, d->n->Nz * d->n->NM, "create_map");
             }
         }
-        */
     }
 
     TIMEELAPSED("create_map");
@@ -893,6 +891,8 @@ static int
 common_input_processing(hmpdf_obj *d, int new_map)
 {//{{{
     STARTFCT
+    
+    CHECKINIT;
 
     HMPDFCHECK(d->m->area < 0.0,
                "no/invalid sky fraction passed.");
@@ -963,29 +963,58 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
 }//}}}
 
 int
-hmpdf_get_map(hmpdf_obj *d, double **map, long *Nside, int new_map)
+_get_Nside(hmpdf_obj *d, long *Nside)
+{//{{{
+    STARTFCT
+    CHECKINIT;
+    SAFEHMPDF(create_sidelengths(d));
+    *Nside = d->m->Nside;
+    ENDFCT
+}//}}}
+
+int
+hmpdf_get_map1(hmpdf_obj *d, double *map, int new_map)
 {//{{{
     STARTFCT
 
     SAFEHMPDF(common_input_processing(d, new_map));
 
-    SAFEALLOC(*map, malloc(d->m->Nside * d->m->Nside * sizeof(double)));
     for (long ii=0; ii<d->m->Nside; ii++)
     {
-        memcpy(*map + ii*d->m->Nside,
+        memcpy(map + ii*d->m->Nside,
                d->m->map_real + ii*d->m->ldmap,
                d->m->Nside * sizeof(double));
     }
-
     if (d->p->stype == hmpdf_kappa)
     {
         for (long ii=0; ii<d->m->Nside*d->m->Nside; ii++)
         {
-            (*map)[ii] -= d->m->mean;
+            map[ii] -= d->m->mean;
         }
     }
+    ENDFCT
+}//}}}
 
-    *Nside = d->m->Nside;
+int
+hmpdf_get_map(hmpdf_obj *d, double **map, long *Nside, int new_map)
+{//{{{
+    STARTFCT
+
+    // we need to know how large to allocate
+    SAFEHMPDF(create_sidelengths(d));
+
+    if (map != NULL)
+    {
+        SAFEALLOC(*map, malloc(d->m->Nside * d->m->Nside * sizeof(double)));
+        SAFEHMPDF(hmpdf_get_map1(d, *map, new_map));
+    }
+
+    if (Nside != NULL)
+    {
+        SAFEHMPDF(_get_Nside(d, Nside));
+    }
 
     ENDFCT
 }//}}}
+
+
