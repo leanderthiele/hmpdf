@@ -23,6 +23,14 @@
  *  The code is interfaced both through C header files
  *  as well as through a convenient python wrapper.
  *
+ *  Applications of the code can be found in
+ *      + <a href="https://ui.adsabs.harvard.edu/abs/2019PhRvD..99j3511T">Thiele, Hill, Smith 2019</a>
+ *        (for the tSZ field)
+ *      + <a href="https://ui.adsabs.harvard.edu/abs/2020arXiv200906547T">Thiele, Hill, Smith 2020</a>
+ *        (for the weak lensing convergence field)
+ *  .
+ *  which we also request you cite if you use the code.
+ *
  *  \section build Building
  *
  *  Dependencies:

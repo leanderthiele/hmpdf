@@ -23,5 +23,13 @@ with HMPDF() as d :
 # do something with the one-point PDF ...
 ```
 
+Applications of the code can be found in
+* [Thiele, Hill, Smith 2019](https://ui.adsabs.harvard.edu/abs/2019PhRvD..99j3511T")
+  (for the tSZ field)
+* [Thiele, Hill, Smith 2020](https://ui.adsabs.harvard.edu/abs/2020arXiv200906547T")
+  (for the weak lensing convergence field)
+
+which we also request you cite if you use the code.
+
 For further information on building the code and using it, please read the
 [Documentation](https://leanderthiele.github.io/hmpdf/html/).
