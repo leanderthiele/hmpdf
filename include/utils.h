@@ -445,9 +445,9 @@ int all_zero(int N, double *x, double threshold);
 #define WAVENR(N, grid, idx) \
     (idx <= N/2) ? grid[idx] : -grid[N-idx]
 
-int wait_for_input(void);
 
 #ifdef GNUPLOT
+int wait_for_input(void);
 typedef struct gnuplot_s gnuplot;
 gnuplot *plot(gnuplot *gp, int N, double *x, double *y);
 gnuplot *plot_comp(gnuplot *gp, int N, double *x, double complex *y, int mode);
