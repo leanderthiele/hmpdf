@@ -445,7 +445,7 @@ int all_zero(int N, double *x, double threshold);
 #define WAVENR(N, grid, idx) \
     (idx <= N/2) ? grid[idx] : -grid[N-idx]
 
-int wait(void);
+int wait_for_input(void);
 
 #ifdef GNUPLOT
 typedef struct gnuplot_s gnuplot;
