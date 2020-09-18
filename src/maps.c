@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <limits.h>
 #include <complex.h>
 #include <time.h>
 #ifdef _OPENMP
