@@ -75,7 +75,7 @@ class _Configs(object) :
                'Mintegr_type', _E(_E.integr), 'Mintegr_alpha', ct.c_double, 'Mintegr_beta', ct.c_double,
                'Duffy08_conc_params', _D(9), 'Tinker10_hmf_params', _D(10), 'Battaglia12_tsz_params', _D(15),
                'noise_pwr', _F(1), 'noise_pwr_params', None,
-               'map_fsky', ct.c_double, 'map_pixelgrid', ct.c_int, 'map_poisson', ct.c_int, ]
+               'map_fsky', ct.c_double, 'map_pixelgrid', ct.c_int, 'map_poisson', ct.c_int, 'map_seed', ct.c_int, ]
     def __init__(self) :
         self.t = [] # keep references to the types
         self.l = []

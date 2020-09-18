@@ -346,6 +346,13 @@ typedef enum
                         *   \par
                         *   Type: int. Default: 1.
                         */
+    hmpdf_map_seed, /*! If this option is set, the resulting simplified simulations (maps) will
+                     *  have this random seed.
+                     *  This means that, given equal map dimensions, the maps will have all halos
+                     *  in identical positions.
+                     *  \par
+                     *  Type: int. Default: None.
+                     */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
                         */

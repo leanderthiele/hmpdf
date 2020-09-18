@@ -32,6 +32,7 @@ typedef struct//{{{
     double area; // in physical units (rad^2)
 
     int mappoisson;
+    int mapseed;
 
     int pxlgrid;
 

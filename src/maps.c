@@ -240,12 +240,31 @@ reset_map_ws(hmpdf_obj *d, map_ws *ws)
 {//{{{
     STARTFCT
 
+    unsigned long seed;
+    if (d->m->mapseed == INT_MAX)
+    // we regard this as seed not set
+    //     the case where the seed assumes this value
+    //     appears quite unlikely,
+    //     and even that would not be fatal
+    //     since on the next iteration the calling
+    //     code would probably use a different one
+    {
+        seed = (unsigned long)(time(NULL))
+               + (unsigned long)(clock())
+               + (unsigned long)(rand())
+               + (unsigned long)(ws->buf);
+    }
+    else
+    // the calling code has set a seed
+    //     we called srand() with this seed
+    //     so now we're getting reproducible
+    //     random numbers
+    {
+        seed = (unsigned long)(rand());
+    }
+
     // seed the random number generator
-    //     be careful that the seed is as close to random as possible
-    gsl_rng_set(ws->rng, (unsigned long)(time(NULL))
-                         + (unsigned long)(clock())
-                         + (unsigned long)(rand())
-                         + (unsigned long)(ws->buf));
+    gsl_rng_set(ws->rng, seed);
 
     zero_real(ws->ldmap * d->m->Nside, ws->map);
 
@@ -781,6 +800,12 @@ create_map(hmpdf_obj *d)
     if (d->m->created_map) { return 0; }
 
     HMPDFPRINT(2, "\tcreate_map\n");
+
+    // if requested, initialize the system random number generator
+    if (d->m->mapseed != INT_MAX)
+    {
+        srand((unsigned int)d->m->mapseed);
+    }
 
     // zero the map
     zero_real(d->m->Nside * d->m->ldmap, d->m->map_real);
