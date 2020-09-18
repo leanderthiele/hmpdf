@@ -483,6 +483,9 @@ add_grf(hmpdf_obj *d, double (*pwr_spec)(double, void *), void *pwr_spec_params)
     {
         HMPDFPRINT(2, "\tadding Gaussian random field to the map\n");
 
+        #ifdef _OPENMP
+        #   pragma omp parallel for num_threads(d->m->Nws) schedule(static)
+        #endif
         for (long ii=0; ii<d->m->Nside; ii++)
         // loop over the long direction (rows)
         {
@@ -490,16 +493,21 @@ add_grf(hmpdf_obj *d, double (*pwr_spec)(double, void *), void *pwr_spec_params)
 
             for (long jj=0; jj<d->m->Nside/2+1; jj++)
             {
+                CONTINUE_IF_ERR
+
                 double ell2 = WAVENR(d->m->Nside, d->m->ellgrid, jj);
                 double ellmod = hypot(ell1, ell2);
 
                 double Cl = pwr_spec(ellmod, pwr_spec_params);
 
-                HMPDFCHECK(Cl < 0.0, "power spectrum must be positive everywhere.");
+                HMPDFCHECK_NORETURN(Cl < 0.0,
+                                    "power spectrum must be positive everywhere.");
+                
+                CONTINUE_IF_ERR
 
                 double complex ampl
-                    = gsl_ran_gaussian(d->m->ws[0]->rng, 1.0)
-                      + _Complex_I * gsl_ran_gaussian(d->m->ws[0]->rng, 1.0);
+                    = gsl_ran_gaussian(d->m->ws[THIS_THREAD]->rng, 1.0)
+                      + _Complex_I * gsl_ran_gaussian(d->m->ws[THIS_THREAD]->rng, 1.0);
                 ampl *= sqrt(0.5 * Cl) / d->f->pixelside
                         * (double)(d->m->Nside);
 
@@ -521,12 +529,19 @@ filter_map(hmpdf_obj *d, double complex *map_comp, int *z_index)
         HMPDFPRINT(3, "\t\tapplying filters to the map\n");
     }
 
-    double *ellmod;
-    SAFEALLOC(ellmod, malloc((d->m->Nside/2+1) * sizeof(double)));
-
+    #ifdef _OPENMP
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
+    #endif
     for (long ii=0; ii<d->m->Nside; ii++)
     // loop over long direction (rows)
     {
+        CONTINUE_IF_ERR
+
+        double *ellmod;
+        SAFEALLOC_NORETURN(ellmod, malloc((d->m->Nside/2+1) * sizeof(double)));
+
+        CONTINUE_IF_ERR
+
         double ell1 = WAVENR(d->m->Nside, d->m->ellgrid, ii);
 
         for (long jj=0; jj<d->m->Nside/2+1; jj++)
@@ -536,13 +551,14 @@ filter_map(hmpdf_obj *d, double complex *map_comp, int *z_index)
             ellmod[jj] = hypot(ell1, ell2);
         }
 
-        SAFEHMPDF(apply_filters_map(d, d->m->Nside/2+1, ellmod,
-                                    map_comp + ii * (d->m->Nside/2+1),
-                                    map_comp + ii * (d->m->Nside/2+1),
-                                    z_index));
+        SAFEHMPDF_NORETURN(apply_filters_map(d, d->m->Nside/2+1, ellmod,
+                                             map_comp + ii * (d->m->Nside/2+1),
+                                             map_comp + ii * (d->m->Nside/2+1),
+                                             z_index));
+
+        free(ellmod);
     }
 
-    free(ellmod);
 
     ENDFCT
 }//}}}
@@ -609,6 +625,9 @@ loop_no_z_dependence(hmpdf_obj *d)
     // add to the total map
     for (int ii=0; ii<d->m->Nws; ii++)
     {
+        #ifdef _OPENMP
+        #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
+        #endif
         for (long jj=0; jj<d->m->Nside; jj++)
         {
             for (long kk=0; kk<d->m->Nside; kk++)
