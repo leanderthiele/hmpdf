@@ -760,13 +760,13 @@ create_mem(hmpdf_obj *d)
             SAFEALLOC(d->m->p_r2c, malloc(sizeof(fftw_plan)));
             *(d->m->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
                                                   d->m->map_real, d->m->map_comp,
-                                                  FFTW_MEASURE);
+                                                  FFTW_ESTIMATE);
         }
 
         SAFEALLOC(d->m->p_c2r, malloc(sizeof(fftw_plan)));
         *(d->m->p_c2r) = fftw_plan_dft_c2r_2d(d->m->Nside, d->m->Nside,
                                               d->m->map_comp, d->m->map_real,
-                                              FFTW_MEASURE);
+                                              FFTW_ESTIMATE);
     }
 
     d->m->created_mem = 1;
