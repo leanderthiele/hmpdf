@@ -807,6 +807,11 @@ create_map(hmpdf_obj *d)
     {
         srand((unsigned int)d->m->mapseed);
     }
+    // otherwise initialize randomly
+    else
+    {
+        srand((unsigned int)time(NULL));
+    }
 
     // zero the map
     zero_real(d->m->Nside * d->m->ldmap, d->m->map_real);
