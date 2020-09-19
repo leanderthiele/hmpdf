@@ -821,17 +821,6 @@ create_map(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\tcreate_map\n");
 
-    // if requested, initialize the system random number generator
-    if (d->m->mapseed != INT_MAX)
-    {
-        srand((unsigned int)d->m->mapseed);
-    }
-    // otherwise initialize randomly
-    else
-    {
-        srand((unsigned int)time(NULL));
-    }
-
     // zero the map
     zero_real(d->m->Nside * d->m->ldmap, d->m->map_real);
 
@@ -948,6 +937,20 @@ common_input_processing(hmpdf_obj *d, int new_map)
                "no/invalid sky fraction passed.");
     HMPDFCHECK(d->f->pixelside < 0.0,
                "no/invalid pixel sidelength passed.");
+
+    if (!(d->m->created_map))
+    {
+        // if requested, initialize the system random number generator
+        if (d->m->mapseed != INT_MAX)
+        {
+            srand((unsigned int)d->m->mapseed);
+        }
+        // otherwise initialize randomly
+        else
+        {
+            srand((unsigned int)time(NULL));
+        }
+    }
 
     if (new_map)
     {
