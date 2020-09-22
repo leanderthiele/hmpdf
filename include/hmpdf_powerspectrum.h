@@ -23,7 +23,7 @@ typedef enum
  */
 int hmpdf_get_Cell(hmpdf_obj *d,
                    int Nell,
-                   double ell[Nell],
+                   double elledges[Nell+1],
                    double Cell[Nell],
                    hmpdf_Cell_mode_e mode);
 
