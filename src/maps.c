@@ -142,6 +142,11 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
         ws->for_fft = 1;
         ws->ldmap = d->m->Nside+2;
     }
+    else
+    {
+        ws->for_fft = 0;
+        ws->ldmap = d->m->Nside;
+    }
 
     NEWMAPWS_SAFEALLOC(ws->pos, malloc(d->m->buflen
                                        * sizeof(double)));
@@ -161,9 +166,9 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     if (ws->for_fft)
     {
         ws->map_comp = (double complex *)ws->map;
-        NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
         if (d->f->has_z_dependent)
         {
+            NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
             *(ws->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
                                                 ws->map, ws->map_comp, FFTW_MEASURE);
         }
@@ -1029,6 +1034,7 @@ perform_map_FT(hmpdf_obj *d)
     //     an fftw plan does not preserve the memory pointed to
     if (d->m->ws[0]->p_r2c == NULL)
     {
+        SAFEALLOC(d->m->ws[0]->p_r2c, malloc(sizeof(fftw_plan)));
         *(d->m->ws[0]->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
                                                      d->m->ws[0]->map,
                                                      d->m->ws[0]->map_comp,
