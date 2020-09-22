@@ -369,7 +369,7 @@ redundant(long N, double complex *a, long ii)
 }//}}}
 
 static inline int
-clustered_term(hmpdf_obj *d, int z_index, double phi,
+clustered_term(hmpdf_obj *d, int z_index, double corr_phi_2, double corr_phi,
                long i1/*long direction*/, long i2/*short direction*/,
                double complex *b12, double complex *out)
 // computes 1/2 * (alpha1^2 + alpha2^2) * zeta(0)
@@ -380,19 +380,15 @@ clustered_term(hmpdf_obj *d, int z_index, double phi,
 {//{{{
     STARTFCT
 
-    *out = 0.0; // to avoid maybe-uninitialized
-
     double complex a1 = redundant(d->n->Nsignal, d->tp->ac[z_index], i1);
     double complex a2 = d->tp->ac[z_index][i2];
     double complex b = b12[i1*(d->n->Nsignal/2+1)+i2]
                        - b12[i1*(d->n->Nsignal/2+1)]
                        - b12[i2] + b12[0];
-    double corr1, corr2;
-    SAFEHMPDF(corr(d, z_index, phi, &corr1));
-    SAFEHMPDF(corr(d, z_index, 0.5*phi, &corr2));
+
     *out = 0.5 * (a1*a1 + a2*a2 + b*b) * d->c->Dsq[z_index] * d->pwr->autocorr
-           + a1*a2 * corr1
-           + b*(a1 + a2) * corr2;
+           + a1*a2 * corr_phi
+           + b*(a1 + a2) * corr_phi_2;
 
     ENDFCT
 }//}}}
@@ -440,6 +436,11 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
         // correct phases
         SAFEHMPDF(correct_phase2d(d, ws->tempc_comp, 1));
 
+        // compute the correlation function interpolator
+        double corr_phi_2, corr_phi;
+        SAFEHMPDF(corr(d, z_index, 0.5*phi, &corr_phi_2));
+        SAFEHMPDF(corr(d, z_index, phi, &corr_phi));
+
         // add to the clustered output
         for (long ii=0; ii<d->n->Nsignal; ii++)
         // loop over the long direction
@@ -448,7 +449,8 @@ tp_zint(hmpdf_obj *d, double phi, twopoint_workspace *ws)
             // loop over the short direction
             {
                 double complex clterm;
-                SAFEHMPDF(clustered_term(d, z_index, phi, ii, jj, ws->tempc_comp, &clterm));
+                SAFEHMPDF(clustered_term(d, z_index, corr_phi_2, corr_phi,
+                                         ii, jj, ws->tempc_comp, &clterm));
                 double complex temp = clterm
                                       * gsl_pow_4(d->c->comoving[z_index])
                                       / d->c->hubble[z_index];

@@ -378,7 +378,7 @@ create_profiles(hmpdf_obj *d)
     SAFEALLOC(d->p->profiles, malloc(d->n->Nz * sizeof(double **)));
     SETARRNULL(d->p->profiles, d->n->Nz);
     #ifdef _OPENMP
-    #   pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(dynamic)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -417,7 +417,7 @@ create_conj_profiles(hmpdf_obj *d)
     SAFEALLOC(d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)));
     SETARRNULL(d->p->conj_profiles, d->n->Nz);
     #ifdef _OPENMP
-    #   pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -468,7 +468,7 @@ create_filtered_profiles(hmpdf_obj *d)
     SETARRNULL(d->p->filtered_profiles, d->n->Nz);
 
     #ifdef _OPENMP
-    #   pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
@@ -550,7 +550,7 @@ create_segments(hmpdf_obj *d)
                    : d->p->profiles;
 
     #ifdef _OPENMP
-    #   pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(dynamic)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {

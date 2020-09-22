@@ -206,7 +206,7 @@ plot_comp(gnuplot *gp, int N, double *x, double complex *y, int mode)
 }//}}}
 
 int
-wait(void)
+wait_for_input(void)
 {//{{{
     int ch;
     struct termios oldt, newt;
@@ -227,7 +227,7 @@ show(gnuplot *gp)
         fprintf(gp->gp, "e\n");
     }
     fflush(gp->gp);
-    wait();
+    wait_for_input();
     pclose(gp->gp);
     free(gp);
 }//}}}

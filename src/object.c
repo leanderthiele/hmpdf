@@ -45,6 +45,10 @@ hmpdf_new(void)
 
     d->inited = 0;
 
+    // if user calls hmpdf_delete directly after hmpdf_new,
+    //     we would like this to have a defined value
+    d->verbosity = 0;
+
     HMPDFNEW_ALLOC(d->n,   malloc(sizeof(numerics_t)));
     HMPDFNEW_ALLOC(d->cls, malloc(sizeof(class_interface_t)));
     HMPDFNEW_ALLOC(d->c,   malloc(sizeof(cosmology_t)));

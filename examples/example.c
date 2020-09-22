@@ -75,67 +75,9 @@ int example_ell_filter_use(void)
 }
 /*! [example_ell_filter_use] */
 
-int example_tsz_map(void)
-{
-    int Nbins = 50; double ymin=0.0; double ymax=1e-4;
-    double binedges[Nbins+1];
-    for (int ii=0; ii<=Nbins; ii++)
-        binedges[ii] = ymin + (double)(ii)*(ymax-ymin)/(double)(Nbins);
-
-    hmpdf_obj *d = hmpdf_new();
-    if (!(d))
-        return -1;
-
-    if (hmpdf_init(d, "example.ini", hmpdf_tsz,
-                   hmpdf_N_threads, 8,
-                   hmpdf_verbosity, 5,
-                   hmpdf_M_min, 1e11,
-                   hmpdf_N_signal, 2048,
-
-                   hmpdf_N_z, 40,
-                   hmpdf_N_M, 40,
-                   hmpdf_N_theta, 200,
-
-                   hmpdf_map_pixelgrid, 4,
-                   hmpdf_map_poisson, 0,
-                   
-                   hmpdf_pixel_side, 1.0,
-                   hmpdf_map_fsky, 0.3e-1))
-        return -1;
-
-    /*
-    double op[Nbins];
-    if (hmpdf_get_op(d, Nbins, binedges, op, 0, 0))
-        return -1;
-
-    savetxt("test_op", Nbins, 1, op);
-    */
-
-    double map_op[Nbins];
-    if (hmpdf_get_map_op(d, Nbins, binedges, map_op, 0))
-        return -1;
-
-    /*
-    double *map;
-    long Nside;
-    if (hmpdf_get_map(d, &map, &Nside, 0))
-        return -1;
-
-    savetxt("test_map_op", Nbins, 1, map_op);
-    tofile("test_map", Nside*Nside, 1, map);
-
-    free(map);
-    */
-
-    if (hmpdf_delete(d))
-        return -1;
-
-    return 0;
-}
-
 int main(void)
 {
-    if (example_tsz_map())
+    if (example_kappa_onepoint())
     {
         fprintf(stderr, "failed\n");
         return -1;
