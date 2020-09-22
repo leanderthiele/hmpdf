@@ -1091,13 +1091,7 @@ hmpdf_get_map1(hmpdf_obj *d, double *map, int new_map)
                d->m->map_real + ii*d->m->ldmap,
                d->m->Nside * sizeof(double));
     }
-    if (d->p->stype == hmpdf_kappa)
-    {
-        for (long ii=0; ii<d->m->Nside*d->m->Nside; ii++)
-        {
-            map[ii] -= d->m->mean;
-        }
-    }
+
     ENDFCT
 }//}}}
 
