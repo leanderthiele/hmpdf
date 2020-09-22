@@ -313,11 +313,14 @@ prepare_Cphi(hmpdf_obj *d)
 }//}}}
 
 int
-hmpdf_get_Cell(hmpdf_obj *d, int Nell, double ell[Nell], double Cell[Nell], hmpdf_Cell_mode_e mode)
+hmpdf_get_Cell(hmpdf_obj *d, int Nell, double elledges[Nell+1], double Cell[Nell], hmpdf_Cell_mode_e mode)
 {//{{{
     STARTFCT
 
     CHECKINIT;
+
+    HMPDFCHECK(not_monotonic(Nell+1, elledges, 1),
+               "elledges not monotonically increasing.");
 
     SAFEHMPDF(prepare_Cell(d));
 
@@ -339,7 +342,8 @@ hmpdf_get_Cell(hmpdf_obj *d, int Nell, double ell[Nell], double Cell[Nell], hmpd
 
     for (int ii=0; ii<Nell; ii++)
     {
-        SAFEHMPDF(interp1d_eval(interp, ell[ii], Cell+ii));
+        SAFEHMPDF(interp1d_eval_integ(interp, elledges[ii], elledges[ii+1], Cell+ii));
+        Cell[ii] /= elledges[ii+1] - elledges[ii];
     }
 
     delete_interp1d(interp);

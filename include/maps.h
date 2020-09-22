@@ -51,7 +51,6 @@ typedef struct//{{{
     double complex *map_comp;
     fftw_plan *p_r2c;
     fftw_plan *p_c2r;
-    double mean;
 
     int Nws;
     int created_map_ws;
