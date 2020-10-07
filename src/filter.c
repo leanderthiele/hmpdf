@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <float.h>
 #include <complex.h>
 
 #include <gsl/gsl_math.h>
@@ -281,14 +282,24 @@ filter_gaussian(void *d, double ell, filter_mode m, int UNUSED(*discard), double
     hmpdf_obj *_d = (hmpdf_obj *)d;
     ell *= _d->f->gaussian_sigma;
 
-    switch (m)
+    // do this carefully to avoid underflow
+    if (0.5*ell*ell > - log((double)FLT_RADIX) * (double)DBL_MIN_EXP
+                      - 2.0)
     {
-        case filter_pdf : *out = exp(-0.5*ell*ell);
-                          break;
-        case filter_ps  : *out = exp(-ell*ell);
-                          break;
-        default         : *out = 0.0; // to avoid maybe-uninitialized
-                          HMPDFERR("Unknown filter mode.");
+        *out = 0.0;
+        return 0;
+    }
+    else
+    {
+        switch (m)
+        {
+            case filter_pdf : *out = exp(-0.5*ell*ell);
+                              break;
+            case filter_ps  : *out = exp(-ell*ell);
+                              break;
+            default         : *out = 0.0; // to avoid maybe-uninitialized
+                              HMPDFERR("Unknown filter mode.");
+        }
     }
 
     ENDFCT
@@ -366,7 +377,23 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
                 double temp;
                 SAFEHMPDF((*(d->f->ffilters[ii]))((void *)d, ell[jj], mode,
                                                   z_index, &temp));
-                out[jj*stride] *= temp;
+
+                // do this carefully to avoid underflows
+                //    (filters can be close to zero, which is dangerous)
+                if ((out[jj*stride] < 10.0*DBL_MIN && temp < 1.0)
+                    || (out[jj*stride] < 1.0 && temp < 10.0*DBL_MIN))
+                {
+                    out[jj*stride] = 0.0;
+                }
+                else if (log(out[jj*stride]) + log(temp)
+                         < log((double)FLT_RADIX) * (double)DBL_MIN_EXP)
+                {
+                    out[jj*stride] = 0.0;
+                }
+                else
+                {
+                    out[jj*stride] *= temp;
+                }
             }
         }
     }
