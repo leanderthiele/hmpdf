@@ -137,7 +137,7 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     ws->rng = NULL;
     ws->p_r2c = NULL;
 
-    if (idx == 0 && d->f->has_z_dependent)
+    if (idx == 0)
     {
         ws->for_fft = 1;
         ws->ldmap = d->m->Nside+2;
@@ -166,9 +166,12 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     if (ws->for_fft)
     {
         ws->map_comp = (double complex *)ws->map;
-        NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
-        *(ws->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
-                                            ws->map, ws->map_comp, FFTW_MEASURE);
+        if (d->f->has_z_dependent)
+        {
+            NEWMAPWS_SAFEALLOC(ws->p_r2c, malloc(sizeof(fftw_plan)));
+            *(ws->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
+                                                ws->map, ws->map_comp, FFTW_MEASURE);
+        }
     }
 
     ENDFCT
@@ -794,20 +797,28 @@ create_mem(hmpdf_obj *d)
 }//}}}
 
 static int
-get_map_mean(hmpdf_obj *d)
+subtract_map_mean(hmpdf_obj *d)
 {//{{{
     STARTFCT
     
-    double sum = 0.0;
+    double mean = 0.0;
     for (long ii=0; ii<d->m->Nside; ii++)
     {
         for (long jj=0; jj<d->m->Nside; jj++)
         {
-            sum += d->m->map_real[ii*d->m->ldmap+jj];
+            mean += d->m->map_real[ii*d->m->ldmap+jj];
         }
     }
     
-    d->m->mean = sum / (double)(d->m->Nside * d->m->Nside);
+    mean /= (double)(d->m->Nside * d->m->Nside);
+
+    for (long ii=0; ii<d->m->Nside; ii++)
+    {
+        for (long jj=0; jj<d->m->Nside; jj++)
+        {
+            d->m->map_real[ii*d->m->ldmap+jj] -= mean;
+        }
+    }
 
     ENDFCT
 }//}}}
@@ -859,7 +870,7 @@ create_map(hmpdf_obj *d)
 
     if (d->p->stype == hmpdf_kappa)
     {
-        SAFEHMPDF(get_map_mean(d));
+        SAFEHMPDF(subtract_map_mean(d));
     }
 
     d->m->created_map = 1;
@@ -975,14 +986,10 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
 
     SAFEHMPDF(common_input_processing(d, new_map));
     
-    double _binedges[Nbins+1];
-    SAFEHMPDF(pdf_adjust_binedges(d, Nbins, binedges,
-                                  _binedges, d->m->mean));
-
     // prepare a histogram
     gsl_histogram *h;
     SAFEALLOC(h, gsl_histogram_alloc(Nbins));
-    SAFEGSL(gsl_histogram_set_ranges(h, _binedges, Nbins+1));
+    SAFEGSL(gsl_histogram_set_ranges(h, binedges, Nbins+1));
 
     // accumulate the histogram
     for (long ii=0; ii<d->m->Nside; ii++)
@@ -990,7 +997,7 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
         for (long jj=0; jj<d->m->Nside; jj++)
         {
             double val = d->m->map_real[ii*d->m->ldmap+jj];
-            if (val < _binedges[0] || val >= _binedges[Nbins])
+            if (val < binedges[0] || val >= binedges[Nbins])
             {
                 continue;
             }
@@ -1011,6 +1018,111 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     }
 
     gsl_histogram_free(h);
+
+    ENDFCT
+}//}}}
+
+int
+perform_map_FT(hmpdf_obj *d)
+// creates the fourier space representation of the map
+//     in the 0th workspace (which is needed as buffer)
+{//{{{
+    STARTFCT
+
+    // prepare the fftw plan if not already existing
+    //     need to do this before copying data because creating
+    //     an fftw plan does not preserve the memory pointed to
+    if (d->m->ws[0]->p_r2c == NULL)
+    {
+        SAFEALLOC(d->m->ws[0]->p_r2c, malloc(sizeof(fftw_plan)));
+        *(d->m->ws[0]->p_r2c) = fftw_plan_dft_r2c_2d(d->m->Nside, d->m->Nside,
+                                                     d->m->ws[0]->map,
+                                                     d->m->ws[0]->map_comp,
+                                                     FFTW_ESTIMATE);
+    }
+
+    // copy the real space map into the 0th workspace
+    for (long ii=0; ii<d->m->Nside; ii++)
+    {
+        memcpy(d->m->ws[0]->map + ii*d->m->ws[0]->ldmap,
+               d->m->map_real + ii*d->m->ldmap,
+               d->m->Nside * sizeof(double));
+    }
+
+    // create the fourier space map
+    fftw_execute(*(d->m->ws[0]->p_r2c));
+
+    ENDFCT
+}//}}}
+
+int
+avg_bin_FT_map(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double ps[Nbins])
+{//{{{
+    STARTFCT
+
+    // prepare two histograms
+    //     (one to count number of modes, the other to accumulate mode powers
+    gsl_histogram *h_nmodes;
+    gsl_histogram *h_modepwrs;
+    SAFEALLOC(h_nmodes, gsl_histogram_alloc(Nbins));
+    SAFEALLOC(h_modepwrs, gsl_histogram_alloc(Nbins));
+    SAFEGSL(gsl_histogram_set_ranges(h_nmodes, binedges, Nbins+1));
+    SAFEGSL(gsl_histogram_set_ranges(h_modepwrs, binedges, Nbins+1));
+
+    // loop over the Fourier space map
+    for (long ii=0; ii<d->m->Nside; ii++)
+    {
+        double ell1 = WAVENR(d->m->Nside, d->m->ellgrid, ii);
+
+        for (long jj=0; jj<d->m->Nside/2+1; jj++)
+        {
+            double ell2 = WAVENR(d->m->Nside, d->m->ellgrid, jj);
+            double ellmod = hypot(ell1, ell2);
+
+            if (ellmod < binedges[0] || ellmod > binedges[Nbins])
+            {
+                continue;
+            }
+            else
+            {
+                SAFEGSL(gsl_histogram_increment(h_nmodes, ellmod));
+                SAFEGSL(gsl_histogram_accumulate(h_modepwrs, ellmod,
+                                                 cabs(d->m->ws[0]->map_comp[ii*(d->m->Nside/2+1)+jj])));
+
+            }
+        }
+    }
+
+    // perform the averaging over modes
+    SAFEGSL(gsl_histogram_div(h_modepwrs, h_nmodes));
+
+    // write into output
+    for (int ii=0; ii<Nbins; ii++)
+    {
+        ps[ii] = gsl_histogram_get(h_modepwrs, ii);
+    }
+
+    gsl_histogram_free(h_nmodes);
+    gsl_histogram_free(h_modepwrs);
+
+    ENDFCT
+}//}}}
+
+int
+hmpdf_get_map_ps(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double ps[Nbins], int new_map)
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(not_monotonic(Nbins+1, binedges, 1),
+               "binedges not monotonically increasing.");
+
+    SAFEHMPDF(common_input_processing(d, new_map));
+
+    // create the Fourier space map
+    SAFEHMPDF(perform_map_FT(d));
+
+    // perform the binning
+    SAFEHMPDF(avg_bin_FT_map(d, Nbins, binedges, ps));
 
     ENDFCT
 }//}}}
@@ -1038,13 +1150,7 @@ hmpdf_get_map1(hmpdf_obj *d, double *map, int new_map)
                d->m->map_real + ii*d->m->ldmap,
                d->m->Nside * sizeof(double));
     }
-    if (d->p->stype == hmpdf_kappa)
-    {
-        for (long ii=0; ii<d->m->Nside*d->m->Nside; ii++)
-        {
-            map[ii] -= d->m->mean;
-        }
-    }
+
     ENDFCT
 }//}}}
 

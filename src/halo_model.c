@@ -262,8 +262,10 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
     double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
     double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
+
     *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
            / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+
     *bias = bnu_Tinker10(nu);
 
     ENDFCT
