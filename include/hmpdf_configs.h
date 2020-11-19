@@ -240,6 +240,8 @@ typedef enum
                                    */
     hmpdf_massfunc_corr,
     hmpdf_massfunc_corr_params,
+    hmpdf_mass_resc,
+    hmpdf_mass_resc_params,
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -386,6 +388,10 @@ typedef double (*hmpdf_k_filter_f)(double,
 typedef double (*hmpdf_massfunc_corr_f)(double,
                                         double,
                                         void *);
+
+typedef double (*hmpdf_mass_resc_f)(double,
+                                    double,
+                                    void *);
 
 /*! Function pointer typedef for user-defined noise power spectrum.
  *  Passed to hmpdf_init() as #hmpdf_noise_pwr.

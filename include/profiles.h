@@ -38,6 +38,9 @@ typedef struct//{{{
     int ***segment_boundaries;
 
     gsl_dht *dht_ws;
+
+    hmpdf_mass_resc_f mass_resc;
+    void *mass_resc_params;
 }//}}}
 profiles_t;
 

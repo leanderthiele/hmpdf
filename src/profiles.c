@@ -213,13 +213,14 @@ fix_endpoints(int N, double *x, double *y)
 
 static int
 kappa_profile(hmpdf_obj *d, int z_index, int M_index,
+              double mass_resc,
               double theta_out, double Rout, double *p)
 {//{{{
     STARTFCT
 
     // find the NFW parameters
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &rhos, &rs));
 
     // fill the profile
     for (int ii=0; ii<d->p->Ntheta; ii++)
@@ -282,13 +283,14 @@ Battmodel_integrand(double z, void *params)
 }
 static int
 tsz_profile(hmpdf_obj *d, int z_index, int M_index,
+            double mass_resc,
             double theta_out, double Rout, double *p)
 {
     STARTFCT
 
     // convert to 200c
     double M200c, R200c, c200c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, &M200c, &R200c, &c200c));
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &M200c, &R200c, &c200c));
     double P0 = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
     double xc = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
@@ -342,20 +344,28 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
 {//{{{
     STARTFCT
 
+    double mass_resc = (d->p->mass_resc == NULL)
+                       ? 1.0
+                       : d->p->mass_resc(d->n->zgrid[z_index],
+                                         d->n->Mgrid[M_index],
+                                         d->p->mass_resc_params);
+
     // find the outer radius on the sky
     double M, Rout, c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, &M, &Rout, &c));
+    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, mass_resc, &M, &Rout, &c));
     Rout *= d->p->rout_scale;
     double theta_out = atan(Rout/d->c->angular_diameter[z_index]);
 
     if (d->p->stype == hmpdf_kappa)
     {
         SAFEHMPDF(kappa_profile(d, z_index, M_index,
+                                mass_resc,
                                 theta_out, Rout, p+1));
     }
     else if (d->p->stype == hmpdf_tsz)
     {
         SAFEHMPDF(tsz_profile(d, z_index, M_index,
+                              mass_resc,
                               theta_out, Rout, p+1));
     }
     else

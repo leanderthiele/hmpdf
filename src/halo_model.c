@@ -98,13 +98,14 @@ density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef, double *out)
 }//}}}
 
 static int 
-RofM(hmpdf_obj *d, int z_index, int M_index, double *out)
+RofM(hmpdf_obj *d, int z_index, int M_index, double *out,
+     double mass_resc)
 {//{{{
     STARTFCT
 
     double dt;
     SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt));
-    *out = cbrt(3.0*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
+    *out = cbrt(3.0*mass_resc*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
 
     ENDFCT
 }//}}}
@@ -146,24 +147,27 @@ c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
     }
 }//}}}
 static inline double
-c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
+c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
+          double mass_resc)
 {//{{{
     return c_Duffy08_1(d, d->n->zgrid[z_index],
-                       d->n->Mgrid[M_index],
+                       mass_resc * d->n->Mgrid[M_index],
                        MDEF_GLOBAL);
 }//}}}
 
 int
-NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs)
+NFW_fundamental(hmpdf_obj *d, int z_index, int M_index,
+                double mass_resc,
+                double *rhos, double *rs)
 // returns rhos via function call and rs via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
     STARTFCT
 
-    double c = c_Duffy08(d, z_index, M_index);
-    SAFEHMPDF(RofM(d, z_index, M_index, rs));
+    double c = c_Duffy08(d, z_index, M_index, mass_resc);
+    SAFEHMPDF(RofM(d, z_index, M_index, rs, mass_resc));
     *rs /= c;
-    *rhos = d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
+    *rhos = mass_resc * d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
             / (log1p(c)-c/(1.0+c));
 
     ENDFCT
@@ -217,6 +221,7 @@ c_of_y(hmpdf_obj *d, double y, double *out)
 
 int
 Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
+      double mass_resc,
       double *M, double *R, double *c)
 // returns the converted mass via function call and the new radius and concentration via return value
 // this function is tested against Colossus --> everything here works
@@ -224,7 +229,7 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     STARTFCT
 
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &rhos, &rs));
     double dt;
     SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt));
     SAFEHMPDF(c_of_y(d, dt/rhos, c));
