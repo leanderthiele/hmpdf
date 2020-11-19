@@ -125,10 +125,25 @@ static inline double
 c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
 {//{{{
     // convert to Msun/h
-    M *= d->c->h;
-    return d->h->Duffy08_params[(int)mdef*3+0]
-           * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
-           * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
+    M *= d->c->h / 2e12;
+    const double *params = d->h->Duffy08_params + (int)(mdef)*3;
+
+    switch (mdef)
+    {
+        // this case is special, since it has more parameters
+        //     (the other definitions are not used for important things)
+        case (hmpdf_mdef_m) :
+            return params[0]
+                   * pow(M,     params[1])
+                   * pow(1.0+z, params[2])
+                   * exp( params[3] * gsl_pow_2(z-params[4])
+                                    * gsl_pow_2(log(M) - params[5]) );
+        // use the Duffy08 parameterization
+        default :
+            return params[0]
+                   * pow(M,      params[1])
+                   * pow(1.0+z,  params[2]);
+    }
 }//}}}
 static inline double
 c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
@@ -267,6 +282,13 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
            / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
 
     *bias = bnu_Tinker10(nu);
+
+    if (d->h->massfunc_corr != NULL)
+    {
+        *hmf *= d->h->massfunc_corr(d->n->zgrid[z_index],
+                                    d->n->Mgrid[M_index] * d->c->h,
+                                    d->h->massfunc_corr_params);
+    }
 
     ENDFCT
 }//}}}

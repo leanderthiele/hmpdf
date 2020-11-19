@@ -98,6 +98,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  double pixel_sidelength[3]; double tophat_radius[3]; double gaussian_fwhm[3];
                  hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;
                  hmpdf_k_filter_f custom_k_filter; void *custom_k_filter_params;
+                 hmpdf_massfunc_corr_f massfunc_corr; void *massfunc_corr_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;

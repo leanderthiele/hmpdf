@@ -12,6 +12,9 @@ typedef struct//{{{
     double *Duffy08_params;
     double *Tinker10_params;
 
+    hmpdf_massfunc_corr_f massfunc_corr;
+    void *massfunc_corr_params;
+
     double **hmf;
     double **bias;
 

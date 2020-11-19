@@ -6,7 +6,7 @@
 static double
 def_Duffy08_conc_params[] = { 5.71, -0.087, -0.47,   // M200c
                               7.85, -0.081, -0.71,   // Mvir
-                             10.14, -0.081, -1.01, };// M200m
+                             10.14, -0.081, -1.01, 0.0, 0.0, 0.0};// M200m
 
 //                 param = factor * (1+z)^pwr
 static double
@@ -38,6 +38,7 @@ struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .gaussian_fwhm={-1.0,0.0,100.0},
                         .custom_ell_filter=NULL, .custom_ell_filter_params=NULL,
                         .custom_k_filter=NULL, .custom_k_filter_params=NULL,
+                        .massfunc_corr=NULL, .massfunc_corr_params=NULL,
                         .Nphi={1000,50,50000}, .phimax={150.0,10.0,1000.0},
                         .pixelexactmax={20,3,50},
                         .phijitter={0.02,1e-10,1e0}, .phipwr=2.0,

@@ -386,7 +386,8 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
                     out[jj*stride] = 0.0;
                 }
                 else if (log(out[jj*stride]) + log(temp)
-                         < log((double)FLT_RADIX) * (double)DBL_MIN_EXP)
+                         < log((double)FLT_RADIX) * (double)DBL_MIN_EXP
+                           - 2.0)
                 {
                     out[jj*stride] = 0.0;
                 }
@@ -397,6 +398,9 @@ apply_filters(hmpdf_obj *d, int N, double *ell, double *in, double *out,
             }
         }
     }
+
+    // FIXME  -- this is a hack!
+    errno = 0;
 
     ENDFCT
 }//}}}
