@@ -106,6 +106,10 @@ Typedefs</h2></td></tr>
 <tr class="separator:a7a44e2a9bed611ed03ff9e9562889ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>) (double, double, void *)</td></tr>
 <tr class="separator:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51b4303623dad08eaf53ba457bbfe68b"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#a51b4303623dad08eaf53ba457bbfe68b">hmpdf_massfunc_corr_f</a>) (double, double, void *)</td></tr>
+<tr class="separator:a51b4303623dad08eaf53ba457bbfe68b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2043d63ae7092b98e875660561b8da79"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#a2043d63ae7092b98e875660561b8da79">hmpdf_mass_resc_f</a>) (double, double, void *)</td></tr>
+<tr class="separator:a2043d63ae7092b98e875660561b8da79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69c88da0bada53144a3d1146b108e110"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00035.html#a69c88da0bada53144a3d1146b108e110">hmpdf_noise_pwr_f</a>) (double, void *)</td></tr>
 <tr class="separator:a69c88da0bada53144a3d1146b108e110"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -164,6 +168,11 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>, 
 <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>, 
 <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>, 
+<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a0438942977e93c9641fba49a9fa6f080">hmpdf_massfunc_corr</a>, 
+<br />
+&#160;&#160;<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae1f623b90b4da17a016b0fd86545f064">hmpdf_massfunc_corr_params</a>, 
+<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a1f12610710cb5967c87269a49043405e">hmpdf_mass_resc</a>, 
+<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae3656bfe6a73edbb6b5d7f74bf57b369">hmpdf_mass_resc_params</a>, 
 <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2">hmpdf_N_phi</a>, 
 <br />
 &#160;&#160;<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789af8fec1238cb2148f69b5ab784abe28ad">hmpdf_phi_max</a>, 
@@ -187,8 +196,8 @@ Enumerations</h2></td></tr>
 <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a0f111c4e1208e1e338df76f9a66be329">hmpdf_map_fsky</a>, 
 <br />
 &#160;&#160;<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789aebbda2faabd5a8d73f09f4b02b52f087">hmpdf_map_pixelgrid</a>, 
-<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a6ee14a2f6418d1952c003cf2267a8a63">hmpdf_map_poisson</a>, 
-<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a>
+<a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a6ee14a2f6418d1952c003cf2267a8a63">hmpdf_map_poisson</a>
+, <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a>
 <br />
  }</td></tr>
 <tr class="separator:a821ed18a82a65541a1feaa9e19fe3789"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -236,6 +245,52 @@ Enumerations</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>W(k,z) window function at k and z </dd></dl>
+
+</div>
+</div>
+<a id="a51b4303623dad08eaf53ba457bbfe68b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51b4303623dad08eaf53ba457bbfe68b">&#9670;&nbsp;</a></span>hmpdf_massfunc_corr_f</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef double(* hmpdf_massfunc_corr_f) (double, double, void *)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Function pointer typedef for user-defined mass function rescaling. Passed to <a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a0438942977e93c9641fba49a9fa6f080">hmpdf_massfunc_corr</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">z</td><td>redshift </td></tr>
+    <tr><td class="paramname">M</td><td>halo mass (M200m, Msun/h) </td></tr>
+    <tr><td class="paramname">p</td><td>pointer for additional parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>hmf_new / hmf_Tinker at z and M </dd></dl>
+
+</div>
+</div>
+<a id="a2043d63ae7092b98e875660561b8da79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2043d63ae7092b98e875660561b8da79">&#9670;&nbsp;</a></span>hmpdf_mass_resc_f</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef double(* hmpdf_mass_resc_f) (double, double, void *)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Function pointer typedef for user-defined mass rescaling. Passed to <a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a1f12610710cb5967c87269a49043405e">hmpdf_mass_resc</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">z</td><td>redshift </td></tr>
+    <tr><td class="paramname">M</td><td>halo mass (M200m, Msun/h) </td></tr>
+    <tr><td class="paramname">p</td><td>pointer for additional parameters </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>M_new / M_old </dd></dl>
 
 </div>
 </div>
@@ -452,6 +507,14 @@ negative values have no effect (but will not trigger a warning). </dd></dl>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0"></a>hmpdf_custom_k_filter_params&#160;</td><td class="fielddoc"><p>pass parameters to the k-space filter (as its last argument). </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
 <dl class="section attention"><dt>Attention</dt><dd>not supported in the python wrapper. </dd></dl>
 </td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a0438942977e93c9641fba49a9fa6f080"></a>hmpdf_massfunc_corr&#160;</td><td class="fielddoc"><p>Correction prefactor for the Tinker mass function. </p><dl class="section user"><dt></dt><dd>Type: #hmpdf_massfunc_f. Default: None. </dd></dl>
+</td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ae1f623b90b4da17a016b0fd86545f064"></a>hmpdf_massfunc_corr_params&#160;</td><td class="fielddoc"><p>Additional parameters to pass to the above function. </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
+</td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a1f12610710cb5967c87269a49043405e"></a>hmpdf_mass_resc&#160;</td><td class="fielddoc"><p>Rescaling function for halo masses going into the profiles (masses going into mass function and bias are not affected). </p><dl class="section user"><dt></dt><dd>Type: hmpdf_mass_resc_f. Default: None. </dd></dl>
+</td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ae3656bfe6a73edbb6b5d7f74bf57b369"></a>hmpdf_mass_resc_params&#160;</td><td class="fielddoc"><p>Additional parameters to pass to the above function. </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
+</td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2"></a>hmpdf_N_phi&#160;</td><td class="fielddoc"><p>Number of pixel-separation sample points in covariance matrix calculation. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1000. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>as long as no numerical instability at small pixel separations is encountered, the default value is conservative. In that case, if you want to decrease run-time, it is recommended you decrease this value to a few hundred, and decrease <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e">hmpdf_pixelexact_max</a> as well. </dd>
 <dd>
@@ -499,7 +562,7 @@ if, however, numerical instability is encountered, results can get more accurate
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6ee14a2f6418d1952c003cf2267a8a63"></a>hmpdf_map_poisson&#160;</td><td class="fielddoc"><p>If set to zero, the number of halos will not be drawn from the Poisson distribution but rather from a much more concentrated one. In that case, the mean (i.e. the averaged one-point PDF) is correctly and much faster approached, while the scatter of individual histograms will not be correct. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><p>required last argument in <a class="el" href="a00041.html#a56610c3095cf0097b8cfb7ce3bce66c0">hmpdf_init_fct()</a>, the convenience macro <a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> takes care of that. </p>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><p>If this option is set, the resulting simplified simulations (maps) will have this random seed. This means that, given equal map dimensions, the maps will have all halos in identical positions. </p><dl class="section user"><dt></dt><dd>Type: int. Default: None. required last argument in <a class="el" href="a00041.html#a56610c3095cf0097b8cfb7ce3bce66c0">hmpdf_init_fct()</a>, the convenience macro <a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> takes care of that. </dd></dl>
 </td></tr>
 </table>
 

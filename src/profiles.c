@@ -347,7 +347,7 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
     double mass_resc = (d->p->mass_resc == NULL)
                        ? 1.0
                        : d->p->mass_resc(d->n->zgrid[z_index],
-                                         d->n->Mgrid[M_index],
+                                         d->n->Mgrid[M_index] * d->c->h,
                                          d->p->mass_resc_params);
 
     // find the outer radius on the sky

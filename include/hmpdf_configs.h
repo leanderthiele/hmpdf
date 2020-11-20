@@ -238,10 +238,31 @@ typedef enum
                                    *   Type: void *. Default: None.
                                    *   \attention not supported in the python wrapper.
                                    */
-    hmpdf_massfunc_corr,
-    hmpdf_massfunc_corr_params,
-    hmpdf_mass_resc,
-    hmpdf_mass_resc_params,
+    hmpdf_massfunc_corr, /*!< Correction prefactor for the Tinker mass function.
+                          *   \par
+                          *   Type: #hmpdf_massfunc_f. Default: None.
+                          */
+    hmpdf_massfunc_corr_params, /*!< Additional parameters to pass to the above function.
+                                 *   \par
+                                 *   Type: void *. Default: None.
+                                 */
+    hmpdf_mass_resc, /*!< Rescaling function for halo masses going into the profiles
+                      *   (masses going into mass function and bias are not affected).
+                      *   \par
+                      *   Type: #hmpdf_mass_resc_f. Default: None.
+                      */
+    hmpdf_mass_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_conc_resc, /*!< Rescaling function for concentration.
+                      *   \par
+                      *   Type: #hmpdf_conc_resc_f. Default: None.
+                      */
+    hmpdf_conc_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -385,11 +406,36 @@ typedef double (*hmpdf_k_filter_f)(double,
                                    double,
                                    void *);
 
+/*! Function pointer typedef for user-defined mass function rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_massfunc_corr.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         hmf_new / hmf_Tinker at z and M
+ */
 typedef double (*hmpdf_massfunc_corr_f)(double,
                                         double,
                                         void *);
 
+/*! Function pointer typedef for user-defined mass rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_mass_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         M_new / M_old
+ */
 typedef double (*hmpdf_mass_resc_f)(double,
+                                    double,
+                                    void *);
+
+/*! Function pointer typedef for user-defined concentration rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_conc_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         c_new / c_old
+ */
+typedef double (*hmpdf_conc_resc_f)(double,
                                     double,
                                     void *);
 

@@ -150,9 +150,18 @@ static inline double
 c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
           double mass_resc)
 {//{{{
-    return c_Duffy08_1(d, d->n->zgrid[z_index],
-                       mass_resc * d->n->Mgrid[M_index],
-                       MDEF_GLOBAL);
+    double out = c_Duffy08_1(d, d->n->zgrid[z_index],
+                             mass_resc * d->n->Mgrid[M_index],
+                             MDEF_GLOBAL);
+
+    if (d->h->conc_resc != NULL)
+    {
+        out *= d->h->conc_resc(d->n->zgrid[z_index],
+                               d->n->Mgrid[M_index],
+                               d->h->conc_resc_params);
+    }
+
+    return out;
 }//}}}
 
 int

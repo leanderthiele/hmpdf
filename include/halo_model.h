@@ -16,6 +16,9 @@ typedef struct//{{{
     hmpdf_massfunc_corr_f massfunc_corr;
     void *massfunc_corr_params;
 
+    hmpdf_conc_resc_f conc_resc;
+    void *conc_resc_params;
+
     double **hmf;
     double **bias;
 

@@ -2,6 +2,8 @@ var a00035 =
 [
     [ "hmpdf_ell_filter_f", "a00035.html#a7a44e2a9bed611ed03ff9e9562889ecd", null ],
     [ "hmpdf_k_filter_f", "a00035.html#ab6eff32b2c4e8683eef46fdd72c2c9bb", null ],
+    [ "hmpdf_massfunc_corr_f", "a00035.html#a51b4303623dad08eaf53ba457bbfe68b", null ],
+    [ "hmpdf_mass_resc_f", "a00035.html#a2043d63ae7092b98e875660561b8da79", null ],
     [ "hmpdf_noise_pwr_f", "a00035.html#a69c88da0bada53144a3d1146b108e110", null ],
     [ "hmpdf_mdef_e", "a00035.html#a5a2e2fcf33b67b716093720bc876e7d8", [
       [ "hmpdf_mdef_c", "a00035.html#a5a2e2fcf33b67b716093720bc876e7d8ab75c5e756a302fb1e6182629f0d8ffe9", null ],
@@ -47,6 +49,10 @@ var a00035 =
       [ "hmpdf_custom_ell_filter_params", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea", null ],
       [ "hmpdf_custom_k_filter", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871", null ],
       [ "hmpdf_custom_k_filter_params", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0", null ],
+      [ "hmpdf_massfunc_corr", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789a0438942977e93c9641fba49a9fa6f080", null ],
+      [ "hmpdf_massfunc_corr_params", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae1f623b90b4da17a016b0fd86545f064", null ],
+      [ "hmpdf_mass_resc", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789a1f12610710cb5967c87269a49043405e", null ],
+      [ "hmpdf_mass_resc_params", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789ae3656bfe6a73edbb6b5d7f74bf57b369", null ],
       [ "hmpdf_N_phi", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2", null ],
       [ "hmpdf_phi_max", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789af8fec1238cb2148f69b5ab784abe28ad", null ],
       [ "hmpdf_pixelexact_max", "a00035.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e", null ],
