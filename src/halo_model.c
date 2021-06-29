@@ -157,7 +157,7 @@ c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
     if (d->h->conc_resc != NULL)
     {
         out *= d->h->conc_resc(d->n->zgrid[z_index],
-                               d->n->Mgrid[M_index],
+                               d->n->Mgrid[M_index] * d->c->h,
                                d->h->conc_resc_params);
     }
 
