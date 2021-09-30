@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: hmpdf.py File Reference</title>
+<title>hmpdf: hmpdf_maps.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,24 +93,138 @@ $(document).ready(function(){initNavTree('a00044.html',''); initResizable(); });
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Data Structures</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">hmpdf.py File Reference</div>  </div>
+<div class="title">hmpdf_maps.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Data Structures</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00052.html">HMPDF</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Python wrapper around <a class="el" href="a00020.html">hmpdf.h</a>.  <a href="a00052.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<div class="textblock"><code>#include &quot;<a class="el" href="a00047.html">hmpdf_object.h</a>&quot;</code><br />
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a30454496d92631fca7b40ee042d3bf95"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#a30454496d92631fca7b40ee042d3bf95">hmpdf_get_map_op</a> (<a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int new_map)</td></tr>
+<tr class="separator:a30454496d92631fca7b40ee042d3bf95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a339bc30c526d118d448c0620c761830d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#a339bc30c526d118d448c0620c761830d">hmpdf_get_map</a> (<a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, double **map, long *Nside, int new_map)</td></tr>
+<tr class="separator:a339bc30c526d118d448c0620c761830d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a30454496d92631fca7b40ee042d3bf95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30454496d92631fca7b40ee042d3bf95">&#9670;&nbsp;</a></span>hmpdf_get_map_op()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int hmpdf_get_map_op </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>Nbins</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>binedges</em>[Nbins+1], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>op</em>[Nbins], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>new_map</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns the histogram of a simplified simulation (map).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Nbins</td><td>number of bins the histogram will be binned into </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">op</td><td>the binned histogram, normalized </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">new_map</td><td>if set to non-zero, the simplified simulation will be rerun even if a map has already been generated </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>error code </dd></dl>
+
+</div>
+</div>
+<a id="a339bc30c526d118d448c0620c761830d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a339bc30c526d118d448c0620c761830d">&#9670;&nbsp;</a></span>hmpdf_get_map()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int hmpdf_get_map </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double **&#160;</td>
+          <td class="paramname"><em>map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long *&#160;</td>
+          <td class="paramname"><em>Nside</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>new_map</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns a simplified simulation (map).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">map</td><td>the map (flattened array of dimensions Nside x Nside) </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">Nside</td><td>sidelength of the map </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">new_map</td><td>if set to non-zero, the simplified simulation will be rerun even if a map has already been generated </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>while the code does perform the memory allocation for the map (so the user does not have to figure out Nside beforehand), the user is responsible for freeing the allocated array, i.e. to call <div class="fragment"><div class="line">free(*map)</div>
+</div><!-- fragment --> after use. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="a00044.html">hmpdf.py</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00044.html">hmpdf_maps.h</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.17 </li>

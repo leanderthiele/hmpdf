@@ -14,6 +14,7 @@
 #include "twopoint.h"
 #include "powerspectrum.h"
 #include "covariance.h"
+#include "maps.h"
 
 #include "hmpdf.h"
 
@@ -21,6 +22,8 @@ struct hmpdf_obj_s
 {//{{{
     int Ncores;
     int verbosity;
+    int warn_is_err;
+    int inited;
 
     numerics_t *n;
     class_interface_t *cls;
@@ -34,10 +37,11 @@ struct hmpdf_obj_s
     twopoint_t *tp;
     powerspectrum_t *ps;
     covariance_t *cov;
+    maps_t *m;
 };//}}}
 
 hmpdf_obj *hmpdf_new(void);
-int reset_data(hmpdf_obj *d);
+int reset_obj(hmpdf_obj *d);
 int hmpdf_delete(hmpdf_obj *d);
 
 #endif

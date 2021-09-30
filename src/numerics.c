@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
 #include <complex.h>
 
 #include <gsl/gsl_integration.h>
@@ -26,6 +25,7 @@ null_numerics(hmpdf_obj *d)
     d->n->signalgrid = NULL;
     d->n->signalgrid_noisy = NULL;
     d->n->lambdagrid = NULL;
+    d->n->lambdagrid_noisy = NULL;
     d->n->phigrid = NULL;
     d->n->phiweights = NULL;
 
@@ -37,7 +37,7 @@ reset_numerics(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_numerics\n")
+    HMPDFPRINT(2, "\treset_numerics\n");
 
     if (d->n->zgrid != NULL) { free(d->n->zgrid); }
     if (d->n->zweights != NULL) { free(d->n->zweights); }
@@ -46,6 +46,7 @@ reset_numerics(hmpdf_obj *d)
     if (d->n->signalgrid != NULL) { free(d->n->signalgrid); }
     if (d->n->signalgrid_noisy != NULL) { free(d->n->signalgrid_noisy); }
     if (d->n->lambdagrid != NULL) { free(d->n->lambdagrid); }
+    if (d->n->lambdagrid_noisy != NULL) { free(d->n->lambdagrid_noisy); }
     if (d->n->phigrid != NULL) { free(d->n->phigrid); }
     if (d->n->phiweights != NULL) { free(d->n->phiweights); }
 
@@ -71,7 +72,7 @@ weight_fct(hmpdf_integr_mode_e m,
         case hmpdf_rational    : *out = pow(x-a, alpha) * pow(x+b, beta); break;
         case hmpdf_chebyshev2  : *out = sqrt((b-x)*(x-a)); break;
         default                : *out = 0.0; // to avoid maybe-unitialized
-                                 HMPDFERR("Unknown integration mode.")
+                                 HMPDFERR("Unknown integration mode.");
     }
 
     ENDFCT
@@ -84,6 +85,9 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
                   int neutralize_weights)
 {//{{{
     STARTFCT
+
+    HMPDFCHECK(N<=0, "N must be strictly positive.");
+    HMPDFCHECK(a>=b, "a must be less than b.");
 
     const gsl_integration_fixed_type *T;
     switch (m)
@@ -98,10 +102,10 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         case hmpdf_rational    : T = gsl_integration_fixed_rational; break;
         case hmpdf_chebyshev2  : T = gsl_integration_fixed_chebyshev2; break;
         default                : T = NULL;
-                                 HMPDFERR("Unknown integration mode.")
+                                 HMPDFERR("Unknown integration mode.");
     }
-    SAFEALLOC(gsl_integration_fixed_workspace *, ws,
-              gsl_integration_fixed_alloc(T, N, a, b, alpha, beta))
+    gsl_integration_fixed_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_fixed_alloc(T, N, a, b, alpha, beta));
     double *_nodes = gsl_integration_fixed_nodes(ws);
     double *_weights = gsl_integration_fixed_weights(ws);
     for (int ii=0; ii<N; ii++)
@@ -110,7 +114,7 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
         if (neutralize_weights)
         {
             double temp;
-            SAFEHMPDF(weight_fct(m, a, b, alpha, beta, nodes[ii], &temp))
+            SAFEHMPDF(weight_fct(m, a, b, alpha, beta, nodes[ii], &temp));
             weights[ii] = _weights[ii] / temp;
         }
         else
@@ -124,52 +128,101 @@ gauss_fixed_point(hmpdf_integr_mode_e m, int N,
 }//}}}
 
 static int
+construct_signalgrid(long N, long *N1, double *smin, double *smax, double *grid)
+// N1 holds the number of negative signal values
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(N<=1, "N must be greater than 1.");
+    HMPDFCHECK(*smin>=*smax, "smin must be less than smax.");
+
+    // find the index where we would like the signal to be
+    //    exactly zero
+    *N1 = round(-*smin/(*smax-*smin)*(double)(N-1));
+    if (*N1 != 0)
+    {
+        // adjust the maximum signal accordingly
+        *smax = *smin * (1.0 - (double)(N-1)/(double)(*N1));
+    }
+    else
+    {
+        *smin = 0.0;
+    }
+
+    SAFEHMPDF(linspace(N, *smin, *smax, grid));
+
+    // guard against small numerical instabilities
+    grid[*N1] = 0.0;
+
+    ENDFCT
+}//}}}
+
+static int
 create_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_grids\n")
+    HMPDFPRINT(2, "\tcreate_grids\n");
 
-    SAFEALLOC(, d->n->zgrid,    malloc(d->n->Nz * sizeof(double)))
-    SAFEALLOC(, d->n->zweights, malloc(d->n->Nz * sizeof(double)))
+    SAFEALLOC(d->n->zgrid,    malloc(d->n->Nz * sizeof(double)));
+    SAFEALLOC(d->n->zweights, malloc(d->n->Nz * sizeof(double)));
     SAFEHMPDF(gauss_fixed_point(d->n->zintegr_type, d->n->Nz,
                                 d->n->zmin, d->n->zmax,
                                 d->n->zintegr_alpha,
                                 d->n->zintegr_beta,
                                 d->n->zgrid, d->n->zweights,
-                                1/*neutralize weights*/))
+                                1/*neutralize weights*/));
 
-    SAFEALLOC(, d->n->Mgrid,    malloc(d->n->NM * sizeof(double)))
-    SAFEALLOC(, d->n->Mweights, malloc(d->n->NM * sizeof(double)))
+    SAFEALLOC(d->n->Mgrid,    malloc(d->n->NM * sizeof(double)));
+    SAFEALLOC(d->n->Mweights, malloc(d->n->NM * sizeof(double)));
     SAFEHMPDF(gauss_fixed_point(d->n->Mintegr_type, d->n->NM,
                                 log(d->n->Mmin), log(d->n->Mmax),
                                 d->n->Mintegr_alpha,
                                 d->n->Mintegr_beta,
                                 d->n->Mgrid, d->n->Mweights,
-                                1/*neutralize weights*/))
+                                1/*neutralize weights*/));
 
     for (int ii=0; ii<d->n->NM; ii++)
     {
         d->n->Mgrid[ii] = exp(d->n->Mgrid[ii]);
     }
 
-    SAFEALLOC(, d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)))
-    linspace(d->n->Nsignal, d->n->signalmin, d->n->signalmax,
-             d->n->signalgrid);
-
-    SAFEALLOC(, d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)))
-    linspace(d->n->Nsignal/2+1,
-             0.0, M_PI/(d->n->signalgrid[1]-d->n->signalgrid[0]),
-             d->n->lambdagrid);
+    SAFEALLOC(d->n->signalgrid, malloc(d->n->Nsignal * sizeof(double)));
+    SAFEHMPDF(construct_signalgrid(d->n->Nsignal,
+                                   &(d->n->Nsignal_negative),
+                                   &(d->n->signalmin), &(d->n->signalmax),
+                                   d->n->signalgrid));
+    
+    SAFEALLOC(d->n->lambdagrid, malloc((d->n->Nsignal/2+1) * sizeof(double)));
+    SAFEHMPDF(linspace(d->n->Nsignal/2+1,
+                       0.0, M_PI/(d->n->signalgrid[1] - d->n->signalgrid[0]),
+                       d->n->lambdagrid));
 
     ENDFCT
 }//}}}
 
-static
-double simps_real(int N, double dx, int stride, double *f)
+int
+init_numerics(hmpdf_obj *d)
+{//{{{
+    STARTFCT
+
+    if (d->n->inited_numerics) { return 0; }
+
+    HMPDFPRINT(1, "init_numerics\n");
+
+    SAFEHMPDF(create_grids(d));
+
+    d->n->inited_numerics = 1;
+
+    ENDFCT
+}//}}}
+
+/* DEPRECATED FUNCTIONS, FOR REFERENCE */
+
+static double
+simps_real(int N, double dx, int stride, double *f)
 // real Simpson integration, N must be odd (even number of intervals)
 {//{{{
-    assert(GSL_IS_ODD(N));
     --N;
     double out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
     for (int ii=1; ii<N-2; ii+=2)
@@ -179,13 +232,12 @@ double simps_real(int N, double dx, int stride, double *f)
     return out * dx / 3.0;
 }//}}}
 
-static
-complex simps_comp(int N, double dx, int stride, complex *f)
-// complex Simpson integration, N must be odd (even number of intervals)
+static double complex
+simps_comp(int N, double dx, int stride, double complex *f)
+// double double complex Simpson integration, N must be odd (even number of intervals)
 {//{{{
-    assert(GSL_IS_ODD(N));
     --N;
-    complex out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
+    double complex out = f[0] + 4.0*f[(N-1)*stride] + f[N*stride];
     for (int ii=1; ii<N-2; ii+=2)
     {
         out += 4.0*f[ii*stride] + 2.0*f[(ii+1)*stride];
@@ -193,8 +245,8 @@ complex simps_comp(int N, double dx, int stride, complex *f)
     return out * dx / 3.0;
 }//}}}
 
-static
-double romb_real(int k, double dx, int stride, double *f)
+static double
+romb_real(int k, double dx, int stride, double *f)
 // real Romberg integration. N = 2^k+1 sample points, real integrand
 {//{{{
     int N = 1<<k;
@@ -225,22 +277,22 @@ double romb_real(int k, double dx, int stride, double *f)
     return Rp[k - 1];
 }//}}}
 
-static
-complex romb_comp(int k, double dx, int stride, complex *f)
-// complex Romberg integration. N = 2^k subdivisions, complex integrand
+static double complex
+romb_comp(int k, double dx, int stride, double complex *f)
+// double double complex Romberg integration. N = 2^k subdivisions, double complex integrand
 {//{{{
     int N = 1<<k;
-    complex R1[k];
-    complex R2[k];
-    complex *Rc = &R1[0];
-    complex *Rp = &R2[0];
+    double complex R1[k];
+    double complex R2[k];
+    double complex *Rc = &R1[0];
+    double complex *Rp = &R2[0];
     double h = (double)(N) * dx;
     Rp[0] = 0.5 * h * (f[0] + f[N*stride]);
 
     for (int nn=1; nn <= k; nn++)
     {
         h *= 0.5;
-        complex temp = 0.0;
+        double complex temp = 0.0;
         for (int jj=1; jj<=(1<<(nn-1)); jj++)
         {
             temp += f[((2*jj-1)*(N/(1<<nn)))*stride];
@@ -250,16 +302,16 @@ complex romb_comp(int k, double dx, int stride, complex *f)
         {
             Rc[jj] = ((1<<(2*jj))*Rc[jj-1] - Rp[jj-1]) / (double)((1<<(2*jj)) - 1);
         }
-        complex *Rt = Rp;
+        double complex *Rt = Rp;
         Rp = Rc;
         Rc = Rt;
     }
     return Rp[k - 1];
 }//}}}
 
-double integr_real(int N, double dx, int stride, double *f)
+double
+integr_real(int N, double dx, int stride, double *f)
 {//{{{
-    assert(GSL_IS_ODD(N));
     int k;
     if (ispwr2(N-1, &k))
     {
@@ -271,9 +323,9 @@ double integr_real(int N, double dx, int stride, double *f)
     }
 }//}}}
 
-complex integr_comp(int N, double dx, int stride, complex *f)
+double complex
+integr_comp(int N, double dx, int stride, double complex *f)
 {//{{{
-    assert(GSL_IS_ODD(N));
     int k;
     if (ispwr2(N-1, &k))
     {
@@ -283,21 +335,5 @@ complex integr_comp(int N, double dx, int stride, complex *f)
     {
         return simps_comp(N, dx, stride, f);
     }
-}//}}}
-
-int
-init_numerics(hmpdf_obj *d)
-{//{{{
-    STARTFCT
-
-    if (d->n->inited_numerics) { return hmpdf_status; }
-
-    HMPDFPRINT(1, "init_numerics\n")
-
-    SAFEHMPDF(create_grids(d))
-
-    d->n->inited_numerics = 1;
-
-    ENDFCT
 }//}}}
 

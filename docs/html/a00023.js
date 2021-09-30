@@ -2,6 +2,7 @@ var a00023 =
 [
     [ "hmpdf_ell_filter_f", "a00023.html#a7a44e2a9bed611ed03ff9e9562889ecd", null ],
     [ "hmpdf_k_filter_f", "a00023.html#ab6eff32b2c4e8683eef46fdd72c2c9bb", null ],
+    [ "hmpdf_noise_pwr_f", "a00023.html#a69c88da0bada53144a3d1146b108e110", null ],
     [ "hmpdf_mdef_e", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8", [
       [ "hmpdf_mdef_c", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8ab75c5e756a302fb1e6182629f0d8ffe9", null ],
       [ "hmpdf_mdef_v", "a00023.html#a5a2e2fcf33b67b716093720bc876e7d8a8bc157256dc9a78fae3f64b30022b23e", null ],
@@ -25,6 +26,7 @@ var a00023 =
     [ "hmpdf_configs_e", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789", [
       [ "hmpdf_N_threads", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428", null ],
       [ "hmpdf_verbosity", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be", null ],
+      [ "hmpdf_warn_is_err", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a87764a5772dbcd746f3b8f543d9f75ee", null ],
       [ "hmpdf_class_pre", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ad3762c49b7f951bd88e226e6f5ea4dea", null ],
       [ "hmpdf_N_z", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574", null ],
       [ "hmpdf_z_min", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a0af4ada2697ea24182397d26d6bd4473", null ],
@@ -50,7 +52,6 @@ var a00023 =
       [ "hmpdf_pixelexact_max", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e", null ],
       [ "hmpdf_phi_jitter", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789af8345055efd076d5198cd12ad7c0c8d7", null ],
       [ "hmpdf_phi_pwr", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3d3fac9287865a8399a7e144499653ef", null ],
-      [ "hmpdf_monotonize", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8", null ],
       [ "hmpdf_zintegr_type", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789acb8f68b7d9532865f7c87580fa0e311d", null ],
       [ "hmpdf_zintegr_alpha", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a42e4390976e5dca9be73485cf503b18e", null ],
       [ "hmpdf_zintegr_beta", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a25569df40535090008f1e322a7d44bda", null ],
@@ -60,7 +61,8 @@ var a00023 =
       [ "hmpdf_Duffy08_conc_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a019378f9941108b49b13dbc58f18f543", null ],
       [ "hmpdf_Tinker10_hmf_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6faee0a5c3a0ade3183faabef5880c93", null ],
       [ "hmpdf_Battaglia12_tsz_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c", null ],
-      [ "hmpdf_noise", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4", null ],
+      [ "hmpdf_noise_pwr", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774", null ],
+      [ "hmpdf_noise_pwr_params", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2", null ],
       [ "hmpdf_end_configs", "a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3", null ]
     ] ]
 ];

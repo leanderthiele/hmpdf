@@ -52,29 +52,30 @@ typedef enum
 
 /*! Options to hmpdf_init().
  *
- *  The variable argument list in hmpdf_init() can be used to pass non-default options.
+ *  The variadic argument list in hmpdf_init() can be used to pass non-default options.
  *  [syntax is explained in the documentation for hmpdf_init()].
  *
  *  There is a large number of options, many of which the typical user will not need to use.
  *  Here is a brief synopsis:
  *
- *  Always used: #hmpdf_end_configs
- *
  *  Frequently used options:
  *      + pixelization: #hmpdf_pixel_side
  *      + ell space filters: #hmpdf_tophat_radius, #hmpdf_gaussian_fwhm,
  *                           #hmpdf_custom_ell_filter (and #hmpdf_custom_ell_filter_params)
- *      + pixel-wise Gaussian noise: #hmpdf_noise
+ *      + Gaussian noise: #hmpdf_noise_pwr (and #hmpdf_noise_pwr_params)
  *      + multithreading: #hmpdf_N_threads
  *  
  *  Less frequently used options:
  *      + verbosity: #hmpdf_verbosity
+ *      + behaviour when unusual states are encountered: #hmpdf_warn_is_err
  *      + halo model fit parameters: #hmpdf_Duffy08_conc_params,
  *                                   #hmpdf_Tinker10_hmf_params,
  *                                   #hmpdf_Battaglia12_tsz_params
  *      + k space filter: #hmpdf_custom_k_filter (and #hmpdf_custom_k_filter_params)
- *      + monotonization of halo profiles: #hmpdf_monotonize
  *      + PDF internal sampling points: #hmpdf_N_signal, #hmpdf_signal_min, #hmpdf_signal_max
+ *      + settings for simplified simulations: #hmpdf_map_fsky,
+ *                                             #hmpdf_map_pixelgrid,
+ *                                             #hmpdf_map_poisson
  *  
  *  Integration grids:
  *      + redshift integration: #hmpdf_N_z, #hmpdf_z_min, #hmpdf_z_max,
@@ -101,6 +102,14 @@ typedef enum
                       *   \par
                       *   Type: int. Default: 0.
                       */
+    hmpdf_warn_is_err, /*!< Controls the behaviour when a warning is encountered.
+                        *   Positive values will treat warnings as error and return,
+                        *   zero value will continue execution but print a message to
+                        *   stderr,
+                        *   and negative values will ignore the warning.
+                        *   \par
+                        *   Type: int. Default: 1.
+                        */
     hmpdf_class_pre, /*!< optional CLASS precision file.
                       *   \par
                       *   Type: char *. Default: None (use CLASS's default precision settings).
@@ -121,8 +130,6 @@ typedef enum
     hmpdf_z_max, /*!< maximum redshift.
                   *   \par
                   *   Type: double. Default: 6 for tSZ, source redshift for weak lensing.
-                  *   \warning If set to values larger than source redshift in weak lensing,
-                  *            behaviour is undefined.
                   */
     hmpdf_N_M, /*!< number of sample points in halo mass integration.
                 *   \par
@@ -142,16 +149,24 @@ typedef enum
                   */
     hmpdf_N_signal, /*!< number of points on which the one-point PDF is sampled internally
                      *   \par
-                     *   Type: int. Default: 1024.
+                     *   Type: long. Default: 1024.
                      *   \remark two-point PDF will be sampled on the square of this.
                      *   \remark Should be chosen as a power of 2 for optimal speed.
                      *   \warning Setting this to large values can trigger numerical instability
                      *            in small-phi two-point PDF, and covariance matrix computations.
+                     *   \attention This is the only instance of an expected long.
                      */
     hmpdf_signal_min, /*!< minimum signal value at which PDF is sampled internally.
                        *   \par
                        *   Type: double. Default: 0.
-                       *   \warning non-zero values are not tested and will likely give wrong results.
+                       *   \remark The PDF should be well converged to zero for smaller signal values.
+                       *   \remark If your signal is only positive
+                       *           (this is quite often true, as long as you are not applying any
+                       *            special ell- or k-space filters)
+                       *           you should set this to zero.
+                       *   \note   This is in the internal units,
+                       *           in which negative WL convergence regions do not exist.
+                       *           Read the paper for a discussion.
                        */
     hmpdf_signal_max, /*!< maximum signal value at which PDF is sampled internally.
                        *   \par
@@ -159,6 +174,9 @@ typedef enum
                        *   \remark Should be chosen such that PDF is well converged to zero to avoid ringing.
                        *   \remark Should be at least 2x larger than maximum signal value you are interested in.
                        *   \remark For weak lensing, you should change this option depending on source redshift.
+                       *   \note   This is in the internal units,
+                       *           in which negative WL convergence regions do not exist.
+                       *           Read the paper for a discussion.
                        */
     hmpdf_N_theta, /*!< number of points on which the signal profiles are sampled.
                     *   \par
@@ -256,16 +274,6 @@ typedef enum
                     *   \remark If you encounter numerical instability (e.g., wild covariance matrix entries),
                     *           increasing this number can potentially be helpful.
                     */
-    hmpdf_monotonize, /*!< If non-zero (default), non-monotonic sections in the signal profiles will be patched.
-                       *   \par
-                       *   Type: int. Default: 1.
-                       *   \remark as long as you do not apply any custom ell- or k-space filter to the signal
-                       *           profiles, leaving this as 1 is very safe.
-                       *   \remark if you do use a custom filter, the rule of thumb is that as long as the filter
-                       *           is close to 1 for small ell/k, it should be fine as well.
-                       *   \remark this has to be set to 1 for two-point PDF and covariance matrix calculations
-                       *           (otherwise the integrations are impossibly slow).
-                       */
     hmpdf_zintegr_type, /*!< Fixed point integration mode for redshift integration.
                          *   \par
                          *   Type: #hmpdf_integr_mode_e. Default: #hmpdf_legendre.
@@ -311,12 +319,43 @@ typedef enum
                                    *   Type: double[15]. Default: see src/configs.c.
                                    *   \remark in the python wrapper, pass a 1d numpy array
                                    */
-    hmpdf_noise, /*!< Option to add pixel-wise Gaussian noise of this standard deviation.
-                  *   \par
-                  *   Type: double. Default: None.
-                  *   \remark negative values have no effect (but will not trigger a warning).
-                  */
-    hmpdf_end_configs, /*!< \attention Required last argument in hmpdf_init(). */
+    hmpdf_noise_pwr, /*!< Option to add pixel-wise Gaussian noise with this power spectrum.
+                      *   \par
+                      *   Type: #hmpdf_noise_pwr_f. Default: None.
+                      */
+    hmpdf_noise_pwr_params, /*!< To pass custom parameters to the function #hmpdf_noise_pwr.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_map_fsky, /*!< If you want to use the stochastic map-mapmaking algorithm
+                     *   (simplified simulations), this is a required setting.
+                     *   It is the sky fraction spanned by the map.
+                     *   \par
+                     *   Type: double. Default: None.
+                     */
+    hmpdf_map_pixelgrid, /*!< Increasing this value yields a more accurate averaging of the
+                          *   signal profiles in each pixel.
+                          *   \par
+                          *   Type: int. Default: 3.
+                          */
+    hmpdf_map_poisson, /*!< If set to zero, the number of halos will not be drawn from the Poisson
+                        *   distribution but rather from a much more concentrated one.
+                        *   In that case, the mean (i.e. the averaged one-point PDF) is correctly
+                        *   and much faster approached, while the scatter of individual histograms
+                        *   will not be correct.
+                        *   \par
+                        *   Type: int. Default: 1.
+                        */
+    hmpdf_map_seed, /*! If this option is set, the resulting simplified simulations (maps) will
+                     *  have this random seed.
+                     *  This means that, given equal map dimensions, the maps will have all halos
+                     *  in identical positions.
+                     *  \par
+                     *  Type: int. Default: None.
+                     */
+    hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
+                        *   hmpdf_init() takes care of that.
+                        */
     // keep this last
 } hmpdf_configs_e;
 
@@ -341,5 +380,15 @@ typedef double (*hmpdf_ell_filter_f)(double,
 typedef double (*hmpdf_k_filter_f)(double,
                                    double,
                                    void *);
+
+/*! Function pointer typedef for user-defined noise power spectrum.
+ *  Passed to hmpdf_init() as #hmpdf_noise_pwr.
+ *  \param ell       angular wavenumber
+ *  \param p         pointer that allows user to pass other parameters.
+ *                   Passed to hmpdf_init() as #hmpdf_noise_pwr_params.
+ *  \return N(ell)   noise power at ell.
+ */
+typedef double (*hmpdf_noise_pwr_f)(double,
+                                    void *);
 
 #endif

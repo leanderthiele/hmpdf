@@ -106,6 +106,8 @@ Typedefs</h2></td></tr>
 <tr class="separator:a7a44e2a9bed611ed03ff9e9562889ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00023.html#ab6eff32b2c4e8683eef46fdd72c2c9bb">hmpdf_k_filter_f</a>) (double, double, void *)</td></tr>
 <tr class="separator:ab6eff32b2c4e8683eef46fdd72c2c9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69c88da0bada53144a3d1146b108e110"><td class="memItemLeft" align="right" valign="top">typedef double(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00023.html#a69c88da0bada53144a3d1146b108e110">hmpdf_noise_pwr_f</a>) (double, void *)</td></tr>
+<tr class="separator:a69c88da0bada53144a3d1146b108e110"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -136,38 +138,38 @@ Enumerations</h2></td></tr>
 <tr class="memitem:a821ed18a82a65541a1feaa9e19fe3789"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789">hmpdf_configs_e</a> { <br />
 &#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be">hmpdf_verbosity</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a87764a5772dbcd746f3b8f543d9f75ee">hmpdf_warn_is_err</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ad3762c49b7f951bd88e226e6f5ea4dea">hmpdf_class_pre</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574">hmpdf_N_z</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a0af4ada2697ea24182397d26d6bd4473">hmpdf_z_min</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574">hmpdf_N_z</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a0af4ada2697ea24182397d26d6bd4473">hmpdf_z_min</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae86572d908d94217ba1095e82b56dc72">hmpdf_z_max</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3d0fe1b9c6a879c262ff8626012cbe59">hmpdf_N_M</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7593e750113eb6432afc700dcad7f654">hmpdf_M_min</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8cef4f9497c09381fa58c2a37e19a0fe">hmpdf_M_max</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7593e750113eb6432afc700dcad7f654">hmpdf_M_min</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8cef4f9497c09381fa58c2a37e19a0fe">hmpdf_M_max</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ad2d62d364af25db2ef2222edac4a2518">hmpdf_signal_min</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1afc241fb40ccb7bf9fd81400fc54827">hmpdf_signal_max</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1afc241fb40ccb7bf9fd81400fc54827">hmpdf_signal_max</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec">hmpdf_N_theta</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6619253df0ad6696969b63a22a3cd4c1">hmpdf_rout_scale</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7013e11c12880d586be810cf2a1ebee1">hmpdf_rout_rdef</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a56620a7dd315b401677e402f294697c2">hmpdf_N_phi</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af8fec1238cb2148f69b5ab784abe28ad">hmpdf_phi_max</a>, 
 <br />
-&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e">hmpdf_pixelexact_max</a>, 
+&#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af8fec1238cb2148f69b5ab784abe28ad">hmpdf_phi_max</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e">hmpdf_pixelexact_max</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789af8345055efd076d5198cd12ad7c0c8d7">hmpdf_phi_jitter</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3d3fac9287865a8399a7e144499653ef">hmpdf_phi_pwr</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8">hmpdf_monotonize</a>, 
 <br />
 &#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789acb8f68b7d9532865f7c87580fa0e311d">hmpdf_zintegr_type</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a42e4390976e5dca9be73485cf503b18e">hmpdf_zintegr_alpha</a>, 
@@ -180,7 +182,8 @@ Enumerations</h2></td></tr>
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6faee0a5c3a0ade3183faabef5880c93">hmpdf_Tinker10_hmf_params</a>, 
 <br />
 &#160;&#160;<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c">hmpdf_Battaglia12_tsz_params</a>, 
-<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>, 
+<a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2">hmpdf_noise_pwr_params</a>, 
 <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a>
 <br />
  }</td></tr>
@@ -198,10 +201,10 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Function pointer typedef for user-defined ell-space filter. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Function pointer typedef for user-defined ell-space filter. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ell</td><td>angular wavenumber </td></tr>
-    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>. </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -220,15 +223,37 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Function pointer typedef for user-defined k-space filter. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Function pointer typedef for user-defined k-space filter. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">k</td><td>comoving wavenumber in 1/Mpc </td></tr>
     <tr><td class="paramname">z</td><td>redshift </td></tr>
-    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>. </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>W(k,z) window function at k and z </dd></dl>
+
+</div>
+</div>
+<a id="a69c88da0bada53144a3d1146b108e110"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69c88da0bada53144a3d1146b108e110">&#9670;&nbsp;</a></span>hmpdf_noise_pwr_f</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef double(* hmpdf_noise_pwr_f) (double, void *)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Function pointer typedef for user-defined noise power spectrum. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ell</td><td>angular wavenumber </td></tr>
+    <tr><td class="paramname">p</td><td>pointer that allows user to pass other parameters. Passed to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2">hmpdf_noise_pwr_params</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>N(ell) noise power at ell. </dd></dl>
 
 </div>
 </div>
@@ -318,21 +343,20 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Options to <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>.</p>
-<p>The variable argument list in <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> can be used to pass non-default options. [syntax is explained in the documentation for <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>].</p>
+<p>Options to <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>.</p>
+<p>The variadic argument list in <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> can be used to pass non-default options. [syntax is explained in the documentation for <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a>].</p>
 <p>There is a large number of options, many of which the typical user will not need to use. Here is a brief synopsis:</p>
-<p>Always used: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3">hmpdf_end_configs</a></p>
 <p>Frequently used options:</p><ul>
 <li>pixelization: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae54a44bfb544f115fa9c31080643059d">hmpdf_pixel_side</a></li>
 <li>ell space filters: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6b355ff3f9ae30f6362c54761118c4b2">hmpdf_tophat_radius</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a5fdc8f30dca54ff11bd01db4d26c4790">hmpdf_gaussian_fwhm</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aef7c5e61135ab55a00e764f77720a8ff">hmpdf_custom_ell_filter</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aab3d90c8eeea5e4cd48ed74d1a09c8ea">hmpdf_custom_ell_filter_params</a>)</li>
-<li>pixel-wise Gaussian noise: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4">hmpdf_noise</a></li>
+<li>Gaussian noise: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2">hmpdf_noise_pwr_params</a>)</li>
 <li>multithreading: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a2257a4ab7f3c37c39943f020935cc428">hmpdf_N_threads</a></li>
 </ul>
 <p>Less frequently used options:</p><ul>
 <li>verbosity: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be">hmpdf_verbosity</a></li>
+<li>behaviour when unusual states are encountered: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a87764a5772dbcd746f3b8f543d9f75ee">hmpdf_warn_is_err</a></li>
 <li>halo model fit parameters: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a019378f9941108b49b13dbc58f18f543">hmpdf_Duffy08_conc_params</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6faee0a5c3a0ade3183faabef5880c93">hmpdf_Tinker10_hmf_params</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c">hmpdf_Battaglia12_tsz_params</a></li>
 <li>k space filter: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1a67fa1ce0886d4bb6f47b4fbd429871">hmpdf_custom_k_filter</a> (and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ae6e5b082811ff39311f3a7c6adc05bb0">hmpdf_custom_k_filter_params</a>)</li>
-<li>monotonization of halo profiles: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8">hmpdf_monotonize</a></li>
 <li>PDF internal sampling points: <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5">hmpdf_N_signal</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789ad2d62d364af25db2ef2222edac4a2518">hmpdf_signal_min</a>, <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a1afc241fb40ccb7bf9fd81400fc54827">hmpdf_signal_max</a></li>
 </ul>
 <p>Integration grids:</p><ul>
@@ -352,6 +376,8 @@ this does <em>not</em> control the multithreading behaviour of CLASS </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be"></a>hmpdf_verbosity&#160;</td><td class="fielddoc"><p>larger values yield more detailed print output. If 0 (default), only error messages are printed. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 0. </dd></dl>
 </td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a87764a5772dbcd746f3b8f543d9f75ee"></a>hmpdf_warn_is_err&#160;</td><td class="fielddoc"><p>Controls the behaviour when a warning is encountered. Positive values will treat warnings as error and return, zero value will continue execution but print a message to stderr, and negative values will ignore the warning. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1. </dd></dl>
+</td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ad3762c49b7f951bd88e226e6f5ea4dea"></a>hmpdf_class_pre&#160;</td><td class="fielddoc"><p>optional CLASS precision file. </p><dl class="section user"><dt></dt><dd>Type: char *. Default: None (use CLASS's default precision settings). </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a68238e565064f74cb7d6b60eef324574"></a>hmpdf_N_z&#160;</td><td class="fielddoc"><p>number of sample points in redshift integration. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 65. </dd></dl>
@@ -361,7 +387,6 @@ this does <em>not</em> control the multithreading behaviour of CLASS </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>non-zero values do not make much sense </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ae86572d908d94217ba1095e82b56dc72"></a>hmpdf_z_max&#160;</td><td class="fielddoc"><p>maximum redshift. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 6 for tSZ, source redshift for weak lensing. </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>If set to values larger than source redshift in weak lensing, behaviour is undefined. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a3d0fe1b9c6a879c262ff8626012cbe59"></a>hmpdf_N_M&#160;</td><td class="fielddoc"><p>number of sample points in halo mass integration. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 65. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>the default value is conservative. By playing with the <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a593ebc8db86c2946a3f000b53365e476">hmpdf_Mintegr_type</a> (as well as <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a0e439b801ea12a89cab6c9eb7761e548">hmpdf_Mintegr_alpha</a> and <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a3a352dc9de86c5ae1cd82ddbdb93fa4f">hmpdf_Mintegr_beta</a>) you can gain some speed here. </dd></dl>
@@ -370,14 +395,18 @@ this does <em>not</em> control the multithreading behaviour of CLASS </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a8cef4f9497c09381fa58c2a37e19a0fe"></a>hmpdf_M_max&#160;</td><td class="fielddoc"><p>maximum halo mass, in M200m definition and Msun units. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 1e16. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5"></a>hmpdf_N_signal&#160;</td><td class="fielddoc"><p>number of points on which the one-point PDF is sampled internally </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1024. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789aaa071f7eb6edc4d8af144359a8d4b5b5"></a>hmpdf_N_signal&#160;</td><td class="fielddoc"><p>number of points on which the one-point PDF is sampled internally </p><dl class="section user"><dt></dt><dd>Type: long. Default: 1024. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>two-point PDF will be sampled on the square of this. </dd>
 <dd>
 Should be chosen as a power of 2 for optimal speed. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>Setting this to large values can trigger numerical instability in small-phi two-point PDF, and covariance matrix computations. </dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>This is the only instance of an expected long. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ad2d62d364af25db2ef2222edac4a2518"></a>hmpdf_signal_min&#160;</td><td class="fielddoc"><p>minimum signal value at which PDF is sampled internally. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 0. </dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>non-zero values are not tested and will likely give wrong results. </dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>The PDF should be well converged to zero for smaller signal values. </dd>
+<dd>
+If your signal is only positive (this is quite often true, as long as you are not applying any special ell- or k-space filters) you should set this to zero. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This is in the internal units, in which negative WL convergence regions do not exist. Read the paper for a discussion. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a1afc241fb40ccb7bf9fd81400fc54827"></a>hmpdf_signal_max&#160;</td><td class="fielddoc"><p>maximum signal value at which PDF is sampled internally. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 2e-4 (tSZ), 1 (weak lensing). </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>Should be chosen such that PDF is well converged to zero to avoid ringing. </dd>
@@ -385,9 +414,10 @@ Should be chosen as a power of 2 for optimal speed. </dd></dl>
 Should be at least 2x larger than maximum signal value you are interested in. </dd>
 <dd>
 For weak lensing, you should change this option depending on source redshift. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This is in the internal units, in which negative WL convergence regions do not exist. Read the paper for a discussion. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789af9f89a94c3e47bcc36b1fd04473e75ec"></a>hmpdf_N_theta&#160;</td><td class="fielddoc"><p>number of points on which the signal profiles are sampled. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 500. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>reasonable precision can be reached with as few as 100 sample points. Runtime of <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> is in many cases quite dominated by this setting. </dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>reasonable precision can be reached with as few as 100 sample points. Runtime of <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> is in many cases quite dominated by this setting. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6619253df0ad6696969b63a22a3cd4c1"></a>hmpdf_rout_scale&#160;</td><td class="fielddoc"><p>radial cut-off. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 2. </dd></dl>
 </td></tr>
@@ -433,13 +463,6 @@ if, however, numerical instability is encountered, results can get more accurate
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a3d3fac9287865a8399a7e144499653ef"></a>hmpdf_phi_pwr&#160;</td><td class="fielddoc"><p>technical (for covariance matrix). Increasing this number increases the sample points at small pixel separation. </p><dl class="section user"><dt></dt><dd>Type: double. Default: 2. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>If you encounter numerical instability (e.g., wild covariance matrix entries), increasing this number can potentially be helpful. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6d32ca9ee31b8046ee27e52fb1e773a8"></a>hmpdf_monotonize&#160;</td><td class="fielddoc"><p>If non-zero (default), non-monotonic sections in the signal profiles will be patched. </p><dl class="section user"><dt></dt><dd>Type: int. Default: 1. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>as long as you do not apply any custom ell- or k-space filter to the signal profiles, leaving this as 1 is very safe. </dd>
-<dd>
-if you do use a custom filter, the rule of thumb is that as long as the filter is close to 1 for small ell/k, it should be fine as well. </dd>
-<dd>
-this has to be set to 1 for two-point PDF and covariance matrix calculations (otherwise the integrations are impossibly slow). </dd></dl>
-</td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789acb8f68b7d9532865f7c87580fa0e311d"></a>hmpdf_zintegr_type&#160;</td><td class="fielddoc"><p>Fixed point integration mode for redshift integration. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00023.html#ab382fb574854db2adb3d858dcfd41a3b">hmpdf_integr_mode_e</a>. Default: <a class="el" href="a00023.html#ab382fb574854db2adb3d858dcfd41a3ba3eec9b7e81b0c20eb3346eb8cab64048">hmpdf_legendre</a>. </dd></dl>
 </td></tr>
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a42e4390976e5dca9be73485cf503b18e"></a>hmpdf_zintegr_alpha&#160;</td><td class="fielddoc"><p>Fixed point integration alpha for redshift integration </p><dl class="section user"><dt></dt><dd>Type: double. Default: 0. </dd></dl>
@@ -461,10 +484,11 @@ this has to be set to 1 for two-point PDF and covariance matrix calculations (ot
 <tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a8dbd059ab22b3de7d11fdbde47ee0a5c"></a>hmpdf_Battaglia12_tsz_params&#160;</td><td class="fielddoc"><p>Fit parameters in the <a href="https://arxiv.org/abs/1109.3711">Battaglia+2012</a> pressure profile model. </p><dl class="section user"><dt></dt><dd>Type: double[15]. Default: see src/configs.c. </dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>in the python wrapper, pass a 1d numpy array </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a7f6fd4659e6ca61f46133d3e960fceb4"></a>hmpdf_noise&#160;</td><td class="fielddoc"><p>Option to add pixel-wise Gaussian noise of this standard deviation. </p><dl class="section user"><dt></dt><dd>Type: double. Default: None. </dd></dl>
-<dl class="section remark"><dt>Remarks</dt><dd>negative values have no effect (but will not trigger a warning). </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774"></a>hmpdf_noise_pwr&#160;</td><td class="fielddoc"><p>Option to add pixel-wise Gaussian noise with this power spectrum. </p><dl class="section user"><dt></dt><dd>Type: <a class="el" href="a00023.html#a69c88da0bada53144a3d1146b108e110">hmpdf_noise_pwr_f</a>. Default: None. </dd></dl>
 </td></tr>
-<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><dl class="section attention"><dt>Attention</dt><dd>Required last argument in <a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a>. </dd></dl>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789a6cfc9b0e221da6a7a5703415ea8c98a2"></a>hmpdf_noise_pwr_params&#160;</td><td class="fielddoc"><p>To pass custom parameters to the function <a class="el" href="a00023.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>. </p><dl class="section user"><dt></dt><dd>Type: void *. Default: None. </dd></dl>
+</td></tr>
+<tr><td class="fieldname"><a id="a821ed18a82a65541a1feaa9e19fe3789ab34a005b0feb9acf3523b4a666d127b3"></a>hmpdf_end_configs&#160;</td><td class="fielddoc"><p>required last argument in <a class="el" href="a00029.html#a56610c3095cf0097b8cfb7ce3bce66c0">hmpdf_init_fct()</a>, the convenience macro <a class="el" href="a00029.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> takes care of that. </p>
 </td></tr>
 </table>
 

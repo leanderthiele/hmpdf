@@ -2,6 +2,8 @@
 #ifndef HMPDF_POWERSPECTRUM_H
 #define HMPDF_POWERSPECTRUM_H
 
+#include "hmpdf_object.h"
+
 /*! Power spectrum/correlation function output modes. */
 typedef enum
 {
@@ -21,7 +23,7 @@ typedef enum
  */
 int hmpdf_get_Cell(hmpdf_obj *d,
                    int Nell,
-                   double ell[Nell],
+                   double elledges[Nell+1],
                    double Cell[Nell],
                    hmpdf_Cell_mode_e mode);
 
@@ -29,7 +31,7 @@ int hmpdf_get_Cell(hmpdf_obj *d,
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d
  *  \param[in] Nphi     number of phi-values the correlation function is to be output at
- *  \param[in] phi      array of length Nphi (in radians)
+ *  \param[in] phi      array of length Nphi (in arcmin)
  *  \param[out] Cphi    output array, at least Nphi long
  *  \param[in] mode     one of #hmpdf_Cell_mode_e
  *  \return error code

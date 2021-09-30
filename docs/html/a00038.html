@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>hmpdf: hmpdf_powerspectrum.h File Reference</title>
+<title>hmpdf: hmpdf_covariance.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,88 +93,56 @@ $(document).ready(function(){initNavTree('a00038.html',''); initResizable(); });
 
 <div class="header">
   <div class="summary">
-<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">hmpdf_powerspectrum.h File Reference</div>  </div>
+<div class="title">hmpdf_covariance.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
-Enumerations</h2></td></tr>
-<tr class="memitem:aa70f8a433e0c64a93e457ab55016caf3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a> { <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3a83bca372e476e7d2e05b52694b5abb79">hmpdf_onehalo</a>, 
-<a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3a2ffab0e37882c2ee27cc426e76dacf26">hmpdf_twohalo</a>, 
-<a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3a19954c75c085aa484ddd41869f2e2409">hmpdf_total</a>
- }</td></tr>
-<tr class="separator:aa70f8a433e0c64a93e457ab55016caf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
+<div class="textblock"><code>#include &quot;<a class="el" href="a00047.html">hmpdf_object.h</a>&quot;</code><br />
+</div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a2b2b780272724460d05b616068140cf2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00038.html#a2b2b780272724460d05b616068140cf2">hmpdf_get_Cell</a> (<a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nell, double ell[Nell], double Cell[Nell], <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a> mode)</td></tr>
-<tr class="separator:a2b2b780272724460d05b616068140cf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf66b768e57cf7db8551cba341d8d9e2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00038.html#abf66b768e57cf7db8551cba341d8d9e2">hmpdf_get_Cphi</a> (<a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nphi, double phi[Nphi], double Cphi[Nphi], <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a> mode)</td></tr>
-<tr class="separator:abf66b768e57cf7db8551cba341d8d9e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46c10272d00ba6fde5b5d4b0836d846e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00038.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov</a> (<a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int Nbins, double binedges[Nbins+1], double cov[Nbins *Nbins], int noisy)</td></tr>
+<tr class="separator:a46c10272d00ba6fde5b5d4b0836d846e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6a1a1025cee09dede78b935767325c8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00038.html#ac6a1a1025cee09dede78b935767325c8">hmpdf_get_cov_diagnostics</a> (<a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *d, int *Nphi, double **phi, double **phiweights, double **corr_diagn)</td></tr>
+<tr class="separator:ac6a1a1025cee09dede78b935767325c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="aa70f8a433e0c64a93e457ab55016caf3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa70f8a433e0c64a93e457ab55016caf3">&#9670;&nbsp;</a></span>hmpdf_Cell_mode_e</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Power spectrum/correlation function output modes. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aa70f8a433e0c64a93e457ab55016caf3a83bca372e476e7d2e05b52694b5abb79"></a>hmpdf_onehalo&#160;</td><td class="fielddoc"><p>output only the 1-halo term </p>
-</td></tr>
-<tr><td class="fieldname"><a id="aa70f8a433e0c64a93e457ab55016caf3a2ffab0e37882c2ee27cc426e76dacf26"></a>hmpdf_twohalo&#160;</td><td class="fielddoc"><p>output only the 2-halo term </p>
-</td></tr>
-<tr><td class="fieldname"><a id="aa70f8a433e0c64a93e457ab55016caf3a19954c75c085aa484ddd41869f2e2409"></a>hmpdf_total&#160;</td><td class="fielddoc"><p>output sum of both </p>
-</td></tr>
-</table>
-
-</div>
-</div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a2b2b780272724460d05b616068140cf2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2b2b780272724460d05b616068140cf2">&#9670;&nbsp;</a></span>hmpdf_get_Cell()</h2>
+<a id="a46c10272d00ba6fde5b5d4b0836d846e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46c10272d00ba6fde5b5d4b0836d846e">&#9670;&nbsp;</a></span>hmpdf_get_cov()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int hmpdf_get_Cell </td>
+          <td class="memname">int hmpdf_get_cov </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>Nell</em>, </td>
+          <td class="paramname"><em>Nbins</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>ell</em>[Nell], </td>
+          <td class="paramname"><em>binedges</em>[Nbins+1], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>Cell</em>[Nell], </td>
+          <td class="paramname"><em>cov</em>[Nbins *Nbins], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a>&#160;</td>
-          <td class="paramname"><em>mode</em>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>noisy</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -183,56 +151,61 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns the angular power spectrum.</p>
+<p>Returns the covariance matrix of the one-point PDF.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">Nell</td><td>number of ell-values the power spectrum is to be output at </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ell</td><td>array of length Nell </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">Cell</td><td>output array, at least Nell long </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>one of <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Nbins</td><td>number of bins the covariance matrix will be binned into </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">binedges</td><td>monotonically increasing array of length Nbins+1 </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cov</td><td>the binned covariance matrix will be written into the first Nbins*Nbins elements of this output array </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">noisy</td><td>if set to non-zero, the covariance matrix will include Gaussian noise with power spectrum <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a24d0855982f57d8fff2347319ac91774">hmpdf_noise_pwr</a>. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>error code </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>If the covariance matrix has already been computed and since then no <a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> has been called on d, the pre-computed result is used and only the binning is performed. </dd>
+<dd>
+If <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789a977031887a6227418e7b92a7297138be">hmpdf_verbosity</a> is set to a positive value, status updates with estimated remaining time will be given during execution. </dd>
+<dd>
+The covariance matrix is normalized for a hypothetical all-sky survey. You will have to divide by your sky coverage fsky to get the correct one on your specific application. </dd></dl>
 
 </div>
 </div>
-<a id="abf66b768e57cf7db8551cba341d8d9e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf66b768e57cf7db8551cba341d8d9e2">&#9670;&nbsp;</a></span>hmpdf_get_Cphi()</h2>
+<a id="ac6a1a1025cee09dede78b935767325c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6a1a1025cee09dede78b935767325c8">&#9670;&nbsp;</a></span>hmpdf_get_cov_diagnostics()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int hmpdf_get_Cphi </td>
+          <td class="memname">int hmpdf_get_cov_diagnostics </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00032.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="a00047.html#a439998de2d821dfe3a21a91fb2687eac">hmpdf_obj</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">int *&#160;</td>
           <td class="paramname"><em>Nphi</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>phi</em>[Nphi], </td>
+          <td class="paramtype">double **&#160;</td>
+          <td class="paramname"><em>phi</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>Cphi</em>[Nphi], </td>
+          <td class="paramtype">double **&#160;</td>
+          <td class="paramname"><em>phiweights</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a>&#160;</td>
-          <td class="paramname"><em>mode</em>&#160;</td>
+          <td class="paramtype">double **&#160;</td>
+          <td class="paramname"><em>corr_diagn</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -241,18 +214,26 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns the angular correlation function.</p>
+<p>Returns diagnostic outputs for the covariance matrix computation. The main use of this function is to identify numerical instability at small pixel separations.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00029.html#a50e240808803a05cbcc912177ebb7087">hmpdf_init()</a> must have been called on d </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">Nphi</td><td>number of phi-values the correlation function is to be output at </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">phi</td><td>array of length Nphi (in radians) </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">Cphi</td><td>output array, at least Nphi long </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>one of <a class="el" href="a00038.html#aa70f8a433e0c64a93e457ab55016caf3">hmpdf_Cell_mode_e</a> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">d</td><td><a class="el" href="a00041.html#a54f161978355cfb09dde0b4a4b3e7599">hmpdf_init()</a> must have been called on d </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">Nphi</td><td>the number of pixel separations will be written into the return value </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">phi</td><td>pointer will be set to an array of length Nphi, containing the pixel separations used internally (in radians) </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">phiweights</td><td>pointer will be set to an array of length Nphi, containing the weights assigned to each pixel separation in the summation. This can occasionally be used to tune the <a class="el" href="a00035.html#a821ed18a82a65541a1feaa9e19fe3789ab6559e6c86ca81189c519dc64408cf7e">hmpdf_pixelexact_max</a> option. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">corr_diagn</td><td>pointer will be set to an array of length Nphi, containing the correlation function at the pixel separation sample points. Noisy behaviour at small phi is a sign of numerical instability. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>error code </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>error code</dd></dl>
+<dl class="section remark"><dt>Remarks</dt><dd>the values in the phi-array are not ordered </dd>
+<dd>
+you can pass NULL for any of the arguments (apart from the first of course), if you are not interested in that specific output </dd>
+<dd>
+if the covariance matrix has not already been computed [<a class="el" href="a00038.html#a46c10272d00ba6fde5b5d4b0836d846e">hmpdf_get_cov()</a> has not been called before], this function will do it </dd>
+<dd>
+while the code does perform the memory allocation for phi, phiweights, and corr_diagn (so that the user does not have to figure out Nphi beforehand), the user is responsible for freeing these arrays, i.e. to call <div class="fragment"><div class="line">free(*phi); free(*phiweights); free(*corr_diagn);</div>
+</div><!-- fragment --> after use. </dd></dl>
 
 </div>
 </div>
@@ -261,7 +242,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00038.html">hmpdf_powerspectrum.h</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="a00038.html">hmpdf_covariance.h</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.17 </li>

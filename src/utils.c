@@ -4,15 +4,17 @@
 #include <stdarg.h>
 #include <complex.h>
 #include <math.h>
+#ifdef GNUPLOT
+#include <termios.h>
+#include <unistd.h>
+#endif
 
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #else
 #pragma message "Warning: compiling without OpenMP. Covariance matrix will be slow."
 #endif
 
-#include <termios.h>
-#include <unistd.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_interp2d.h>
@@ -20,11 +22,15 @@
 
 #include "utils.h"
 
-int
-hmpdf_status_update(int *status, int result)
+void
+new_gsl_error_handler(const char *reason, const char *file,
+                      int line, int UNUSED(gsl_errno))
 {//{{{
-    *status = result;
-    return result;
+    #ifdef DEBUG
+    fprintf(stderr, "***GSL error: %s in %s line %d\n", reason, file, line);
+    fflush(stderr);
+    #endif
+    return;
 }//}}}
 
 int
@@ -42,22 +48,45 @@ ispwr2(int N, int *k)
     return ((temp == N) ? 1 : 0);
 }//}}}
 
-void
+static int 
+linlogspace_sanity_checks(int N, double xmin, double xmax)
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(N<=0, "N must be strictly positive.");
+    HMPDFCHECK(xmin>=xmax, "xmin must be less than xmax.");
+
+    ENDFCT
+}//}}}
+
+int
 linspace(int N, double xmin, double xmax, double *x)
 {//{{{
+    STARTFCT
+    
+    SAFEHMPDF(linlogspace_sanity_checks(N, xmin, xmax));
+
     for (int ii=0; ii<N; ii++)
     {
         x[ii] = xmin + (double)(ii)*(xmax-xmin)/(double)(N-1);
     }
+
+    ENDFCT
 }//}}}
 
-void
+int
 logspace(int N, double xmin, double xmax, double *x)
 {//{{{
+    STARTFCT
+
+    SAFEHMPDF(linlogspace_sanity_checks(N, xmin, xmax));
+
     for (int ii=0; ii<N; ii++)
     {
         x[ii] = exp(log(xmin) + (double)(ii)*log(xmax/xmin)/(double)(N-1));
     }
+
+    ENDFCT
 }//}}}
 
 void
@@ -82,30 +111,17 @@ reverse(int N, double *in, double *out)
 }//}}}
 
 int
-not_monotonic(int N, double *x, int *problems)
-// checks if x is monotonically increasing
-// (this is what we require for the FFTs to work)
-// if problems != NULL, writes problematic indices into the array
-// if problems == NULL, returns immediately if a non-monotonic
-//     value is found (useful to check user input binedges)
+not_monotonic(int N, double *x, int sgn)
+// checks if x is monotonically increasing (sgn>0) / decreasing (sgn<0)
 {//{{{
-    int out = 0;
     for (int ii=1; ii<N; ii++)
     {
-        if (x[ii] <= x[ii-1])
+        if ((sgn > 0) ? (x[ii] <= x[ii-1]) : (x[ii] >= x[ii-1]))
         {
-            out += 1;
-            if (problems != NULL)
-            {
-                problems[out-1] = ii;
-            }
-            else
-            {
-                break;
-            }
+            return 1;
         }
     }
-    return out;
+    return 0;
 }//}}}
 
 int
@@ -124,37 +140,24 @@ all_zero(int N, double *x, double threshold)
 }//}}}
 
 void
-zero_real(int N, double *x)
+zero_real(long N, double *x)
 {//{{{
-    for (int ii=0; ii<N; ii++)
+    for (long ii=0; ii<N; ii++)
     {
         x[ii] = 0.0;
     }
 }//}}}
 
 void
-zero_comp(int N, complex *x)
+zero_comp(long N, double complex *x)
 {//{{{
-    for (int ii=0; ii<N; ii++)
+    for (long ii=0; ii<N; ii++)
     {
         x[ii] = 0.0;
     }
 }//}}}
 
-int
-wait(void)
-{//{{{
-    int ch;
-    struct termios oldt, newt;
-    tcgetattr ( STDIN_FILENO, &oldt );
-    newt = oldt;
-    newt.c_lflag &= ~( ICANON | ECHO );
-    tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
-    ch = getchar();
-    tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
-    return ch;
-}//}}}
-
+#ifdef GNUPLOT
 struct
 gnuplot_s
 {//{{{
@@ -175,7 +178,7 @@ plot(gnuplot *gp, int N, double *x, double *y)
     }
     for (int ii=0; ii<N; ii++)
     {
-        fprintf(gp->gp, "%.8e %.8e\n", x[ii], y[ii]);
+        fprintf(gp->gp, "%.16e %.16e\n", x[ii], y[ii]);
     }
     fprintf(gp->gp, "e\n");
     gp->Nlines += 1;
@@ -183,7 +186,7 @@ plot(gnuplot *gp, int N, double *x, double *y)
 }//}}}
 
 gnuplot *
-plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
+plot_comp(gnuplot *gp, int N, double *x, double complex *y, int mode)
 {//{{{
     if (gp == NULL)
     {
@@ -195,11 +198,25 @@ plot_comp(gnuplot *gp, int N, double *x, complex *y, int mode)
     }
     for (int ii=0; ii<N; ii++)
     {
-        fprintf(gp->gp, "%.8e %.8e\n", x[ii], (mode==0) ? creal(y[ii]) : cimag(y[ii]));
+        fprintf(gp->gp, "%.16e %.16e\n", x[ii], (mode==0) ? creal(y[ii]) : cimag(y[ii]));
     }
     fprintf(gp->gp, "e\n");
     gp->Nlines += 1;
     return gp;
+}//}}}
+
+int
+wait_for_input(void)
+{//{{{
+    int ch;
+    struct termios oldt, newt;
+    tcgetattr ( STDIN_FILENO, &oldt );
+    newt = oldt;
+    newt.c_lflag &= ~( ICANON | ECHO );
+    tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
+    ch = getchar();
+    tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
+    return ch;
 }//}}}
 
 void
@@ -210,10 +227,11 @@ show(gnuplot *gp)
         fprintf(gp->gp, "e\n");
     }
     fflush(gp->gp);
-    wait();
+    wait_for_input();
     pclose(gp->gp);
     free(gp);
 }//}}}
+#endif // GNUPLOT
 
 static int
 lcounttxt(FILE *f)
@@ -405,16 +423,6 @@ isfile(char *fname)
     }
 }//}}}
 
-int
-this_core(void)
-{//{{{
-    #ifdef _OPENMP
-    return omp_get_thread_num();
-    #else
-    return 0;
-    #endif
-}//}}}
-
 struct
 interp1d_s
 {//{{{
@@ -429,43 +437,40 @@ interp1d_s
     double yhi;
 };//}}}
 
+const gsl_interp_type *
+interp1d_type(interp_mode m)
+{//{{{
+    switch (m)
+    {
+        case interp_linear           : return gsl_interp_linear;
+        case interp_polynomial       : return gsl_interp_polynomial;
+        case interp_cspline          : return gsl_interp_cspline;
+        case interp_cspline_periodic : return gsl_interp_cspline_periodic;
+        case interp_akima            : return gsl_interp_akima;
+        case interp_akima_periodic   : return gsl_interp_akima_periodic;
+        case interp_steffen          : return gsl_interp_steffen;
+        default                      : return NULL;
+    }
+}//}}}
+
 int
 new_interp1d(int N, double *x, double *y, double ylo, double yhi,
              interp_mode m, gsl_interp_accel *a, interp1d **out)
 {//{{{
     STARTFCT
 
-    const gsl_interp_type *T;
-    switch (m)
-    {
-        case interp_linear           : T = gsl_interp_linear;
-                                       break;
-        case interp_polynomial       : T = gsl_interp_polynomial;
-                                       break;
-        case interp_cspline          : T = gsl_interp_cspline;
-                                       break;
-        case interp_cspline_periodic : T = gsl_interp_cspline_periodic;
-                                       break;
-        case interp_akima            : T = gsl_interp_akima;
-                                       break;
-        case interp_akima_periodic   : T = gsl_interp_akima_periodic;
-                                       break;
-        case interp_steffen          : T = gsl_interp_steffen;
-                                       break;
-        default                      : T = NULL;
-                                       HMPDFERR("Unkown interpolation type.")
-    }
-    SAFEALLOC(, *out, malloc(sizeof(interp1d)))
+    const gsl_interp_type *T = interp1d_type(m);
+    SAFEALLOC(*out, malloc(sizeof(interp1d)));
     (*out)->N = N;
     (*out)->x = x;
     (*out)->y = y;
     (*out)->ylo = ylo;
     (*out)->yhi = yhi;
-    SAFEALLOC(, (*out)->i, gsl_interp_alloc(T, (*out)->N))
+    SAFEALLOC((*out)->i, gsl_interp_alloc(T, (*out)->N));
     if (a == NULL)
     {
         (*out)->alloced_accel = 1;
-        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
+        SAFEALLOC((*out)->a, gsl_interp_accel_alloc());
     }
     else
     {
@@ -473,12 +478,7 @@ new_interp1d(int N, double *x, double *y, double ylo, double yhi,
         (*out)->a = a;
     }
     
-    SAFEGSL_NORETURN(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N))
-
-    if (hmpdf_status)
-    {
-        delete_interp1d(*out);
-    }
+    SAFEGSL(gsl_interp_init((*out)->i, (*out)->x, (*out)->y, (*out)->N));
 
     ENDFCT
 }//}}}
@@ -510,7 +510,32 @@ interp1d_eval(interp1d *interp, double x, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
-                                  interp->a, out))
+                                  interp->a, out));
+    }
+
+    ENDFCT
+}//}}}
+
+int
+interp1d_eval1(interp1d *interp, double x, int *inrange, double *out)
+{//{{{
+    STARTFCT
+
+    if (x < interp->x[0])
+    {
+        *inrange = 0;
+        *out = interp->ylo;
+    }
+    else if (x > interp->x[interp->N-1])
+    {
+        *inrange = 0;
+        *out = interp->yhi;
+    }
+    else
+    {
+        *inrange = 1;
+        SAFEGSL(gsl_interp_eval_e(interp->i, interp->x, interp->y, x,
+                                  interp->a, out));
     }
 
     ENDFCT
@@ -532,7 +557,32 @@ interp1d_eval_deriv(interp1d *interp, double x, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
-                                        interp->a, out))
+                                        interp->a, out));
+    }
+
+    ENDFCT
+}//}}}
+
+int
+interp1d_eval_deriv1(interp1d *interp, double x, int *inrange, double *out)
+{//{{{
+    STARTFCT
+
+    if (x < interp->x[0])
+    {
+        *inrange = 0;
+        *out = 0.0;
+    }
+    else if (x > interp->x[interp->N-1])
+    {
+        *inrange = 0;
+        *out = 0.0;
+    }
+    else
+    {
+        *inrange = 1;
+        SAFEGSL(gsl_interp_eval_deriv_e(interp->i, interp->x, interp->y, x,
+                                        interp->a, out));
     }
 
     ENDFCT
@@ -552,7 +602,7 @@ interp1d_eval_integ(interp1d *interp, double a, double b, double *out)
     else
     {
         SAFEGSL(gsl_interp_eval_integ_e(interp->i, interp->x, interp->y,
-                                        _a, _b, interp->a, out))
+                                        _a, _b, interp->a, out));
         *out += (_a - a) * interp->ylo + (b - _b) * interp->yhi;
     }
 
@@ -588,31 +638,27 @@ new_interp2d(int N, double *x, double *z,
         case interp2d_bicubic  : T = gsl_interp2d_bicubic;
                                  break;
         default                : T = NULL;
-                                 HMPDFERR("Unkown interpolation type.")
+                                 HMPDFERR("Unkown interpolation type.");
     }
-    SAFEALLOC(, *out, malloc(sizeof(interp2d)))
+    SAFEALLOC(*out, malloc(sizeof(interp2d)));
     (*out)->N = N;
     (*out)->x = x;
     (*out)->z = z;
     (*out)->zlo = zlo;
     (*out)->zhi = zhi;
-    SAFEALLOC(, (*out)->i, gsl_interp2d_alloc(T, (*out)->N, (*out)->N))
+    SAFEALLOC((*out)->i, gsl_interp2d_alloc(T, (*out)->N, (*out)->N));
     if (a == NULL)
     {
         (*out)->alloced_accel = 1;
-        SAFEALLOC(, (*out)->a, gsl_interp_accel_alloc())
+        SAFEALLOC((*out)->a, gsl_interp_accel_alloc());
     }
     else
     {
         (*out)->alloced_accel = 0;
         (*out)->a = a;
     }
-    SAFEGSL_NORETURN(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
-                                       (*out)->z, (*out)->N, (*out)->N))
-    if (hmpdf_status)
-    {
-        delete_interp2d(*out);
-    }
+    SAFEGSL(gsl_interp2d_init((*out)->i, (*out)->x, (*out)->x,
+                              (*out)->z, (*out)->N, (*out)->N));
 
     ENDFCT
 }//}}}
@@ -644,7 +690,7 @@ interp2d_eval(interp2d *interp, double x, double y, double *out)
     else
     {
         SAFEGSL(gsl_interp2d_eval_e(interp->i, interp->x, interp->x, interp->z,
-                                    x, y, interp->a, interp->a, out))
+                                    x, y, interp->a, interp->a, out));
     }
 
     ENDFCT
@@ -661,10 +707,10 @@ bin_1d(int N, double *x, double *y,
     STARTFCT
 
     interp1d *interp;
-    SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp))
+    SAFEHMPDF(new_interp1d(N, x, y, 0.0, 0.0, m, NULL, &interp));
     for (int ii=0; ii<Nbins; ii++)
     {
-        SAFEHMPDF(interp1d_eval_integ(interp, binedges[ii], binedges[ii+1], out+ii))
+        SAFEHMPDF(interp1d_eval_integ(interp, binedges[ii], binedges[ii+1], out+ii));
         out[ii] /= (x[1] - x[0]);
     }
     delete_interp1d(interp);
@@ -679,9 +725,9 @@ bin_2d(int N, double *x, double *z, int Nsample,
     STARTFCT
 
     interp2d *interp;
-    SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp))
-    SAFEALLOC(gsl_integration_glfixed_table *, t,
-              gsl_integration_glfixed_table_alloc(Nsample))
+    SAFEHMPDF(new_interp2d(N, x, z, 0.0, 0.0, m, NULL, &interp));
+    gsl_integration_glfixed_table *t;
+    SAFEALLOC(t, gsl_integration_glfixed_table_alloc(Nsample));
 
     for (int ii=0; ii<Nbins; ii++)
     {
@@ -700,9 +746,9 @@ bin_2d(int N, double *x, double *z, int Nsample,
                 {
                     double node_j, weight_j, temp;
                     SAFEGSL(gsl_integration_glfixed_point(binedges[jj], binedges[jj+1],
-                                                          ll, &node_j, &weight_j, t))
+                                                          ll, &node_j, &weight_j, t));
 
-                    SAFEHMPDF(interp2d_eval(interp, node_i, node_j, &temp))
+                    SAFEHMPDF(interp2d_eval(interp, node_i, node_j, &temp));
                     *res += weight_i * weight_j * temp
                             / gsl_pow_2(x[1] - x[0]);
                 }

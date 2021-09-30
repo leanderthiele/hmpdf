@@ -1,14 +1,12 @@
-import sys
 import numpy as np
 
-sys.path.append('../')
 from hmpdf import HMPDF
 
 ## [example_kappa_onepoint]
 def example_kappa_onepoint() :
     binedges = np.linspace(0.0, 0.3, num=101)
     with HMPDF() as d :
-        d.init('example.ini', 'kappa', 1.0, verbosity=5, N_z=10, N_M=10, N_theta=25)
+        d.init('example.ini', 'kappa', 1.0)
         op = d.get_op(binedges)
     # do something with the one-point PDF ...
 ## [example_kappa_onepoint]

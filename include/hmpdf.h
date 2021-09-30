@@ -20,8 +20,16 @@
  *      + thermal Sunyaev-Zel'dovich effect (Compton-y)
  *      + weak lensing convergence
  *
- *  It code is interfaced both through C header files
+ *  The code is interfaced both through C header files
  *  as well as through a convenient python wrapper.
+ *
+ *  Applications of the code can be found in
+ *      + <a href="https://ui.adsabs.harvard.edu/abs/2019PhRvD..99j3511T">Thiele, Hill, Smith 2019</a>
+ *        (for the tSZ field)
+ *      + <a href="https://ui.adsabs.harvard.edu/abs/2020arXiv200906547T">Thiele, Hill, Smith 2020</a>
+ *        (for the weak lensing convergence field)
+ *  .
+ *  which we also request you cite if you use the code.
  *
  *  \section build Building
  *
@@ -39,12 +47,16 @@
  *      + add FFTW3/GSL locations to LINKER if those are non-standard
  *      + remove the OpenMP flag if you do not wish parallel execution
  *
- *  If you intend to use the python wrapper, you need to adapt the variable PATHTOHMPDF
- *  in hmpdf.py.
+ *  Then you can simply type `make`.
  *
- *  It may also be convenient to put libhmpdf.so into one of the default locations
- *  searched by the linker
- *  (in which case you can simply delete the PATHTOHMPDF line).
+ *  Afterwards, if you intend to use the python wrapper, type `make python`.
+ *  This will run pip.
+ *  It will also hardcode the location of libhmpdf.so into the python package,
+ *  which has the advantage that you can recompile the C code without having to run
+ *  pip again, and the disadvantage that you need to keep libhmpdf.so where it is.
+ *
+ *  It may also be convenient to copy libhmpdf.so into one of the default locations
+ *  searched by the linker.
  *
  *  \section use Usage
  *
@@ -57,7 +69,8 @@
  *         this will also compute the data needed for all outputs.
  *         See #hmpdf_configs_e for optional inputs.
  *      3. get your output [hmpdf_get_op(), hmpdf_get_tp(), hmpdf_get_cov(),
- *                          hmpdf_get_Cell(), hmpdf_get_Cphi()].
+ *                          hmpdf_get_Cell(), hmpdf_get_Cphi(),
+ *                          hmpdf_get_map(), hmpdf_get_map_op()].
  *      4. go to (3.) if you require any other outputs;
  *         go to (2.) if you want to re-run the code with different options.
  *      5. free the memory associated with the #hmpdf_obj with hmpdf_delete().
@@ -73,41 +86,45 @@
  *      + pixelization: #hmpdf_pixel_side
  *      + ell space filters: #hmpdf_tophat_radius, #hmpdf_gaussian_fwhm,
  *                           #hmpdf_custom_ell_filter (and #hmpdf_custom_ell_filter_params)
- *      + pixel-wise Gaussian noise: #hmpdf_noise
+ *      + Gaussian noise: #hmpdf_noise_pwr (and #hmpdf_noise_pwr_params)
  *      + multithreading: #hmpdf_N_threads
  *
  *  See the documentation of #hmpdf_configs_e for all options.
  *
  *  \section time Runtime
  *
- *  The following are empirically found with standard settings (and only approximate!).
- *  All functions scale as #hmpdf_N_M x #hmpdf_N_z, this is omitted in the following:
- *      + hmpdf_init(): ~3 seconds on a single thread.
+ *  The following were found with default settings on a laptop.
+ *  These functions scale as #hmpdf_N_M x #hmpdf_N_z, this is omitted in the following:
+ *      + hmpdf_init(): a few seconds (depends strongly on the configuration)
  *                      \par
  *                      scales as #hmpdf_N_theta to #hmpdf_N_theta^2.
  *                      Different if CLASS runtime starts to dominate.
  *                      #hmpdf_tsz takes longer than #hmpdf_kappa.
- *      + hmpdf_get_op(): fast if #hmpdf_monotonize is set to non-zero (default),
- *                        otherwise ~1 min (?)
- *                        \par
- *                        scales as #hmpdf_N_signal
- *      + hmpdf_get_tp(): ~1 min on a single thread.
+ *      + hmpdf_get_tp(): ~10 seconds on a single thread.
  *                        \par
  *                        scales as #hmpdf_N_signal^2.
- *      + hmpdf_get_cov(): ~20 min on 40 threads.
+ *      + hmpdf_get_cov(): ~20 minutes on 8 threads.
  *                         \par
  *                         scales as #hmpdf_N_signal^2 x #hmpdf_N_phi.
  *
  *  .
  *
+ *  The simplified simulations (maps) scale as #hmpdf_map_fsky / #hmpdf_pixel_side^2.
+ *
  *  Other functions are fast in comparison to hmpdf_init().
- *  hmpdf_init() and hmpdf_get_cov() are parallelized in critical parts,
+ *  hmpdf_init(), hmpdf_get_cov(), hmpdf_get_map(), hmpdf_get_map_op()
+ *  are parallelized in critical parts,
  *  while hmpdf_get_tp() does not get faster if #hmpdf_N_threads is increased.
+ *  The simplified simulations can easily become memory throughput-limited,
+ *  in which case speed does not scale well with #hmpdf_N_threads.
  *
  *  \section errrors Error handling
  *
  *  All functions [except hmpdf_new()] return a non-zero int if an error occured.
  *  A traceback will be printed to stderr.
+ *  You can remove the definition of the macro DEBUG in the Makefile,
+ *  in which case no error handling at all will be happening
+ *  (could give a marginal speed-up in some cases, but not recommended).
  *
  *  \section threads Thread safety
  *
@@ -133,8 +150,12 @@
  *  typedef #hmpdf_ell_filter_f:
  *  \snippet example.c example_ell_filter
  *
- *  We can also do this in python:
+ *  We can also do this in python (note, however, that due to the overhead in calling the
+ *  python lambda this will be slower than in C):
  *  \snippet example.py example_ell_filter_use
+ *
+ *  For a more involved example, in examples/WL_PDF_forecast/ you can find all ingredients
+ *  to reproduce the Fisher forecast from the WL convergence PDF.
  */
 
 #include "hmpdf_object.h"
@@ -144,5 +165,6 @@
 #include "hmpdf_twopoint.h"
 #include "hmpdf_covariance.h"
 #include "hmpdf_powerspectrum.h"
+#include "hmpdf_maps.h"
 
 #endif

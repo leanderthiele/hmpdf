@@ -2,6 +2,8 @@
 #ifndef HMPDF_COVARIANCE_H
 #define HMPDF_COVARIANCE_H
 
+#include "hmpdf_object.h"
+
 /*! Returns the covariance matrix of the one-point PDF.
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d
@@ -10,13 +12,16 @@
  *  \param[out] cov     the binned covariance matrix will be written into the first Nbins*Nbins elements of 
  *                      this output array
  *  \param[in] noisy    if set to non-zero, the covariance matrix will include Gaussian noise
- *                      of standard deviation #hmpdf_noise
+ *                      with power spectrum #hmpdf_noise_pwr.
  *  \return error code
  *
  *  \remark If the covariance matrix has already been computed and since then no hmpdf_init()
  *          has been called on d, the pre-computed result is used and only the binning is performed.
  *  \remark If #hmpdf_verbosity is set to a positive value, status updates with estimated remaining
  *          time will be given during execution.
+ *  \remark The covariance matrix is normalized for a hypothetical all-sky survey.
+ *          You will have to divide by your sky coverage fsky
+ *          to get the correct one on your specific application.
  */
 int hmpdf_get_cov(hmpdf_obj *d,
                   int Nbins,

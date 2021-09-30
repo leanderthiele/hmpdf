@@ -30,7 +30,7 @@ reset_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\treset_halo_model\n")
+    HMPDFPRINT(2, "\treset_halo_model\n");
 
     if (d->h->hmf != NULL)
     {
@@ -91,7 +91,7 @@ density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef, double *out)
         case hmpdf_mdef_m : *out = 200.0 * d->c->rho_m[z_index];
                             break;
         default           : *out = 0.0; // to avoid maybe-uninitialized
-                            HMPDFERR("Unknown mass definition.")
+                            HMPDFERR("Unknown mass definition.");
     }
 
     ENDFCT
@@ -103,7 +103,7 @@ RofM(hmpdf_obj *d, int z_index, int M_index, double *out)
     STARTFCT
 
     double dt;
-    SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt))
+    SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt));
     *out = cbrt(3.0*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
 
     ENDFCT
@@ -121,8 +121,8 @@ MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef, double *out)
     ENDFCT
 }//}}}
 
-static double
-_c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
+static inline double
+c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
 {//{{{
     // convert to Msun/h
     M *= d->c->h;
@@ -130,12 +130,12 @@ _c_Duffy08(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
            * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
            * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
 }//}}}
-static double
+static inline double
 c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
 {//{{{
-    return _c_Duffy08(d, d->n->zgrid[z_index],
-                      d->n->Mgrid[M_index],
-                      MDEF_GLOBAL);
+    return c_Duffy08_1(d, d->n->zgrid[z_index],
+                       d->n->Mgrid[M_index],
+                       MDEF_GLOBAL);
 }//}}}
 
 int
@@ -146,7 +146,7 @@ NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs
     STARTFCT
 
     double c = c_Duffy08(d, z_index, M_index);
-    SAFEHMPDF(RofM(d, z_index, M_index, rs))
+    SAFEHMPDF(RofM(d, z_index, M_index, rs));
     *rs /= c;
     *rhos = d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
             / (log1p(c)-c/(1.0+c));
@@ -159,10 +159,12 @@ create_c_of_y(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_c_of_y\n")
+    HMPDFPRINT(2, "\tcreate_c_of_y\n");
 
-    SAFEALLOC(double *, logc_grid, malloc(CINTERP_NC * sizeof(double)))
-    SAFEALLOC(double *, logy_grid, malloc(CINTERP_NC * sizeof(double)))
+    double *logc_grid;
+    double *logy_grid;
+    SAFEALLOC(logc_grid, malloc(CINTERP_NC * sizeof(double)));
+    SAFEALLOC(logy_grid, malloc(CINTERP_NC * sizeof(double)));
     for (int ii=0; ii<CINTERP_NC; ii++)
     {
         logc_grid[ii] = log(CINTERP_CMAX)
@@ -170,13 +172,14 @@ create_c_of_y(hmpdf_obj *d)
         double _c = exp(logc_grid[ii]);
         logy_grid[ii] = log(3.0) - 3.0*logc_grid[ii] + log(log1p(_c) - _c/(1.0+_c));
     }
-    SAFEALLOC(, d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC))
-    SAFEALLOC(, d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)))
+    SAFEALLOC(d->h->c_interp, gsl_spline_alloc(gsl_interp_cspline, CINTERP_NC));
+    SAFEALLOC(d->h->c_accel,  malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->h->c_accel, d->Ncores);
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEALLOC(, d->h->c_accel[ii], gsl_interp_accel_alloc())
+        SAFEALLOC(d->h->c_accel[ii], gsl_interp_accel_alloc());
     }
-    SAFEGSL(gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC))
+    SAFEGSL(gsl_spline_init(d->h->c_interp, logy_grid, logc_grid, CINTERP_NC));
     free(logc_grid);
     free(logy_grid);
 
@@ -191,7 +194,7 @@ c_of_y(hmpdf_obj *d, double y, double *out)
     STARTFCT
 
     SAFEGSL(gsl_spline_eval_e(d->h->c_interp, log(y),
-                              d->h->c_accel[this_core()], out))
+                              d->h->c_accel[THIS_THREAD], out));
     *out = exp(*out);
 
     ENDFCT
@@ -206,18 +209,18 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     STARTFCT
 
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs))
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
     double dt;
-    SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt))
-    SAFEHMPDF(c_of_y(d, dt/rhos, c))
+    SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt));
+    SAFEHMPDF(c_of_y(d, dt/rhos, c));
     *R = rs * *c;
-    SAFEHMPDF(MofR(d, z_index, *R, mdef_out, M))
+    SAFEHMPDF(MofR(d, z_index, *R, mdef_out, M));
 
     ENDFCT
 }//}}}
 
-static double
-_fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
+static inline double
+fnu_Tinker10_primitive(hmpdf_obj *d, int n, double z)
 {//{{{
     return d->h->Tinker10_params[n*2]
            *pow(1.0+z, d->h->Tinker10_params[n*2 + 1]);
@@ -227,11 +230,11 @@ static double
 fnu_Tinker10(hmpdf_obj *d, double nu, double z)
 {//{{{
     z = (z<3.0) ? z : 3.0;
-    double beta  = _fnu_Tinker10_primitive(d, 0, z);
-    double phi   = _fnu_Tinker10_primitive(d, 1, z);
-    double eta   = _fnu_Tinker10_primitive(d, 2, z);
-    double gamma = _fnu_Tinker10_primitive(d, 3, z);
-    double alpha = _fnu_Tinker10_primitive(d, 4, z);
+    double beta  = fnu_Tinker10_primitive(d, 0, z);
+    double phi   = fnu_Tinker10_primitive(d, 1, z);
+    double eta   = fnu_Tinker10_primitive(d, 2, z);
+    double gamma = fnu_Tinker10_primitive(d, 3, z);
+    double alpha = fnu_Tinker10_primitive(d, 4, z);
     return nu * alpha*(1.0+pow(beta*nu, -2.0*phi))
            * pow(nu, 2.0*eta) * exp(-0.5*gamma*gsl_pow_2(nu));
 }//}}}
@@ -250,7 +253,7 @@ bnu_Tinker10(double nu)
 }//}}}
 
 static int
-_dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
+dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
 {//{{{
     STARTFCT
 
@@ -259,8 +262,10 @@ _dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
     double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
     double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
+
     *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
            / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+
     *bias = bnu_Tinker10(nu);
 
     ENDFCT
@@ -271,19 +276,21 @@ create_dndlogM(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_dndlogM\n")
+    HMPDFPRINT(2, "\tcreate_dndlogM\n");
 
-    SAFEALLOC(, d->h->hmf,  malloc(d->n->Nz * sizeof(double *)))
-    SAFEALLOC(, d->h->bias, malloc(d->n->Nz * sizeof(double *)))
+    SAFEALLOC(d->h->hmf,  malloc(d->n->Nz * sizeof(double *)));
+    SETARRNULL(d->h->hmf, d->n->Nz);
+    SAFEALLOC(d->h->bias, malloc(d->n->Nz * sizeof(double *)));
+    SETARRNULL(d->h->hmf, d->n->Nz);
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)))
-        SAFEALLOC(, d->h->bias[z_index], malloc(d->n->NM * sizeof(double)))
+        SAFEALLOC(d->h->hmf[z_index],  malloc(d->n->NM * sizeof(double)));
+        SAFEALLOC(d->h->bias[z_index], malloc(d->n->NM * sizeof(double)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            SAFEHMPDF(_dndlogM(d, z_index, M_index,
-                               d->h->hmf[z_index]+M_index,
-                               d->h->bias[z_index]+M_index))
+            SAFEHMPDF(dndlogM(d, z_index, M_index,
+                              d->h->hmf[z_index]+M_index,
+                              d->h->bias[z_index]+M_index));
         }
     }
 
@@ -295,12 +302,12 @@ init_halo_model(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->h->inited_halo) { return hmpdf_status; }
+    if (d->h->inited_halo) { return 0; }
 
-    HMPDFPRINT(1, "init_halo_model\n")
+    HMPDFPRINT(1, "init_halo_model\n");
 
-    SAFEHMPDF(create_c_of_y(d))
-    SAFEHMPDF(create_dndlogM(d))
+    SAFEHMPDF(create_c_of_y(d));
+    SAFEHMPDF(create_dndlogM(d));
     d->h->inited_halo = 1;
 
     ENDFCT

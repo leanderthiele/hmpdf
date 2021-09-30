@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #endif
 
 #include <gsl/gsl_math.h>
@@ -34,15 +34,16 @@ null_profiles(hmpdf_obj *d)
     d->p->decr_tgrid = NULL;
     d->p->incr_tgrid = NULL;
     d->p->decr_tsqgrid = NULL;
-    d->p->prtilde_thetagrid = NULL;
+    d->p->incr_tsqgrid = NULL;
     d->p->reci_tgrid = NULL;
-    d->p->created_monotonicity = 0;
-    d->p->is_not_monotonic = NULL;
+    d->p->created_segments = 0;
+    d->p->segment_boundaries = NULL;
     d->p->dht_ws = NULL;
     d->p->profiles = NULL;
     d->p->created_conj_profiles = 0;
     d->p->conj_profiles = NULL;
     d->p->created_filtered_profiles = 0;
+    d->p->filtered_profiles = NULL;
     d->p->incr_tgrid_accel = NULL;
     d->p->reci_tgrid_accel = NULL;
 
@@ -54,14 +55,24 @@ reset_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
     
-    HMPDFPRINT(2, "\treset_profiles\n")
+    HMPDFPRINT(2, "\treset_profiles\n");
 
     if (d->p->decr_tgrid != NULL) { free(d->p->decr_tgrid); }
     if (d->p->incr_tgrid != NULL) { free(d->p->incr_tgrid); }
     if (d->p->decr_tsqgrid != NULL) { free(d->p->decr_tsqgrid); }
+    if (d->p->incr_tsqgrid != NULL) { free(d->p->incr_tsqgrid); }
     if (d->p->reci_tgrid != NULL) { free(d->p->reci_tgrid); }
-    if (d->p->prtilde_thetagrid != NULL) { free(d->p->prtilde_thetagrid); }
-    if (d->p->incr_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->incr_tgrid_accel); }
+    if (d->p->incr_tgrid_accel != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            if (d->p->incr_tgrid_accel[ii] != NULL)
+            {
+                gsl_interp_accel_free(d->p->incr_tgrid_accel[ii]);
+            }
+        }
+        free(d->p->incr_tgrid_accel);
+    }
     if (d->p->reci_tgrid_accel != NULL) { gsl_interp_accel_free(d->p->reci_tgrid_accel); }
     if (d->p->profiles != NULL)
     {
@@ -99,16 +110,41 @@ reset_profiles(hmpdf_obj *d)
         }
         free(d->p->conj_profiles);
     }
-    if (d->p->is_not_monotonic != NULL)
+    if (d->p->filtered_profiles != NULL)
     {
         for (int z_index=0; z_index<d->n->Nz; z_index++)
         {
-            if (d->p->is_not_monotonic[z_index] != NULL)
+            if (d->p->filtered_profiles[z_index] != NULL)
             {
-                free(d->p->is_not_monotonic[z_index]);
+                for (int M_index=0; M_index<d->n->NM; M_index++)
+                {
+                    if (d->p->filtered_profiles[z_index][M_index] != NULL)
+                    {
+                        free(d->p->filtered_profiles[z_index][M_index]);
+                    }
+                }
+                free(d->p->filtered_profiles[z_index]);
             }
         }
-        free(d->p->is_not_monotonic);
+        free(d->p->filtered_profiles);
+    }
+    if (d->p->segment_boundaries != NULL)
+    {
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+        {
+            if (d->p->segment_boundaries[z_index] != NULL)
+            {
+                for (int M_index=0; M_index<d->n->NM; M_index++)
+                {
+                    if (d->p->segment_boundaries[z_index][M_index] != NULL)
+                    {
+                        free(d->p->segment_boundaries[z_index][M_index]);
+                    }
+                }
+                free(d->p->segment_boundaries[z_index]);
+            }
+        }
+        free(d->p->segment_boundaries);
     }
     if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
 
@@ -120,23 +156,20 @@ create_angle_grids(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_angle_grids\n")
-    
-    d->p->prtilde_Ntheta = PRTILDE_INTEGR_NTHETA;
+    HMPDFPRINT(2, "\tcreate_angle_grids\n");
 
-    SAFEALLOC(, d->p->decr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)))
-    SAFEALLOC(, d->p->incr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)))
-    SAFEALLOC(, d->p->decr_tsqgrid, malloc((d->p->Ntheta+1) * sizeof(double)))
-    SAFEALLOC(, d->p->reci_tgrid,   malloc(d->p->Ntheta     * sizeof(double)))
-    // TODO rename, perhaps we don't need it!
-    SAFEALLOC(, d->p->prtilde_thetagrid, malloc(d->p->prtilde_Ntheta * sizeof(double)))
+    SAFEALLOC(d->p->decr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)));
+    SAFEALLOC(d->p->incr_tgrid,   malloc((d->p->Ntheta+1) * sizeof(double)));
+    SAFEALLOC(d->p->decr_tsqgrid, malloc((d->p->Ntheta+1) * sizeof(double)));
+    SAFEALLOC(d->p->incr_tsqgrid, malloc((d->p->Ntheta+1) * sizeof(double)));
+    SAFEALLOC(d->p->reci_tgrid,   malloc(d->p->Ntheta     * sizeof(double)));
 
     for (int ii=0; ii<d->p->Ntheta; ii++)
     {
         // reverse order, maximum angle is the first one
         gsl_sf_result result1, result2;
-        SAFEGSL(gsl_sf_bessel_zero_J0_e(ii+1, &result1))
-        SAFEGSL(gsl_sf_bessel_zero_J0_e(d->p->Ntheta, &result2))
+        SAFEGSL(gsl_sf_bessel_zero_J0_e(ii+1, &result1));
+        SAFEGSL(gsl_sf_bessel_zero_J0_e(d->p->Ntheta, &result2));
         d->p->decr_tgrid[d->p->Ntheta-1-ii] = result1.val / result2.val;
         d->p->decr_tsqgrid[d->p->Ntheta-1-ii]
             = gsl_pow_2(d->p->decr_tgrid[d->p->Ntheta-1-ii]);
@@ -145,14 +178,21 @@ create_angle_grids(hmpdf_obj *d)
     }
 
     reverse(d->p->Ntheta, d->p->decr_tgrid, d->p->incr_tgrid+1);
+    reverse(d->p->Ntheta, d->p->decr_tsqgrid, d->p->incr_tsqgrid+1);
     // fix the endpoints
     d->p->decr_tgrid[d->p->Ntheta] = 0.0;
     d->p->decr_tsqgrid[d->p->Ntheta] = 0.0;
+    d->p->incr_tsqgrid[0] = 0.0;
     d->p->incr_tgrid[0] = 0.0;
 
-    linspace(d->p->prtilde_Ntheta, 0.0, 1.0, d->p->prtilde_thetagrid);
-    SAFEALLOC(, d->p->incr_tgrid_accel, gsl_interp_accel_alloc())
-    SAFEALLOC(, d->p->reci_tgrid_accel, gsl_interp_accel_alloc())
+    SAFEALLOC(d->p->incr_tgrid_accel,
+              malloc(d->Ncores * sizeof(gsl_interp_accel *)));
+    SETARRNULL(d->p->incr_tgrid_accel, d->Ncores);
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        SAFEALLOC(d->p->incr_tgrid_accel[ii], gsl_interp_accel_alloc());
+    }
+    SAFEALLOC(d->p->reci_tgrid_accel, gsl_interp_accel_alloc());
 
     ENDFCT
 }//}}}
@@ -179,7 +219,7 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
 
     // find the NFW parameters
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs))
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
 
     // fill the profile
     for (int ii=0; ii<d->p->Ntheta; ii++)
@@ -209,7 +249,6 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
         {
             p[ii] = 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
-        // TODO check if rho_m here physical or comoving
         p[ii] -= 2.0*lout*d->c->rho_m[z_index];
         p[ii] /= d->c->Scrit[z_index];
     }
@@ -227,8 +266,8 @@ typedef struct
 }
 Battmodel_params;
 
-static double
-_Battmodel_primitive(hmpdf_obj *d, double M200c, double z, int n)
+static inline double
+Battmodel_primitive(hmpdf_obj *d, double M200c, double z, int n)
 {
     return d->p->Battaglia12_params[n*3+0]
            * pow(M200c/1e14, d->p->Battaglia12_params[n*3+1])
@@ -249,22 +288,28 @@ tsz_profile(hmpdf_obj *d, int z_index, int M_index,
 
     // convert to 200c
     double M200c, R200c, c200c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, &M200c, &R200c, &c200c))
-    double P0 = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
-    double xc = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, &M200c, &R200c, &c200c));
+    double P0 = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
+    double xc = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
 
     // prepare the integration
     Battmodel_params par;
-    par.alpha = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
-    par.beta  = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
-    par.gamma = _Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
+    par.alpha = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 2);
+    par.beta  = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 3);
+    par.gamma = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 4);
 
     gsl_function integrand;
     integrand.function = &Battmodel_integrand;
     integrand.params = &par;
-    SAFEALLOC(gsl_integration_workspace *, ws,
-              gsl_integration_workspace_alloc(BATTINTEGR_LIMIT))
+    gsl_integration_workspace *ws;
+    SAFEALLOC(ws, gsl_integration_workspace_alloc(BATTINTEGR_LIMIT));
+
+    // rescaling from integration units to physical Compton-y
+    double scaling = P0 * xc * M200c * 200.0
+                     * d->c->rho_c[z_index] * d->c->Ob_0 / d->c->Om_0
+                     * GNEWTON * SIGMATHOMSON / MELECTRON / gsl_pow_2(SPEEDOFLIGHT)
+                     / 1.932/*convert from thermal to electron pressure*/;
 
     // loop over angles
     for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
@@ -275,15 +320,14 @@ tsz_profile(hmpdf_obj *d, int z_index, int M_index,
         
         double err;
         SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout,
-                                    BATTINTEGR_EPSABS, BATTINTEGR_EPSREL,
+                                    BATTINTEGR_EPSABS
+                                    * (d->n->signalgrid[1]-d->n->signalgrid[0]) / scaling,
+                                    BATTINTEGR_EPSREL,
                                     BATTINTEGR_LIMIT, BATTINTEGR_KEY,
-                                    ws, p+ii, &err))
+                                    ws, p+ii, &err));
 
         // normalize
-        p[ii] *= P0 * xc * M200c * 200.0
-                 * d->c->rho_c[z_index] * d->c->Ob_0 / d->c->Om_0
-                 * GNEWTON * SIGMATHOMSON / MELECTRON / gsl_pow_2(SPEEDOFLIGHT)
-                 / 1.932; // convert from thermal to electron pressure
+        p[ii] *= scaling;
     }
 
     gsl_integration_workspace_free(ws);
@@ -300,23 +344,23 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
 
     // find the outer radius on the sky
     double M, Rout, c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, &M, &Rout, &c))
+    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, &M, &Rout, &c));
     Rout *= d->p->rout_scale;
     double theta_out = atan(Rout/d->c->angular_diameter[z_index]);
 
     if (d->p->stype == hmpdf_kappa)
     {
         SAFEHMPDF(kappa_profile(d, z_index, M_index,
-                                theta_out, Rout, p+1))
+                                theta_out, Rout, p+1));
     }
     else if (d->p->stype == hmpdf_tsz)
     {
         SAFEHMPDF(tsz_profile(d, z_index, M_index,
-                              theta_out, Rout, p+1))
+                              theta_out, Rout, p+1));
     }
     else
     {
-        HMPDFERR("unkown signal type.")
+        HMPDFERR("unkown signal type.");
     }
 
     p[0] = theta_out;
@@ -329,31 +373,29 @@ create_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    HMPDFPRINT(2, "\tcreate_profiles\n")
+    HMPDFPRINT(2, "\tcreate_profiles\n");
     
-    SAFEALLOC(, d->p->profiles, malloc(d->n->Nz * sizeof(double **)))
+    SAFEALLOC(d->p->profiles, malloc(d->n->Nz * sizeof(double **)));
+    SETARRNULL(d->p->profiles, d->n->Nz);
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(dynamic)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
-        SAFEALLOC_NORETURN(, d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)))
+        CONTINUE_IF_ERR
+        SAFEALLOC_NORETURN(d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)));
+        SETARRNULL(d->p->profiles[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
-            SAFEALLOC_NORETURN(, d->p->profiles[z_index][M_index],
-                               malloc((d->p->Ntheta+2) * sizeof(double)))
-            if (hmpdf_status) { continue; }
-            
+            CONTINUE_IF_ERR
+            SAFEALLOC_NORETURN(d->p->profiles[z_index][M_index],
+                               malloc((d->p->Ntheta+2) * sizeof(double)));
+            CONTINUE_IF_ERR 
             SAFEHMPDF_NORETURN(profile(d, z_index, M_index,
-                                       d->p->profiles[z_index][M_index]))
-            if (hmpdf_status) { continue; }
-            
+                                       d->p->profiles[z_index][M_index]));
+            CONTINUE_IF_ERR
             SAFEHMPDF_NORETURN(fix_endpoints(d->p->Ntheta, d->p->decr_tgrid,
-                                             d->p->profiles[z_index][M_index]+1))
-            
-            if (hmpdf_status) { continue; }
+                                             d->p->profiles[z_index][M_index]+1));
         }
     }
 
@@ -366,40 +408,44 @@ create_conj_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_conj_profiles) { return hmpdf_status; }
+    if (d->p->created_conj_profiles) { return 0; }
 
-    HMPDFPRINT(2, "\tcreate_conj_profiles\n")
+    HMPDFPRINT(2, "\tcreate_conj_profiles\n");
     
     // prepare the Hankel transform work space
-    d->p->dht_ws = gsl_dht_new(d->p->Ntheta, 0, 1.0);
-    SAFEALLOC(, d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)))
+    SAFEALLOC(d->p->dht_ws, gsl_dht_new(d->p->Ntheta, 0, 1.0));
+    SAFEALLOC(d->p->conj_profiles, malloc(d->n->Nz * sizeof(double **)));
+    SETARRNULL(d->p->conj_profiles, d->n->Nz);
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         // need buffer to store the profiles with theta increasing
         // allocate inside z-loop for thread safety
-        SAFEALLOC_NORETURN(double *, temp, malloc(d->p->Ntheta * sizeof(double)))
-        if (hmpdf_status) { continue; }
-        SAFEALLOC_NORETURN(, d->p->conj_profiles[z_index],
-                           malloc(d->n->NM * sizeof(double *)))
-        if (hmpdf_status) { continue; }
+        double *temp;
+        SAFEALLOC_NORETURN(temp, malloc(d->p->Ntheta * sizeof(double)));
+        CONTINUE_IF_ERR
+        SAFEALLOC_NORETURN(d->p->conj_profiles[z_index],
+                           malloc(d->n->NM * sizeof(double *)));
+        CONTINUE_IF_ERR
+        SETARRNULL(d->p->conj_profiles[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
-            SAFEALLOC_NORETURN(, d->p->conj_profiles[z_index][M_index],
-                               malloc((d->p->Ntheta+1) * sizeof(double)))
+            CONTINUE_IF_ERR
+            SAFEALLOC_NORETURN(d->p->conj_profiles[z_index][M_index],
+                               malloc((d->p->Ntheta+1) * sizeof(double)));
+            CONTINUE_IF_ERR
             reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1, temp);
             // dht_ws is const under gsl_dht_apply, so this is thread safe
             SAFEGSL_NORETURN(gsl_dht_apply(d->p->dht_ws, temp,
-                                           d->p->conj_profiles[z_index][M_index]+1))
-            if (hmpdf_status) { continue; }
+                                           d->p->conj_profiles[z_index][M_index]+1));
+            CONTINUE_IF_ERR
             d->p->conj_profiles[z_index][M_index][0]
                 = 1.0 / d->p->profiles[z_index][M_index][0];
         }
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         free(temp);
     }
 
@@ -413,52 +459,69 @@ create_filtered_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_filtered_profiles) { return hmpdf_status; }
-    if (d->f->Nfilters == 0 ) { return hmpdf_status; }
+    if (d->p->created_filtered_profiles) { return 0; }
+    if (d->f->Nfilters == 0 ) { return 0; }
 
-    HMPDFPRINT(2, "\tcreate_filtered_profiles\n")
+    HMPDFPRINT(2, "\tcreate_filtered_profiles\n");
+
+    SAFEALLOC(d->p->filtered_profiles, malloc(d->n->Nz * sizeof(double **)));
+    SETARRNULL(d->p->filtered_profiles, d->n->Nz);
 
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(d->Ncores)
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(static)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        if (hmpdf_status) { continue; }
-        SAFEALLOC_NORETURN(double *, ell, malloc(d->p->Ntheta * sizeof(double)))
-        if (hmpdf_status) { continue; }
-        SAFEALLOC_NORETURN(double *, temp, malloc(d->p->Ntheta * sizeof(double))) // buffer
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
+        SAFEALLOC_NORETURN(d->p->filtered_profiles[z_index],
+                           malloc(d->n->NM * sizeof(double *)));
+        CONTINUE_IF_ERR
+        SETARRNULL(d->p->filtered_profiles[z_index], d->n->NM);
+        double *ell;
+        SAFEALLOC_NORETURN(ell, malloc(d->p->Ntheta * sizeof(double)));
+        CONTINUE_IF_ERR
+        double *temp;
+        SAFEALLOC_NORETURN(temp, malloc(d->p->Ntheta * sizeof(double))); // buffer
+        CONTINUE_IF_ERR
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            if (hmpdf_status) { continue; }
+            CONTINUE_IF_ERR
+            SAFEALLOC_NORETURN(d->p->filtered_profiles[z_index][M_index],
+                               malloc((d->p->Ntheta+2) * sizeof(double)));
+            CONTINUE_IF_ERR
+            // set the outer radius
+            d->p->filtered_profiles[z_index][M_index][0]
+                = d->p->profiles[z_index][M_index][0];
+
             for (int ii=0; ii<d->p->Ntheta; ii++)
             {
                 ell[ii] = d->p->reci_tgrid[ii]
                           * d->p->conj_profiles[z_index][M_index][0];
             }
+
             // multiply with the window functions
             SAFEHMPDF_NORETURN(apply_filters(d, d->p->Ntheta, ell,
                                              d->p->conj_profiles[z_index][M_index]+1,
-                                             temp, 1, filter_pdf, &z_index))
-            if (hmpdf_status) { continue; }
+                                             temp, 1, filter_pdf, &z_index));
+            CONTINUE_IF_ERR
             // transform back to real space
             SAFEGSL_NORETURN(gsl_dht_apply(d->p->dht_ws, temp,
-                                           d->p->profiles[z_index][M_index]+1))
-            if (hmpdf_status) { continue; }
+                                           d->p->filtered_profiles[z_index][M_index]+1));
+            CONTINUE_IF_ERR
             // reverse the profile
-            reverse(d->p->Ntheta, d->p->profiles[z_index][M_index]+1,
-                                  d->p->profiles[z_index][M_index]+1);
+            reverse(d->p->Ntheta, d->p->filtered_profiles[z_index][M_index]+1,
+                                  d->p->filtered_profiles[z_index][M_index]+1);
             // normalize properly
             for (int ii=0; ii<d->p->Ntheta; ii++)
             {
-                d->p->profiles[z_index][M_index][ii+1]
+                d->p->filtered_profiles[z_index][M_index][ii+1]
                     *= gsl_pow_2(d->p->reci_tgrid[d->p->Ntheta-1]);
             }
 
             SAFEHMPDF_NORETURN(fix_endpoints(d->p->Ntheta, d->p->decr_tgrid,
-                                             d->p->profiles[z_index][M_index]+1))
+                                             d->p->filtered_profiles[z_index][M_index]+1));
         }
-        if (hmpdf_status) { continue; }
+        CONTINUE_IF_ERR
         free(temp);
         free(ell);
     }
@@ -468,165 +531,111 @@ create_filtered_profiles(hmpdf_obj *d)
     ENDFCT
 }//}}}
 
-static int
-monotonize(int Nx, int Nproblems, int *problems, double *x, double *y)
-// problems is an int[Nproblems], holding the indices where y was decreasing,
-// in increasing order
-{//{{{
-    STARTFCT
-
-    double scale = 0.0;
-    for (int jj=1; jj<Nx; jj++)
-    {
-        scale += y[jj] * y[jj];
-    }
-    scale = sqrt(scale/(double)(Nx-1));
-
-    int ledge = 0;
-    int redge = 0;
-    for (int ii=0; ii<Nproblems; ii++)
-    {
-        // check if we have already covered this problem
-        if (redge > problems[ii])
-        {
-            continue;
-        }
-        ledge = problems[ii] - 1; // >= 0
-        
-        // find the right edge
-        redge = Nx;
-        for (int jj=ledge+1; jj<Nx; jj++)
-        {
-            if (y[jj] > y[ledge]+0.1*scale)
-            {
-                redge = jj;
-                break;
-            }
-        }
-
-        double a, b;
-        // treat the case when no redge was found (only decreasing from here onwards)
-        // in this case, we build a simple linear ramp, and hope that this profile is not important
-        if (redge == Nx)
-        {
-            if (ledge == 0)
-            // case when we have no valid points
-            // use stdev as relevant scale
-            // profiles using this are completely irrelevant hopefully
-            {
-                a = scale / (x[Nx-1] - x[ledge]);
-                b = - a * x[ledge];
-            }
-            else
-            // perform linear fit through the last few datapoints
-            // x       x      x      x    x
-            // _start ...   ....   ....  ledge
-            {
-                int _start = GSL_MAX(0, ledge-3);
-                double cov00, cov01, cov11, sumsq;
-                SAFEGSL(gsl_fit_linear(x+_start, 1, y+_start, 1, ledge-_start+1,
-                                       &b, &a, &cov00, &cov01, &cov11, &sumsq))
-                // as is by construction negative, but we still need to ensure
-                // b doesn't spoil the party,
-                // and ensure numerical stability in a
-                a = GSL_MIN(-scale/fabs(x[Nx-1]-x[0]), a);
-                b = GSL_MAX(y[ledge] - a * x[ledge], b);
-            }
-        }
-        // a redge was found
-        else
-        {
-            a = (y[redge]-y[ledge]) / (x[redge] - x[ledge]);
-            b = y[ledge] - a * x[ledge];
-        }
-
-        for (int jj=ledge+1; jj<redge; jj++)
-        {
-            y[jj] = a * x[jj] + b;
-        }
-    }
-    
-    ENDFCT
-}//}}}
-
 int
-create_monotonicity(hmpdf_obj *d)
+create_segments(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->created_monotonicity) { return hmpdf_status; }
+    if (d->p->created_segments) { return 0; }
 
-    HMPDFPRINT(2, "\tcreate_monotonicity\n")
+    HMPDFPRINT(2, "\tcreate_segments\n");
 
-    if (d->n->monotonize)
-    {
-        HMPDFPRINT(3, "\t\tmonotonizing\n")
-    }
-    else
-    {
-        HMPDFPRINT(3, "\t\tnot monotonizing\n")
-    }
+    SAFEALLOC(d->p->segment_boundaries,
+              malloc(d->n->Nz * sizeof(int **)));
+    SETARRNULL(d->p->segment_boundaries, d->n->Nz);
 
-    SAFEALLOC(, d->p->is_not_monotonic, malloc(d->n->Nz * sizeof(int *)))
+    // find the profiles we need to create the segments for
+    double ***pr = (d->p->created_filtered_profiles) ?
+                   d->p->filtered_profiles
+                   : d->p->profiles;
+
+    #ifdef _OPENMP
+    #   pragma omp parallel for num_threads(d->Ncores) schedule(dynamic)
+    #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        SAFEALLOC(, d->p->is_not_monotonic[z_index],
-                  malloc((d->n->NM+1) * sizeof(int)))
-        d->p->is_not_monotonic[z_index][d->n->NM] = 0;
+        CONTINUE_IF_ERR
+        SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index],
+                           malloc(d->n->NM * sizeof(int *)));
+        CONTINUE_IF_ERR
+        SETARRNULL(d->p->segment_boundaries[z_index], d->n->NM);
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            int _problems[d->p->Ntheta+1];
-            d->p->is_not_monotonic[z_index][M_index]
-                = not_monotonic(d->p->Ntheta+1,
-                                d->p->profiles[z_index][M_index]+1,
-                                _problems);
-            
-            if (d->n->monotonize && d->p->is_not_monotonic[z_index][M_index])
+            CONTINUE_IF_ERR
+            int len = 10;
+            SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index][M_index],
+                               malloc(len * sizeof(int)));
+            CONTINUE_IF_ERR
+
+            // 0th element stores the number of segments, it's at least one
+            d->p->segment_boundaries[z_index][M_index][0] = 1;
+
+            // the first segment starts at the radial cut-off
+            d->p->segment_boundaries[z_index][M_index][1] = 1;
+
+            for (int ii=1; ii<d->p->Ntheta; ii++)
             {
-                SAFEHMPDF(monotonize(d->p->Ntheta+1,
-                                     d->p->is_not_monotonic[z_index][M_index],
-                                     _problems, d->p->decr_tgrid,
-                                     d->p->profiles[z_index][M_index]+1))
-                // check if it worked correctly
-                if (!(all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                               1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))))
+                int sgn_lo = GSL_SIGN(pr[z_index][M_index][ii+1]
+                                      - pr[z_index][M_index][ii]);
+                int sgn_hi = GSL_SIGN(pr[z_index][M_index][ii+2]
+                                      - pr[z_index][M_index][ii+1]);
+                if (sgn_lo != sgn_hi) // change in gradient
                 {
-                    SAFEHMPDF(not_monotonic(d->p->Ntheta+1,
-                                            d->p->profiles[z_index][M_index]+1,
-                                            NULL))
+                    ++(d->p->segment_boundaries[z_index][M_index][0]);
+                    
+                    // check if we still have enough space
+                    if (d->p->segment_boundaries[z_index][M_index][0]+2 >= len)
+                    {
+                        len *= 2;
+                        SAFEALLOC_NORETURN(d->p->segment_boundaries[z_index][M_index],
+                                           realloc(d->p->segment_boundaries[z_index][M_index],
+                                           len * sizeof(int)));
+                        CONTINUE_IF_ERR
+                    }
+                    d->p->segment_boundaries[z_index][M_index]
+                        [d->p->segment_boundaries[z_index][M_index][0]] = ii + 1;
+
+                    // the sign of the segment lower ends encodes the gradient
+                    d->p->segment_boundaries[z_index][M_index]
+                        [d->p->segment_boundaries[z_index][M_index][0]-1] *= sgn_lo;
                 }
-                d->p->is_not_monotonic[z_index][M_index] = 0;
             }
 
-            if (d->p->is_not_monotonic[z_index][M_index])
-            {
-                d->p->is_not_monotonic[z_index][d->n->NM] += 1;
-            }
+            // the last segment ends at the cluster centre
+            d->p->segment_boundaries[z_index][M_index]
+                [d->p->segment_boundaries[z_index][M_index][0]+1] = d->p->Ntheta + 1;
+            // get sign for last segment correct
+            d->p->segment_boundaries[z_index][M_index]
+                [d->p->segment_boundaries[z_index][M_index][0]]
+                *= GSL_SIGN(pr[z_index][M_index][d->p->Ntheta + 1]
+                            - pr[z_index][M_index][d->p->Ntheta]);
         }
-        
     }
 
-    d->p->created_monotonicity = 1;
+    d->p->created_segments = 1;
 
     ENDFCT
 }//}}}
 
 int
-s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s)
+s_of_t(hmpdf_obj *d, int z_index, int M_index, long Nt, double *t, double *s)
 // returns signal(t) at z_index, M_index
-// TODO thread safety : one accelerator per core!
+// t is in the rescaled units (by outer radius)
+// NOTE : this function is currently only used in the maps,
+//        so we are ALWAYS interpolating the un-filtered profiles
 {//{{{
     STARTFCT
 
-    SAFEALLOC(double *, temp, malloc((d->p->Ntheta+1) * sizeof(double)))
+    double *temp;
+    SAFEALLOC(temp, malloc((d->p->Ntheta+1) * sizeof(double)));
     reverse(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1, temp);
     interp1d *interp;
     SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->incr_tgrid, temp, temp[0], 0.0,
-                           PRINTERP_TYPE, d->p->incr_tgrid_accel, &interp))
+                           PRINTERP_TYPE, d->p->incr_tgrid_accel[THIS_THREAD], &interp));
 
-    for (int ii=0; ii<Nt; ii++)
+    for (long ii=0; ii<Nt; ii++)
     {
-        SAFEHMPDF(interp1d_eval(interp, t[ii], s+ii))
+        SAFEHMPDF(interp1d_eval(interp, t[ii], s+ii));
     }
     free(temp);
     delete_interp1d(interp);
@@ -645,12 +654,12 @@ s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *
     SAFEHMPDF(new_interp1d(d->p->Ntheta, d->p->reci_tgrid,
                            d->p->conj_profiles[z_index][M_index]+1,
                            d->p->conj_profiles[z_index][M_index][1]/*low l*/, 0.0/*high l*/,
-                           SELL_INTERP_TYPE, d->p->reci_tgrid_accel, &interp))
+                           SELL_INTERP_TYPE, d->p->reci_tgrid_accel, &interp));
     double hankel_norm = 2.0 * M_PI * gsl_pow_2(d->p->profiles[z_index][M_index][0]);
     for (int ii=0; ii<Nell; ii++)
     {
         double l = ell[ii] / d->p->conj_profiles[z_index][M_index][0];
-        SAFEHMPDF(interp1d_eval(interp, l, s+ii))
+        SAFEHMPDF(interp1d_eval(interp, l, s+ii));
         s[ii] *= hankel_norm;
     }
     delete_interp1d(interp);
@@ -658,56 +667,196 @@ s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *
     ENDFCT
 }//}}}
 
-int
-dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq)
-// write dtheta^2(signal)/dsignal*dsignal into return values
+static int
+choose_ordinate(hmpdf_obj *d, int end, int start, inv_profile_e mode, int sgn, double **out)
 {//{{{
     STARTFCT
 
-    if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                 1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0])))
+    int indx = 0; // avoid maybe-uninitialized
+    switch (sgn)
     {
-        zero_real(d->n->Nsignal, dtsq);
-        return hmpdf_status;
+        case (1)  : indx = start - 1;
+                    break;
+        case (-1) : indx = d->p->Ntheta + 1 - end;
+                    break;
+        default   : HMPDFERR("unknown sign");
     }
-    
-    interp1d *interp;
-    SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                           d->p->decr_tsqgrid, 0.0, 0.0, PRINTERP_TYPE, NULL, &interp))
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+
+    double *ptr = NULL; // avoid maybe-uninitialized
+    switch (mode)
     {
-        SAFEHMPDF(interp1d_eval_deriv(interp, d->n->signalgrid[ii], dtsq+ii))
-        dtsq[ii] *= gsl_pow_2(d->p->profiles[z_index][M_index][0])
-                    * (d->n->signalgrid[1] - d->n->signalgrid[0]);
+        case (dtsq_of_s) :
+            switch (sgn)
+            {
+                case (1)  : ptr = d->p->decr_tsqgrid;
+                            break;
+                case (-1) : ptr = d->p->incr_tsqgrid;
+                            break;
+            }
+            break;
+        case (t_of_s)    :
+            switch (sgn)
+            {
+                case (1)  : ptr = d->p->decr_tgrid;
+                            break;
+                case (-1) : ptr = d->p->incr_tgrid;
+                            break;
+            }
+            break;
+        default          : HMPDFERR("unknown mode");
     }
-    delete_interp1d(interp);
+
+    ptr += indx;
+
+    memcpy(*out, ptr, (end-start) * sizeof(double));
 
     ENDFCT
 }//}}}
 
-int
-t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t)
-// only valid results if monotonize is True
+static int
+remove_duplicates(int *N, double *x, double *y, double eps)
+// removes duplicates in y and adjusts x accordingly
+//     values are considered equal if they fall within eps of one another
 {//{{{
     STARTFCT
 
-    if (all_zero(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                 1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0])))
+    for (int ii=1; ii<*N; ii++)
     {
-        zero_real(d->n->Nsignal, t);
-        CHECKERR
-        return hmpdf_status;
+        if (fabs(y[ii] - y[ii-1]) < eps)
+        {
+            memmove(y+ii-1, y+ii, (*N - ii)*sizeof(double));
+            memmove(x+ii-1, x+ii, (*N - ii)*sizeof(double));
+            --*N;
+            --ii;
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+void
+delete_batch(batch_t *b)
+{//{{{
+    if (b->data != NULL)
+    {
+        free(b->data);
+    }
+}//}}}
+
+int
+inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
+            inv_profile_e mode, batch_t *b)
+// Depending on mode = { dtsq_of_s , t_of_s },
+// write dtheta^2(signal)/dsignal*dsignal,
+//    or theta(signal)
+// into return value
+{//{{{
+    STARTFCT
+
+    b->len = 0;
+    b->data = NULL;
+
+    int end   = abs(d->p->segment_boundaries[z_index][M_index][segment+2]);
+    int start = abs(d->p->segment_boundaries[z_index][M_index][segment+1]);
+    int len = end - start;
+    int sgn = GSL_SIGN(d->p->segment_boundaries[z_index][M_index][segment+1]);
+    int min_size = gsl_interp_type_min_size(interp1d_type(INVPRINTERP_TYPE));
+
+    // choose the correct profile
+    double *pr = ((d->p->created_filtered_profiles) ?
+                 d->p->filtered_profiles
+                 : d->p->profiles)[z_index][M_index];
+
+    // check if there is anything interesting here
+    if (all_zero(len, pr+start,
+                 1e-1*(d->n->signalgrid[1]-d->n->signalgrid[0]))
+        || (len < min_size))
+    {
+        ENDFCT
+    }
+
+    double *temp;
+    SAFEALLOC(temp, malloc(len * sizeof(double)));
+    if (sgn == 1)
+    {
+        memcpy(temp, pr+start,
+               len * sizeof(double));
+    }
+    else
+    {
+        reverse(len, pr+start, temp);
+    }
+
+    double *ordinate;
+    SAFEALLOC(ordinate, malloc(len * sizeof(double)));
+    SAFEHMPDF(choose_ordinate(d, end, start, mode, sgn, &ordinate));
+
+    // check if there are duplicates in temp
+    SAFEHMPDF(remove_duplicates(&len, ordinate, temp,
+              1e-3 * (d->n->signalgrid[1] - d->n->signalgrid[0])));
+    // check if it's too short now
+    if (len < min_size)
+    {
+        ENDFCT
     }
 
     interp1d *interp;
-    SAFEHMPDF(new_interp1d(d->p->Ntheta+1, d->p->profiles[z_index][M_index]+1,
-                           d->p->decr_tgrid, 0.0, 0.0, PRINTERP_TYPE, NULL, &interp))
-    for (int ii=0; ii<d->n->Nsignal; ii++)
+    SAFEHMPDF(new_interp1d(len, temp, ordinate,
+                           0.0, 0.0, INVPRINTERP_TYPE, NULL, &interp));
+
+    // auxiliary variables to keep track of current state
+    int inbatch = 0;
+    int len_this_batch = (int)(fabs(temp[len-1]-temp[0])
+                               / (d->n->signalgrid[1]-d->n->signalgrid[0])) + 4;
+
+    for (long ii = (sgn==1) ? 0 : d->n->Nsignal-1;
+         (sgn==1) ? ii<d->n->Nsignal : ii>=0;
+         (sgn==1) ? ii++ : ii--)
     {
-        SAFEHMPDF(interp1d_eval(interp, d->n->signalgrid[ii], t+ii))
-        t[ii] *= d->p->profiles[z_index][M_index][0];
+        double val;
+        int inrange;
+        switch (mode)
+        {
+            case (dtsq_of_s) :
+                SAFEHMPDF(interp1d_eval_deriv1(interp, d->n->signalgrid[ii],
+                                               &inrange, &val));
+                val *= gsl_pow_2(pr[0])
+                       * (d->n->signalgrid[1] - d->n->signalgrid[0]);
+                val = fabs(val); // we only need the absolute value of dtheta^2/dsignal,
+                                 //     since we only use it as Jacobians
+                break;
+            case (t_of_s)    :
+                SAFEHMPDF(interp1d_eval1(interp, d->n->signalgrid[ii],
+                                         &inrange, &val));
+                val *= pr[0];
+                break;
+        }
+        if (inrange)
+        {
+            if (!(inbatch))
+            // first element in the batch
+            {
+                HMPDFCHECK(b->len > 0, "something is weird with this profile "
+                                       "(z = %d, M = %d, segment = %d)",
+                                       z_index, M_index, segment);
+                SAFEALLOC(b->data, malloc(len_this_batch * sizeof(double)));
+                b->start = ii;
+                b->incr = sgn;
+                b->len = 0;
+            }
+            b->data[b->len] = val;
+            ++b->len;
+            inbatch = 1;
+        }
+        else
+        {
+            inbatch = 0;
+        }
     }
     delete_interp1d(interp);
+
+    free(temp);
+    free(ordinate);
 
     ENDFCT
 }//}}}
@@ -717,12 +866,12 @@ init_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
 
-    if (d->p->inited_profiles) { return hmpdf_status; }
+    if (d->p->inited_profiles) { return 0; }
 
-    HMPDFPRINT(1, "init_profiles\n")
+    HMPDFPRINT(1, "init_profiles\n");
 
-    SAFEHMPDF(create_angle_grids(d))
-    SAFEHMPDF(create_profiles(d))
+    SAFEHMPDF(create_angle_grids(d));
+    SAFEHMPDF(create_profiles(d));
 
     d->p->inited_profiles = 1;
 

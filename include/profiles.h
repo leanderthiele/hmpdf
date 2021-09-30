@@ -20,9 +20,10 @@ typedef struct//{{{
     double *decr_tgrid;
     double *incr_tgrid;
     double *decr_tsqgrid;
+    double *incr_tsqgrid;
     double *reci_tgrid; // reciprocal space grid
 
-    gsl_interp_accel *incr_tgrid_accel;
+    gsl_interp_accel **incr_tgrid_accel;
     gsl_interp_accel *reci_tgrid_accel;
 
     double ***profiles; // each profile has as zero entry theta out and then the profile
@@ -31,27 +32,51 @@ typedef struct//{{{
     double ***conj_profiles; // each profile has as zero entry the rescaling such that reci_thetagrid -> ell
 
     int created_filtered_profiles;
+    double ***filtered_profiles;
 
-    int prtilde_Ntheta;
-    double *prtilde_thetagrid;
-
-    int created_monotonicity;
-    int **is_not_monotonic;
+    int created_segments;
+    int ***segment_boundaries;
 
     gsl_dht *dht_ws;
 }//}}}
 profiles_t;
+
+typedef enum
+{//{{{
+    dtsq_of_s,
+    t_of_s,
+}//}}}
+inv_profile_e;
+
+typedef struct
+{//{{{
+    long start; // the start index in the signal grid
+    long len;   // length of this batch
+    int incr;     // +-1 --> loop over signal grid such that
+                  //    theta is always decreasing
+    double *data; // either t_of_s or dtsq_of_s, of length len
+}//}}}
+batch_t;
+
+typedef struct
+{//{{{
+    int Nbatches;
+    batch_t *batches;
+}//}}}
+batch_container_t;
+
+void delete_batch(batch_t *b);
 
 int null_profiles(hmpdf_obj *d);
 int reset_profiles(hmpdf_obj *d);
 int init_profiles(hmpdf_obj *d);
 int create_conj_profiles(hmpdf_obj *d);
 int create_filtered_profiles(hmpdf_obj *d);
-int create_monotonicity(hmpdf_obj *d);
+int create_segments(hmpdf_obj *d);
 
-int s_of_t(hmpdf_obj *d, int z_index, int M_index, int Nt, double *t, double *s);
+int s_of_t(hmpdf_obj *d, int z_index, int M_index, long Nt, double *t, double *s);
 int s_of_ell(hmpdf_obj *d, int z_index, int M_index, int Nell, double *ell, double *s);
-int dtsq_of_s(hmpdf_obj *d, int z_index, int M_index, double *dtsq);
-int t_of_s(hmpdf_obj *d, int z_index, int M_index, double *t);
+int inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
+                inv_profile_e mode, batch_t *b);
 
 #endif

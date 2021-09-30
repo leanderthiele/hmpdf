@@ -4,9 +4,8 @@ CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
-CFLAGS = -std=gnu99 -fPIC -Wall -Wpedantic -Wno-variadic-macros -Wno-format -DHAVE_INLINE
-#OPTFLAGS = -O4 -ffast-math
-OPTFLAGS = -O3 -g3 -ffast-math
+CFLAGS = --std=gnu99 -fPIC -Wall -Wextra -Wpedantic -Wno-variadic-macros -Winline -DHAVE_INLINE -DDEBUG
+OPTFLAGS = -O4 -g3 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
@@ -38,6 +37,11 @@ directories: $(OBJDIR)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 	mkdir -p $(OUTDIR)
+
+.PHONY: python
+python:
+	echo $(shell pwd) > hmpdf/PATHTOHMPDF.txt
+	pip install . --user
 
 .PHONY: clean
 clean:

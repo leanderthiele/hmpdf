@@ -24,7 +24,7 @@ powerspectrum_t;
 
 int null_powerspectrum(hmpdf_obj *d);
 int reset_powerspectrum(hmpdf_obj *d);
-int hmpdf_get_Cell(hmpdf_obj *d, int Nell, double ell[Nell], double Cell[Nell], hmpdf_Cell_mode_e mode);
+int hmpdf_get_Cell(hmpdf_obj *d, int Nell, double elledges[Nell+1], double Cell[Nell], hmpdf_Cell_mode_e mode);
 int hmpdf_get_Cphi(hmpdf_obj *d, int Nphi, double phi[Nphi], double Cphi[Nphi], hmpdf_Cell_mode_e mode);
 
 #endif

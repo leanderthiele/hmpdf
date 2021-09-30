@@ -1,6 +1,8 @@
 #ifndef COVARIANCE_H
 #define COVARIANCE_H
 
+#include <time.h>
+
 #include "twopoint.h"
 #include "hmpdf.h"
 
