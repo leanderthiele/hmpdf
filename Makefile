@@ -1,6 +1,5 @@
-
-PATHTOCLASS = /usr/local/class_public-3.0.1
-PATHTOFFTW = /usr/local/fftw-3.3.9
+PATHTOCLASS = /home/lthiele/class_public
+PATHTOFFTW = 
 
 CC = gcc
 ARCHIVE = libhmpdf.a

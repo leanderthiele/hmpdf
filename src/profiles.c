@@ -874,7 +874,9 @@ integrate_profile(hmpdf_obj *d, int z_index, int M_index, double *out)
 
 
     double *x = d->p->incr_tsqgrid; // abscissae [0, 1]
-    double *y = d->p->profiles[z_index][M_index]+1; // integrand values
+    double *y = (double *)malloc(Nsamples * sizeof(double));
+    reverse(Nsamples, d->p->profiles[z_index][M_index]+1, y);
+
     double theta_out = d->p->profiles[z_index][M_index][0];
 
     for (int ii=0; ii<Nintervals/2; ii++)
@@ -904,6 +906,8 @@ integrate_profile(hmpdf_obj *d, int z_index, int M_index, double *out)
         
         *out += (alpha * y[Nintervals] + beta * y[Nintervals-1] - eta * y[Nintervals-2]) / 6.0;
     }
+
+    free(y);
 
     // get the correct scale
     *out *= M_PI * gsl_pow_2(theta_out);
