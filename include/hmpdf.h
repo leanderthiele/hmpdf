@@ -161,6 +161,7 @@
 #include "hmpdf_object.h"
 #include "hmpdf_configs.h"
 #include "hmpdf_init.h"
+#include "hmpdf_mean.h"
 #include "hmpdf_onepoint.h"
 #include "hmpdf_twopoint.h"
 #include "hmpdf_covariance.h"

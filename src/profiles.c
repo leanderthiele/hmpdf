@@ -862,6 +862,56 @@ inv_profile(hmpdf_obj *d, int z_index, int M_index, int segment,
 }//}}}
 
 int
+integrate_profile(hmpdf_obj *d, int z_index, int M_index, double *out)
+// integrates the given profile over angle, using Simpson's rule
+{// {{{
+    STARTFCT
+
+    *out = 0.0;
+
+    int Nsamples = d->p->Ntheta+1; // number of sample points
+    int Nintervals = Nsamples-1;
+
+
+    double *x = d->p->incr_tsqgrid; // abscissae [0, 1]
+    double *y = d->p->profiles[z_index][M_index]+1; // integrand values
+    double theta_out = d->p->profiles[z_index][M_index][0];
+
+    for (int ii=0; ii<Nintervals/2; ii++)
+    // note that this also works for Nintervals odd because of integer arithmetic
+    {
+        // Simpson's rule from Wikipedia
+        *out += (x[2*ii+2] - x[2*ii]) / 6.0
+                * (  (2.0-(x[2*ii+2]-x[2*ii+1])/(x[2*ii+1]-x[2*ii])) * y[2*ii]
+                   + gsl_pow_2(x[2*ii+2] - x[2*ii])/(x[2*ii+1]-x[2*ii])/(x[2*ii+2]-x[2*ii+1]) * y[2*ii+1]
+                   + (2.0-(x[2*ii+1]-x[2*ii])/(x[2*ii+2]-x[2*ii+1])) * y[2*ii+2] );
+    }
+
+    if (GSL_IS_ODD(Nintervals))
+    // handle last interval (again Wikipedia)
+    {
+        double alpha = (  2.0*gsl_pow_2(x[Nintervals]-x[Nintervals-1])
+                        + 3.0*(x[Nintervals]-x[Nintervals-1])*(x[Nintervals-1]-x[Nintervals-2]) )
+                       / (x[Nintervals]-x[Nintervals-2]);
+        
+        double beta = (  gsl_pow_2(x[Nintervals]-x[Nintervals-1])
+                       + 3.0*(x[Nintervals]-x[Nintervals-1])*(x[Nintervals-1]-x[Nintervals-2]) )
+                      / (x[Nintervals-1]-x[Nintervals-2]);
+        
+        double eta = gsl_pow_3(x[Nintervals]-x[Nintervals-1])
+                     / (x[Nintervals-1]-x[Nintervals-2])
+                     / (x[Nintervals]-x[Nintervals-2]);
+        
+        *out += (alpha * y[Nintervals] + beta * y[Nintervals-1] - eta * y[Nintervals-2]) / 6.0;
+    }
+
+    // get the correct scale
+    *out *= M_PI * gsl_pow_2(theta_out);
+
+    ENDFCT
+}//}}}
+
+int
 init_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
