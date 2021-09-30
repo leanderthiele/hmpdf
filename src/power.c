@@ -75,7 +75,7 @@ Pk_linear(hmpdf_obj *d, double k, double *out)
 
     struct background *ba = (struct background *)d->cls->ba;
     struct primordial *pm = (struct primordial *)d->cls->pm;
-    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+    struct fourier *nl = (struct fourier *)d->cls->nl;
 
     // check if we are at wavenumbers not covered by CLASS interpolator
     if (UNLIKELY(log(k) > nl->ln_k[nl->k_size-1]))
@@ -84,10 +84,10 @@ Pk_linear(hmpdf_obj *d, double k, double *out)
     }
     else
     {
-        SAFECLASS(nonlinear_pk_at_k_and_z(ba, pm, nl,
-                                          pk_linear, k, 0.0,
-                                          nl->index_pk_total,
-                                          out, NULL),
+        SAFECLASS(fourier_pk_at_k_and_z(ba, pm, nl,
+                                        pk_linear, k, 0.0,
+                                        nl->index_pk_total,
+                                        out, NULL),
                   nl->error_message);
     }
 
@@ -136,7 +136,7 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
 
     p->status = 0;
 
-    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+    struct fourier *nl = (struct fourier *)d->cls->nl;
 
     gsl_function integrand;
     integrand.function = &power_integrand;

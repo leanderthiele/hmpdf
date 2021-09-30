@@ -100,8 +100,8 @@ fill_background(hmpdf_obj *d)
         SAFECLASS(background_tau_of_z(ba, d->n->zgrid[z_index], &tau),
                   ba->error_message);
         // write interpolated background quantities into pvecback
-        SAFECLASS(background_at_tau(ba, tau, ba->long_info,
-                                    ba->inter_normal, &index, pvecback),
+        SAFECLASS(background_at_tau(ba, tau, long_info,
+                                    inter_normal, &index, pvecback),
                   ba->error_message);
 
         d->c->hubble[z_index] = pvecback[ba->index_bg_H]; // 1/Mpc
@@ -119,8 +119,8 @@ fill_background(hmpdf_obj *d)
         // find distances to source position
         SAFECLASS(background_tau_of_z(ba, d->n->zsource, &tau),
                   ba->error_message);
-        SAFECLASS(background_at_tau(ba, tau, ba->long_info,
-                                    ba->inter_normal, &index, pvecback),
+        SAFECLASS(background_at_tau(ba, tau, long_info,
+                                    inter_normal, &index, pvecback),
                   ba->error_message);
         double chi_s = pvecback[ba->index_bg_conf_distance];
         double dA_s = pvecback[ba->index_bg_ang_distance];
