@@ -1,4 +1,6 @@
-PATHTOCLASS = /usr/local/class_public
+
+PATHTOCLASS = /usr/local/class_public-3.0.1
+PATHTOFFTW = /usr/local/fftw-3.3.9
 
 CC = gcc
 ARCHIVE = libhmpdf.a
@@ -9,7 +11,11 @@ OPTFLAGS = -O4 -g3 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
-INCLUDE += -I$(PATHTOCLASS)/include
+INCLUDE += -I$(PATHTOCLASS)/include \
+           -I$(PATHTOCLASS)/external/HyRec2020 \
+           -I$(PATHTOCLASS)/external/RecfastCLASS \
+           -I$(PATHTOCLASS)/external/heating \
+           -I$(PATHTOFFTW)/api
 
 LINKER = -L$(PATHTOCLASS)
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
