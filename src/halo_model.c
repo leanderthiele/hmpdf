@@ -261,10 +261,19 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
     double sigma_squared_prime = d->pwr->ssq[M_index][1];
     double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
-    double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
+    if (d->h->custom_hmf != NULL)
+    {
+        *hmf = d->h->custom_hmf(d->n->zgrid[z_index],
+                                d->n->Mgrid[M_index],
+                                d->h->custom_hmf_params);
+    }
+    else
+    {
+        double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
 
-    *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
-           / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+        *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
+               / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+    }
 
     *bias = bnu_Tinker10(nu);
 

@@ -17,6 +17,9 @@ typedef struct//{{{
 
     gsl_spline *c_interp;
     gsl_interp_accel **c_accel;
+
+    hmpdf_custom_hmf_f custom_hmf;
+    void *custom_hmf_params;
 }//}}}
 halo_model_t;
 

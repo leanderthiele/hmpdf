@@ -327,6 +327,14 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
+    hmpdf_custom_hmf, /*!< Option to use a custom halo mass function.
+                       *   \par
+                       *   Type: #hmpdf_custom_hmf_f. Default: None.
+                       */
+    hmpdf_custom_hmf_params, /*!< To pass custom paramters to the function #hmpdf_custom_hmf.
+                              *   \par
+                              *   Type: void *. Default: None.
+                              */
     hmpdf_map_fsky, /*!< If you want to use the stochastic map-mapmaking algorithm
                      *   (simplified simulations), this is a required setting.
                      *   It is the sky fraction spanned by the map.
@@ -390,5 +398,17 @@ typedef double (*hmpdf_k_filter_f)(double,
  */
 typedef double (*hmpdf_noise_pwr_f)(double,
                                     void *);
+
+/*! Function pointer typedef for user-defined mass function.
+ *  Passed to hmpdf_init() as #hmpdf_custom_hmf.
+ *  \param z         redshift
+ *  \param M         M200m in Msun
+ *  \param p         pointer that allows user to pass other parameters.
+ *                   Passed to hmpdf_init() as #hmpdf_custom_hmf_params.
+ *  \return dndlogM  in Mpc^-3, log is base e
+ */
+typedef double (*hmpdf_custom_hmf_f)(double,
+                                     double,
+                                     void *);
 
 #endif
