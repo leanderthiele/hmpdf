@@ -16,4 +16,18 @@
 int hmpdf_get_mean(hmpdf_obj *d,
                    double *mean);
 
+
+/*! Returns the sky-averaged Compton-y weighted temperature in keV.
+ *
+ * \param[in,out] d     hmpdf_init() must have been called on d
+ * \param[out]    mean  return value
+ *
+ * \return error code
+ *
+ * \attention Does not take filters or noise into account.
+ * \attention Only makes sense for signal type #hmpdf_tsz.
+ */
+int hmpdf_get_mean_T(hmpdf_obj *d,
+                     double *mean);
+
 #endif
