@@ -32,13 +32,12 @@ Arnaud05_T_of_M(hmpdf_obj *d, int z_index, int M_index, double *out)
 
     static const double A = 5.34e14; // Msun
     static const double alpha = 1.72;
-    static const double m_bias = 0.25;
+    static const double m_bias = 0.2;
 
     // definition of Arnaud+05: h(z) = H(z) / H0
-    // TODO this needs to be verified
-    double hz = d->c->hubble[z_index] / (d->c->h * SPEEDOFLIGHT);
+    double hz = d->c->hubble[z_index] * SPEEDOFLIGHT / d->c->h;
 
-    *out = 5.0 * pow( hz * (1.0+m_bias) * d->n->Mgrid[M_index] / A, 1.0/alpha );
+    *out = 5.0 * pow( hz * (1.0-m_bias) * M200c / A, 1.0/alpha );
 
     ENDFCT
 }//}}}
