@@ -12,13 +12,14 @@ typedef struct//{{{
 
     void /*struct precision*/ *pr;
     void /*struct background*/ *ba;
-    void /*struct thermo*/ *th;
+    void /*struct thermodynamics*/ *th;
     void /*struct primordial*/ *pm;
-    void /*struct perturbs*/ *pt;
-    void /*struct nonlinear*/ *nl;
-    void /*struct transfers*/ *tr;
-    void /*struct spectra*/ *sp;
+    void /*struct perturbations*/ *pt;
+    void /*struct fourier*/ *nl;
+    void /*struct transfer*/ *tr;
+    void /*struct harmonic*/ *sp;
     void /*struct lensing*/ *le;
+    void /*struct distortions*/ *sd;
     void /*struct output*/ *op;
 }//}}}
 class_interface_t;

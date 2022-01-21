@@ -17,13 +17,14 @@ alloc_class(hmpdf_obj *d)
 
     SAFEALLOC(d->cls->pr, malloc(sizeof(struct precision)));
     SAFEALLOC(d->cls->ba, malloc(sizeof(struct background)));
-    SAFEALLOC(d->cls->th, malloc(sizeof(struct thermo)));
-    SAFEALLOC(d->cls->pt, malloc(sizeof(struct perturbs)));
-    SAFEALLOC(d->cls->tr, malloc(sizeof(struct transfers)));
+    SAFEALLOC(d->cls->th, malloc(sizeof(struct thermodynamics)));
+    SAFEALLOC(d->cls->pt, malloc(sizeof(struct perturbations)));
+    SAFEALLOC(d->cls->tr, malloc(sizeof(struct transfer)));
     SAFEALLOC(d->cls->pm, malloc(sizeof(struct primordial)));
-    SAFEALLOC(d->cls->sp, malloc(sizeof(struct spectra)));
-    SAFEALLOC(d->cls->nl, malloc(sizeof(struct nonlinear)));
+    SAFEALLOC(d->cls->sp, malloc(sizeof(struct harmonic)));
+    SAFEALLOC(d->cls->nl, malloc(sizeof(struct fourier)));
     SAFEALLOC(d->cls->le, malloc(sizeof(struct lensing)));
+    SAFEALLOC(d->cls->sd, malloc(sizeof(struct distortions)));
     SAFEALLOC(d->cls->op, malloc(sizeof(struct output)));
 
     ENDFCT
@@ -38,10 +39,10 @@ run_class(hmpdf_obj *d)
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
-    struct thermo *th = (struct thermo *)d->cls->th;
-    struct perturbs *pt = (struct perturbs *)d->cls->pt;
+    struct thermodynamics *th = (struct thermodynamics *)d->cls->th;
+    struct perturbations *pt = (struct perturbations *)d->cls->pt;
     struct primordial *pm = (struct primordial *)d->cls->pm;
-    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
+    struct fourier *nl = (struct fourier *)d->cls->nl;
 
     HMPDFPRINT(3, "\t\tbackground\n");
     SAFECLASS(background_init(pr, ba), ba->error_message);
@@ -57,7 +58,7 @@ run_class(hmpdf_obj *d)
     SAFECLASS(thermodynamics_init(pr, ba, th), th->error_message);
     
     HMPDFPRINT(3, "\t\tperturbs\n");
-    SAFECLASS(perturb_init(pr, ba, th, pt), pt->error_message);
+    SAFECLASS(perturbations_init(pr, ba, th, pt), pt->error_message);
 
     // check if user passed a correct CLASS .ini file
     if (pt->has_pk_matter != _TRUE_)
@@ -76,7 +77,7 @@ run_class(hmpdf_obj *d)
     SAFECLASS(primordial_init(pr, pt, pm), pm->error_message);
 
     HMPDFPRINT(3, "\t\tnonlinear\n");
-    SAFECLASS(nonlinear_init(pr, ba, th, pt, pm, nl), nl->error_message);
+    SAFECLASS(fourier_init(pr, ba, th, pt, pm, nl), nl->error_message);
 
     ENDFCT
 }//}}}
@@ -99,19 +100,20 @@ init_class_interface(hmpdf_obj *d)
 
     struct precision *pr = (struct precision *)d->cls->pr;
     struct background *ba = (struct background *)d->cls->ba;
-    struct thermo *th = (struct thermo *)d->cls->th;
-    struct perturbs *pt = (struct perturbs *)d->cls->pt;
+    struct thermodynamics *th = (struct thermodynamics *)d->cls->th;
+    struct perturbations *pt = (struct perturbations *)d->cls->pt;
     struct primordial *pm = (struct primordial *)d->cls->pm;
-    struct nonlinear *nl = (struct nonlinear *)d->cls->nl;
-    struct spectra *sp = (struct spectra *)d->cls->sp;
+    struct fourier *nl = (struct fourier *)d->cls->nl;
+    struct harmonic *sp = (struct harmonic *)d->cls->sp;
     struct lensing *le = (struct lensing *)d->cls->le;
     struct output *op = (struct output *)d->cls->op;
-    struct transfers *tr = (struct transfers *)d->cls->tr;
+    struct transfer *tr = (struct transfer *)d->cls->tr;
+    struct distortions *sd = (struct distortions *)d->cls->sd;
 
     ErrorMsg errmsg;
-    SAFECLASS(input_init_from_arguments(argc, argv, pr, ba, th,
-                                       pt, tr, pm, sp,
-                                       nl, le, op, errmsg),
+    SAFECLASS(input_init(argc, argv, pr, ba, th,
+                         pt, tr, pm, sp,
+                         nl, le, sd, op ,errmsg),
               errmsg);
 
     SAFEHMPDF(run_class(d));
@@ -134,8 +136,9 @@ null_class_interface(hmpdf_obj *d)
     d->cls->nl = NULL;
     d->cls->sp = NULL;
     d->cls->le = NULL;
-    d->cls->op = NULL;
     d->cls->tr = NULL;
+    d->cls->sd = NULL;
+    d->cls->op = NULL;
 
     ENDFCT
 }//}}}
@@ -147,27 +150,28 @@ reset_class_interface(hmpdf_obj *d)
 
     HMPDFPRINT(2, "\treset_class_interface\n");
 
-    struct nonlinear *nl;
-    struct perturbs *pt;
+    struct fourier *nl;
+    struct perturbations *pt;
     struct primordial *pm;
-    struct thermo *th;
+    struct thermodynamics *th;
     struct background *ba;
 
     if (d->cls->op != NULL) { free(d->cls->op); }
     if (d->cls->le != NULL) { free(d->cls->le); }
     if (d->cls->sp != NULL) { free(d->cls->sp); }
     if (d->cls->tr != NULL) { free(d->cls->tr); }
+    if (d->cls->sd != NULL) { free(d->cls->sd); }
     if (d->cls->nl != NULL)
     { 
-        nl = (struct nonlinear *)d->cls->nl;
-        SAFECLASS(nonlinear_free(nl),
+        nl = (struct fourier *)d->cls->nl;
+        SAFECLASS(fourier_free(nl),
                   nl->error_message);
         free(d->cls->nl);
     }
     if (d->cls->pt != NULL)
     {
-        pt = (struct perturbs *)d->cls->pt;
-        SAFECLASS(perturb_free(pt),
+        pt = (struct perturbations *)d->cls->pt;
+        SAFECLASS(perturbations_free(pt),
                   pt->error_message);
         free(d->cls->pt);
     }
@@ -180,7 +184,7 @@ reset_class_interface(hmpdf_obj *d)
     }
     if (d->cls->th != NULL)
     {
-        th = (struct thermo *)d->cls->th;
+        th = (struct thermodynamics *)d->cls->th;
         SAFECLASS(thermodynamics_free(th),
                   th->error_message);
         free(d->cls->th);
