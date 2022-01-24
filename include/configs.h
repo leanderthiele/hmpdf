@@ -102,6 +102,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  hmpdf_mass_resc_f mass_resc; void *mass_resc_params;
                  hmpdf_conc_resc_f conc_resc; void *conc_resc_params;
                  hmpdf_mass_cuts_f mass_cuts; void *mass_cuts_params;
+                 hmpdf_bias_resc_f bias_resc; void *bias_resc_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;

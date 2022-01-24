@@ -263,13 +263,21 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
-    hmpdf_mass_cuts, /*! Redshift-dependent upper mass limits.
-                      *  \par
-                      *  Type: #hmpdf_mass_cuts_f. Default: None.
+    hmpdf_mass_cuts, /*!< Redshift-dependent upper mass limits.
+                      *   \par
+                      *   Type: #hmpdf_mass_cuts_f. Default: None.
                       */
-    hmpdf_mass_cuts_params, /*! Additional parameters to pass to the above function.
-                             *  \par
-                             *  Type: void *. Default: None.
+    hmpdf_mass_cuts_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_bias_resc, /*!< Rescaling function for bias.
+                      *   \par
+                      *   Type: #hmpdf_bias_resc_f. Default: None.
+                      */
+    hmpdf_bias_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
                              */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
@@ -464,6 +472,17 @@ typedef double (*hmpdf_mass_cuts_f)(double,
  *  \return N(ell)   noise power at ell.
  */
 typedef double (*hmpdf_noise_pwr_f)(double,
+                                    void *);
+
+/*! Function pointer typedef for user-defined bias rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_bias_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         rescaling of the halo bias
+ */
+typedef double (*hmpdf_bias_resc_f)(double,
+                                    double,
                                     void *);
 
 #endif

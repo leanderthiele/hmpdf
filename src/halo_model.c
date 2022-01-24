@@ -338,6 +338,13 @@ create_dndlogM(hmpdf_obj *d)
                 SAFEHMPDF(dndlogM(d, z_index, M_index,
                                   d->h->hmf[z_index]+M_index,
                                   d->h->bias[z_index]+M_index));
+
+                if (d->h->bias_resc != NULL)
+                {
+                    d->h->bias[z_index][M_index] *= d->h->bias_resc(d->n->zgrid[z_index],
+                                                                    d->n->Mgrid[M_index] * d->c->h,
+                                                                    d->h->bias_resc_params);
+                }
             }
         }
     }

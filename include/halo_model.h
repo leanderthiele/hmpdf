@@ -19,6 +19,9 @@ typedef struct//{{{
     hmpdf_conc_resc_f conc_resc;
     void *conc_resc_params;
 
+    hmpdf_bias_resc_f bias_resc;
+    void *bias_resc_params;
+
     double **hmf;
     double **bias;
 

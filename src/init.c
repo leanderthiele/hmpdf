@@ -38,6 +38,7 @@ typedef enum
     cr_type, // hmpdf_conc_resc_f
     np_type, // hmpdf_noise_pwr_f
     mc_type, // hmpdf_mass_cuts_f
+    br_type, // hmpdf_bias_resc_f
 }//}}}
 dtype;
 
@@ -61,6 +62,7 @@ dtype;
             case (mr_type) : expr(hmpdf_mass_resc_f); break;       \
             case (cr_type) : expr(hmpdf_conc_resc_f); break;       \
             case (mc_type) : expr(hmpdf_mass_cuts_f); break;       \
+            case (br_type) : expr(hmpdf_bias_resc_f); break;       \
             case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
@@ -225,6 +227,10 @@ init_params(hmpdf_obj *d, param *p)
            d->n->mass_cuts, mc_type, def.mass_cuts);
     INIT_P(hmpdf_mass_cuts_params,
            d->n->mass_cuts_params, vptr_type, def.mass_cuts_params);
+    INIT_P(hmpdf_bias_resc,
+           d->h->bias_resc, br_type, def.bias_resc);
+    INIT_P(hmpdf_bias_resc_params,
+           d->h->bias_resc_params, vptr_type, def.bias_resc_params);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,
