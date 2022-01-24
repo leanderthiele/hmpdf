@@ -324,9 +324,21 @@ create_dndlogM(hmpdf_obj *d)
         SAFEALLOC(d->h->bias[z_index], malloc(d->n->NM * sizeof(double)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            SAFEHMPDF(dndlogM(d, z_index, M_index,
-                              d->h->hmf[z_index]+M_index,
-                              d->h->bias[z_index]+M_index));
+            // if we are above the mass cut, set HMF to zero
+            if (d->n->mass_cuts != NULL
+                && d->n->Mgrid[M_index]
+                   > d->n->mass_cuts(d->n->zgrid[z_index], d->n->mass_cuts_params)
+                     / d->c->h)
+            {
+                d->h->hmf[z_index][M_index] = 0.0;
+                d->h->bias[z_index][M_index] = 0.0;
+            }
+            else
+            {
+                SAFEHMPDF(dndlogM(d, z_index, M_index,
+                                  d->h->hmf[z_index]+M_index,
+                                  d->h->bias[z_index]+M_index));
+            }
         }
     }
 

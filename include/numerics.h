@@ -21,6 +21,9 @@ typedef struct//{{{
     double *Mgrid;
     double *Mweights;
 
+    hmpdf_mass_cuts_f mass_cuts;
+    void *mass_cuts_params;
+
     long Nsignal;
     long Nsignal_negative;
     double signalmin;

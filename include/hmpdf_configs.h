@@ -263,6 +263,14 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
+    hmpdf_mass_cuts, /*! Redshift-dependent upper mass limits.
+                      *  \par
+                      *  Type: #hmpdf_mass_cuts_f. Default: None.
+                      */
+    hmpdf_mass_cuts_params, /*! Additional parameters to pass to the above function.
+                             *  \par
+                             *  Type: void *. Default: None.
+                             */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -437,6 +445,15 @@ typedef double (*hmpdf_mass_resc_f)(double,
  */
 typedef double (*hmpdf_conc_resc_f)(double,
                                     double,
+                                    void *);
+
+/*! Function pointer typedef to pass redshift-dependent upper limit in mass.
+ *  Passed to hmpdf_init() as #hmpdf_mass_cuts.
+ *  \param z        redshift
+ *  \param p        pointer for additional parameters
+ *  \return         upper mass limit (M200m, Msun/h)
+ */
+typedef double (*hmpdf_mass_cuts_f)(double,
                                     void *);
 
 /*! Function pointer typedef for user-defined noise power spectrum.
