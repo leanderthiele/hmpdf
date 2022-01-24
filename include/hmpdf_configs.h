@@ -10,6 +10,7 @@
  */
 typedef enum
 {
+    // NOTE do not change ordering here!
     hmpdf_mdef_c, /*!< M200c (200x critial density) */
     hmpdf_mdef_v, /*!< Mvir (virial mass according to Bryan+Norman 1998) */
     hmpdf_mdef_m, /*!< M200m (200x mean matter density) */

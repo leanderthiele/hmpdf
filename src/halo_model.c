@@ -286,22 +286,42 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
 {//{{{
     STARTFCT
 
-    double sigma_squared = d->pwr->ssq[M_index][0];
-    double sigma_squared_prime = d->pwr->ssq[M_index][1];
-    double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
-
-    double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
-
-    *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
-           / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
-
-    *bias = bnu_Tinker10(nu);
-
-    if (d->h->massfunc_corr != NULL)
+    // case where we are above the possible mass cut
+    if (d->n->mass_cuts != NULL
+        && d->n->Mgrid[M_index]
+           > d->n->mass_cuts(d->n->zgrid[z_index], d->n->mass_cuts_params)
+             / d->c->h)
     {
-        *hmf *= d->h->massfunc_corr(d->n->zgrid[z_index],
-                                    d->n->Mgrid[M_index] * d->c->h,
-                                    d->h->massfunc_corr_params);
+        *hmf = 0.0;
+        *bias = 0.0;
+    }
+    // we are below the mass cut (or none is given)
+    else
+    {
+        double sigma_squared = d->pwr->ssq[M_index][0];
+        double sigma_squared_prime = d->pwr->ssq[M_index][1];
+        double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
+
+        double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
+
+        *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
+               / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+
+        *bias = bnu_Tinker10(nu);
+
+        if (d->h->massfunc_corr != NULL)
+        {
+            *hmf *= d->h->massfunc_corr(d->n->zgrid[z_index],
+                                        d->n->Mgrid[M_index] * d->c->h,
+                                        d->h->massfunc_corr_params);
+        }
+
+        if (d->h->bias_resc != NULL)
+        {
+            *bias *= d->h->bias_resc(d->n->zgrid[z_index],
+                                     d->n->Mgrid[M_index] * d->c->h,
+                                     d->h->bias_resc_params);
+        }
     }
 
     ENDFCT
@@ -324,28 +344,9 @@ create_dndlogM(hmpdf_obj *d)
         SAFEALLOC(d->h->bias[z_index], malloc(d->n->NM * sizeof(double)));
         for (int M_index=0; M_index<d->n->NM; M_index++)
         {
-            // if we are above the mass cut, set HMF to zero
-            if (d->n->mass_cuts != NULL
-                && d->n->Mgrid[M_index]
-                   > d->n->mass_cuts(d->n->zgrid[z_index], d->n->mass_cuts_params)
-                     / d->c->h)
-            {
-                d->h->hmf[z_index][M_index] = 0.0;
-                d->h->bias[z_index][M_index] = 0.0;
-            }
-            else
-            {
-                SAFEHMPDF(dndlogM(d, z_index, M_index,
-                                  d->h->hmf[z_index]+M_index,
-                                  d->h->bias[z_index]+M_index));
-
-                if (d->h->bias_resc != NULL)
-                {
-                    d->h->bias[z_index][M_index] *= d->h->bias_resc(d->n->zgrid[z_index],
-                                                                    d->n->Mgrid[M_index] * d->c->h,
-                                                                    d->h->bias_resc_params);
-                }
-            }
+            SAFEHMPDF(dndlogM(d, z_index, M_index,
+                              d->h->hmf[z_index]+M_index,
+                              d->h->bias[z_index]+M_index));
         }
     }
 
