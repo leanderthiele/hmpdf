@@ -51,6 +51,19 @@ typedef enum
     hmpdf_chebyshev2, /*!< .*/
 } hmpdf_integr_mode_e;
 
+/*! Ordering of the Arico+2020 parameters for the BCM */
+typedef enum
+{
+    hmpdf_Arico20_eta, /*!<.*/
+    hmpdf_Arico20_M_c, /*!<.*/
+    hmpdf_Arico20_beta, /*!<.*/
+    hmpdf_Arico20_theta_inn, /*!<.*/
+    hmpdf_Arico20_theta_out, /*!<.*/
+    hmpdf_Arico20_M_inn, /*!<.*/
+    hmpdf_Arico20_M_r, /*!<.*/
+    hmpdf_Arico20_M_1_z0_cen, /*!<.*/
+} hmpdf_Arico20_params_e;
+
 /*! Options to hmpdf_init().
  *
  *  The variadic argument list in hmpdf_init() can be used to pass non-default options.
@@ -280,6 +293,13 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
+    hmpdf_Arico20_params, /*!< The parameters for the Arico+2020 BCM.
+                           *   If passed, the convergence profiles will be computed using the BCM.
+                           *   Only applicable if computing the kappa PDF.
+                           *   The ordering is specified by #hmpdf_Arico20_params_e.
+                           *   \par
+                           *   Type: double *. Default: None.
+                           */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.

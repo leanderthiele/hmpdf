@@ -159,7 +159,7 @@ new_gsl_error_handler(const char *reason, const char *file,
 #endif
 //}}}
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(VIM)
 #   define WCONVERSIONOFF _Pragma("GCC diagnostic ignored \"-Wsign-conversion\"")
 #   define WCONVERSIONON  _Pragma("GCC diagnostic pop")
 #else

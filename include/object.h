@@ -8,6 +8,7 @@
 #include "power.h"
 #include "halo_model.h"
 #include "profiles.h"
+#include "bcm.h"
 #include "filter.h"
 #include "noise.h"
 #include "onepoint.h"
@@ -32,6 +33,7 @@ struct hmpdf_obj_s
     halo_model_t *h;
     filters_t *f;
     profiles_t *p;
+    bcm_t *bcm;
     noise_t *ns;
     onepoint_t *op;
     twopoint_t *tp;

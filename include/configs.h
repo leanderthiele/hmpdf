@@ -79,7 +79,6 @@
 #define MAPNOZ_STATUS_PERIOD 400
 #define MAPWZ_STATUS_PERIOD  8
 
-
 #define NOISE_ELLMIN 1e-2
 #define NOISE_ELLMAX 1e12
 #define NOISE_LIMIT  1000
@@ -87,6 +86,8 @@
 #define NOISE_EPSREL 1e-3
 #define NOISE_KEY    6
 #define NOISE_ZETAINTERP_N 1000
+
+#define XI_SEARCH_TOL 1e-2 // choice in Max Lee's code
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
@@ -103,6 +104,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  hmpdf_conc_resc_f conc_resc; void *conc_resc_params;
                  hmpdf_mass_cuts_f mass_cuts; void *mass_cuts_params;
                  hmpdf_bias_resc_f bias_resc; void *bias_resc_params;
+                 double *Arico20_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;

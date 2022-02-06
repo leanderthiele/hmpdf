@@ -231,6 +231,8 @@ init_params(hmpdf_obj *d, param *p)
            d->h->bias_resc, br_type, def.bias_resc);
     INIT_P(hmpdf_bias_resc_params,
            d->h->bias_resc_params, vptr_type, def.bias_resc_params);
+    INIT_P(hmpdf_Arico20_params,
+           d->bcm->Arico20_params, dptr_type, def.Arico20_params);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,
@@ -484,6 +486,8 @@ sanity_checks(hmpdf_obj *d)
                "hmpdf_z_min must be less than hmpdf_z_max.");
     HMPDFCHECK(d->n->Mmin >= d->n->Mmax,
                "hmpdf_M_min must be less than hmpdf_M_max.");
+    HMPDFCHECK(d->bcm->Arico20_params != NULL && d->p->stype != hmpdf_kappa,
+               "hmpdf_Arico20_params only works for signal type hmpdf_kappa");
 
     ENDFCT
 }//}}}
@@ -500,6 +504,7 @@ compute_necessary_for_all(hmpdf_obj *d)
     SAFEHMPDF(init_halo_model(d));
     SAFEHMPDF(init_filters(d));
     SAFEHMPDF(init_profiles(d));
+    SAFEHMPDF(init_bcm(d));
     SAFEHMPDF(init_noise(d));
 
     ENDFCT
