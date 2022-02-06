@@ -55,6 +55,7 @@ init_bcm(hmpdf_obj *d)
     HMPDFPRINT(1, "init_bcm\n");
 
     // TODO allocate and fill the array with radii,
+    //      find the radius closest to R200c
     //      perhaps other stuff necessary
 
     d->bcm->inited_bcm = 1;
@@ -276,10 +277,19 @@ interpolate_xi(hmpdf_obj *d, bcm_ws *ws)
 {//{{{
     STARTFCT
 
-    for (int r_index=0; r_index<d->bcm->Nradii; r_index++)
+    // we know that at R200c xi=1, so this is a good place to start
+    ws->dm_xi[d->bcm->R200c_idx] = find_xi_at_rf(d->bcm->radii[d->bcm->R200c_idx]*ws->R200c,
+                                                 1.0, ws);
+
+    // now go upwards in r
+    for (int r_index=d->bcm->R200c_idx+1; r_index<d->bcm->Nradii; r_index++)
         ws->dm_xi[r_index] = find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
-                                           (r_index) ? ws->dm_xi[r_index-1] : 1.0,
-                                           ws);
+                                           ws->dm_xi[r_index-1], ws);
+
+    // now go downwards in r
+    for (int r_index=d->bcm->R200c_idx-1; r_index>=0; r_index--)
+        ws->dm_xi[r_index] = find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
+                                           ws->dm_xi[r_index+1], ws);
 
     SAFEGSL(gsl_interp_init(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi, d->bcm->Nradii));
 

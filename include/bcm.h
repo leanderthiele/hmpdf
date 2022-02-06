@@ -16,6 +16,7 @@ typedef struct//{{{
 
     // for the relaxed dark matter profile interpolation
     int Nradii;
+    int R200c_idx; // the index closest to R200c in the array
     double *radii; // where xi(r) will be evaluated
 }//}}}
 bcm_t;
