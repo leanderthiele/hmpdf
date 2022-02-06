@@ -503,8 +503,8 @@ compute_necessary_for_all(hmpdf_obj *d)
     SAFEHMPDF(init_power(d));
     SAFEHMPDF(init_halo_model(d));
     SAFEHMPDF(init_filters(d));
-    SAFEHMPDF(init_profiles(d));
     SAFEHMPDF(init_bcm(d));
+    SAFEHMPDF(init_profiles(d));
     SAFEHMPDF(init_noise(d));
 
     ENDFCT

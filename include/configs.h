@@ -87,7 +87,12 @@
 #define NOISE_KEY    6
 #define NOISE_ZETAINTERP_N 1000
 
-#define XI_SEARCH_TOL 1e-2 // choice in Max Lee's code
+#define BCM_XI_SEARCH_TOL 1e-2 // choice in Max Lee's code
+
+#define BCM_BGINTEGR_LIMIT 1000
+#define BCM_BGINTEGR_KEY 6
+#define BCM_BGINTEGR_EPSABS 1e-3 // in units of remaining baryonic mass
+#define BCM_BGINTEGR_EPSREL 1e-4
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;

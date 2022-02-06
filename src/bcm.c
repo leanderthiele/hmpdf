@@ -3,6 +3,7 @@
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf_erf.h>
+#include <gsl/gsl_integration.h>
 
 #include "configs.h"
 #include "utils.h"
@@ -29,6 +30,7 @@ null_bcm(hmpdf_obj *d)
 
     d->bcm->inited_bcm = 0;
     d->bcm->radii = NULL;
+    d->bcm->ws = NULL;
 
     ENDFCT
 }//}}}
@@ -41,6 +43,15 @@ reset_bcm(hmpdf_obj *d)
     HMPDFPRINT(2, "\treset_bcm\n");
 
     if (d->bcm->radii != NULL) { free(d->bcm->radii); }
+    if (d->bcm->ws != NULL)
+    {
+        for (int ii=0; ii<d->Ncores; ii++)
+        {
+            bcm_delete_ws(d->bcm->ws[ii]);
+            free(d->bcm->ws[ii]);
+        }
+        free(d->bcm->ws);
+    }
 
     ENDFCT
 }//}}}
@@ -54,9 +65,24 @@ init_bcm(hmpdf_obj *d)
 
     HMPDFPRINT(1, "init_bcm\n");
 
-    // TODO allocate and fill the array with radii,
-    //      find the radius closest to R200c
-    //      perhaps other stuff necessary
+    // TODO check that these settings make sense
+    d->bcm->Nradii = 1000;
+    d->bcm->rmin = 1e-5;
+    d->bcm->rmax = 1e1;
+    SAFEALLOC(d->bcm->radii, malloc(d->bcm->Nradii * sizeof(double)));
+    SAFEHMPDF(logspace(d->bcm->Nradii, d->bcm->rmin, d->bcm->rmax, d->bcm->radii));
+
+    // find the radius closest(ish) to R200c -- this is not super important and only
+    // a small optimization in the computation of xi
+    for (d->bcm->R200c_idx=0; d->bcm->radii[d->bcm->R200c_idx]<1.0; d->bcm->R200c_idx++);
+    
+    // allocate the workspaces
+    SAFEALLOC(d->bcm->ws, malloc(d->Ncores * sizeof(bcm_ws *)));
+    for (int ii=0; ii<d->Ncores; ii++)
+    {
+        SAFEALLOC(d->bcm->ws, malloc(sizeof(bcm_ws)));
+        SAFEHMPDF(bcm_new_ws(d, d->bcm->ws[ii]));
+    }
 
     d->bcm->inited_bcm = 1;
 
@@ -74,6 +100,8 @@ bcm_new_ws(hmpdf_obj *d, bcm_ws *ws)
     // TODO think about interpolation type here, will need to see examples
     SAFEALLOC(ws->dm_xi_interp, gsl_interp_alloc(gsl_interp_linear, d->bcm->Nradii));
 
+    SAFEALLOC(ws->bg_integr_ws, gsl_integration_workspace_alloc(BCM_BGINTEGR_LIMIT));
+
     ENDFCT
 }//}}}
 
@@ -85,6 +113,7 @@ bcm_delete_ws(bcm_ws *ws)
     free(ws->dm_xi);
     gsl_interp_accel_free(ws->dm_r_accel);
     gsl_interp_free(ws->dm_xi_interp);
+    gsl_integration_workspace_free(ws->bg_integr_ws);
 
     ENDFCT
 }//}}}
@@ -100,14 +129,40 @@ rho_bg(double r, bcm_ws *ws)
            / gsl_pow_2( 1.0+gsl_pow_2(r/ws->bg_r_out) );
 }//}}}
 
-inline static double
-M_bg(double r, bcm_ws *ws)
+static double
+M_bg_integrand(double r, void *p)
+// basically the same function as above only with 4pi r^2 Jacobian
+// and GSL-compatible
+{//{{{
+    bcm_ws *ws = (bcm_ws *)p;
+    return 4.0 * M_PI * gsl_pow_2(r) * rho_bg(r, ws);
+}//}}}
+
+static int
+M_bg(double r, bcm_ws *ws, double other_mass, double *out)
 // bound gas mass profile
+// The other_mass is the remaining baryonic mass, which should be computed beforehand.
+// This can be used to robustly terminate the integration such that the total baryonic
+// mass is well approximated.
+// Can also pass a negative number for this parameter in case it is not known.
 {//{{{
     // TODO there is a closed form expression for this but it has special
     //      functions of complex arguments...
+    static gsl_function integrand;
+    
+    STARTFCT
 
-    return 0.0;
+    integrand.function = &M_bg_integrand;
+    integrand.params = ws;
+
+    double err;
+    SAFEGSL(gsl_integration_qag(&integrand, 0.0, r,
+                                (other_mass > 0.0) ? BCM_BGINTEGR_EPSABS * other_mass : 0.0,
+                                BCM_BGINTEGR_EPSREL,
+                                BCM_BGINTEGR_LIMIT, BCM_BGINTEGR_KEY,
+                                ws->bg_integr_ws, out, &err));
+
+    ENDFCT
 }//}}}
 
 inline static double
@@ -251,12 +306,17 @@ f_cg_fit(hmpdf_obj *d, int z_index, double M200c)
     return exp(M_LN10 * log10_f_cg);
 }//}}}
 
-inline static double
-find_xi_at_rf(double rf, double xi_init, bcm_ws *ws)
+inline static int
+find_xi_at_rf(double rf, double xi_init, bcm_ws *ws, double *out)
 // xi_init can be a guess for what xi should be, will be used to speed
 //         up the search if chosen well.
 {//{{{
-    double M_bary = M_bg(rf, ws) + M_cg(rf, ws) + M_rg(rf, ws) + M_eg(rf, ws);
+    STARTFCT
+
+    double M_bary = M_cg(rf, ws) + M_rg(rf, ws) + M_eg(rf, ws);
+    double m_bg;
+    SAFEHMPDF(M_bg(rf, ws, M_bary, &m_bg));
+    M_bary += m_bg;
 
     double xi, diff;
 
@@ -267,9 +327,11 @@ find_xi_at_rf(double rf, double xi_init, bcm_ws *ws)
         xi = 1.0 + 0.3 * ( gsl_pow_2(Mi/Mf) - 1.0 );
         diff = fabs(xi - xi_init);
         xi_init = xi;
-    } while (diff > XI_SEARCH_TOL);
+    } while (diff > BCM_XI_SEARCH_TOL);
 
-    return xi;
+    *out = xi;
+
+    ENDFCT
 }//}}}
 
 static int
@@ -278,26 +340,36 @@ interpolate_xi(hmpdf_obj *d, bcm_ws *ws)
     STARTFCT
 
     // we know that at R200c xi=1, so this is a good place to start
-    ws->dm_xi[d->bcm->R200c_idx] = find_xi_at_rf(d->bcm->radii[d->bcm->R200c_idx]*ws->R200c,
-                                                 1.0, ws);
+    SAFEHMPDF(find_xi_at_rf(d->bcm->radii[d->bcm->R200c_idx]*ws->R200c,
+                            1.0, ws, ws->dm_xi+d->bcm->R200c_idx));
 
     // now go upwards in r
     for (int r_index=d->bcm->R200c_idx+1; r_index<d->bcm->Nradii; r_index++)
-        ws->dm_xi[r_index] = find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
-                                           ws->dm_xi[r_index-1], ws);
+        SAFEHMPDF(find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
+                                ws->dm_xi[r_index-1], ws, ws->dm_xi+r_index));
 
     // now go downwards in r
     for (int r_index=d->bcm->R200c_idx-1; r_index>=0; r_index--)
-        ws->dm_xi[r_index] = find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
-                                           ws->dm_xi[r_index+1], ws);
+        SAFEHMPDF(find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
+                                ws->dm_xi[r_index+1], ws, ws->dm_xi+r_index));
 
     SAFEGSL(gsl_interp_init(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi, d->bcm->Nradii));
+
+    // FIXME
+    /*
+    {
+        char buffer[256];
+        sprintf(buffer, "xi_%d.dat", THIS_THREAD);
+        savetxt(buffer, d->bcm->Nradii, 2, d->bcm->radii, ws->dm_xi);
+        return 1;
+    }
+    */
 
     ENDFCT
 }//}}}
 
 int
-bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws)
+bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws)
 {//{{{
     STARTFCT
 
@@ -306,8 +378,8 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws)
 
     // first compute basic NFW properties
     double _c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, 1.0, &(ws->M200c), &(ws->R200c), &_c));
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, 1.0, &(ws->rhos), &(ws->rs)));
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &(ws->M200c), &(ws->R200c), &_c));
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &(ws->rhos), &(ws->rs)));
 
     // compute the mass fractions
     double f_dm, f_cg, f_sg, f_hg, f_rg, f_bg, f_eg;
@@ -338,7 +410,9 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws)
     ws->bg_r_inn = d->bcm->Arico20_params[hmpdf_Arico20_theta_inn]*ws->R200c;
     ws->bg_r_out = d->bcm->Arico20_params[hmpdf_Arico20_theta_out]*ws->R200c;
     ws->bg_beta_i = 3.0 - pow(d->bcm->Arico20_params[hmpdf_Arico20_M_inn]/ws->M200c, 0.31);
-    ws->bg_y0 = f_bg * ws->M200c / M_bg(ws->R200c, ws);
+    double m_bg;
+    SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m_bg));
+    ws->bg_y0 = f_bg * ws->M200c / m_bg;
 
     ws->cg_y0 = 1.0;
     ws->cg_Rh = 0.015 * ws->R200c;
@@ -355,6 +429,19 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws)
     // compute the dark matter relaxation
     
     SAFEHMPDF(interpolate_xi(d, ws));
+
+    // FIXME
+    {
+        double *rho = malloc((d->bcm->Nradii-2) * sizeof(double));
+        for (int ii=0; ii<d->bcm->Nradii-2; ii++)
+            SAFEHMPDF(bcm_density_profile(d, ws, d->bcm->radii[ii+1]*ws->R200c, rho+ii));
+        
+        char buffer[256];
+        sprintf(buffer, "rho_%d.dat", THIS_THREAD);
+        savetxt(buffer, d->bcm->Nradii-2, 2, d->bcm->radii+1, rho);
+        free(rho);
+        return 1;
+    }
 
     ENDFCT
 }//}}}

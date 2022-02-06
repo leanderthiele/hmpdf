@@ -21,6 +21,7 @@
 #include "cosmology.h"
 #include "halo_model.h"
 #include "filter.h"
+#include "bcm.h"
 #include "profiles.h"
 
 #include "hmpdf.h"
@@ -257,6 +258,99 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
     ENDFCT
 }//}}}
 
+// kappa BCM profiles {{{
+typedef struct
+{
+    double rproj;
+    bcm_ws *ws;
+    hmpdf_obj *d;
+    int err;
+}
+kappabcm_params;
+
+static double
+kappabcm_integrand(double z, void *params)
+{
+    kappabcm_params *p = (kappabcm_params *)params;
+    double r = hypot(z, p->rproj);
+    double out;
+    p->err = bcm_density_profile(p->d, p->ws, r, &out);
+    return out;
+}
+
+static int
+kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
+                 double mass_resc,
+                 double theta_out, double Rout, double *p)
+{
+    STARTFCT
+
+    bcm_ws *ws = d->bcm->ws[THIS_THREAD];
+
+    bcm_init_ws(d, z_index, M_index, mass_resc, ws);
+
+    kappabcm_params par;
+    par.d = d;
+    par.err = 0;
+    par.ws = ws;
+
+    gsl_function integrand;
+    integrand.function = &kappabcm_integrand;
+    integrand.params = &par;
+
+    gsl_integration_workspace *integr_ws;
+    SAFEALLOC(integr_ws, gsl_integration_workspace_alloc(BATTINTEGR_LIMIT));
+
+    // loop over angles
+    for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
+    {
+        double t = d->p->decr_tgrid[ii] * theta_out;
+        par.rproj = tan(t) * d->c->angular_diameter[z_index];
+        double lout = sqrt(Rout*Rout - par.rproj*par.rproj);
+        double err;
+
+        if (Rout<ws->R200c || par.rproj>ws->R200c)
+        {
+            SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout,
+                                        BATTINTEGR_EPSABS
+                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
+                                        BATTINTEGR_EPSREL,
+                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                                        integr_ws, p+ii, &err));
+        }
+        else
+        // split integration in two parts to avoid discontinuity at R200c
+        {
+            double integr_inner, integr_outer;
+            double lout1 = sqrt(ws->R200c*ws->R200c - par.rproj*par.rproj);
+            SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout1,
+                                        BATTINTEGR_EPSABS
+                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
+                                        BATTINTEGR_EPSREL,
+                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                                        integr_ws, &integr_inner, &err));
+            SAFEGSL(gsl_integration_qag(&integrand, lout1, lout,
+                                        BATTINTEGR_EPSABS
+                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
+                                        BATTINTEGR_EPSREL,
+                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                                        integr_ws, &integr_outer, &err));
+            p[ii] = integr_inner + integr_outer;
+        }
+
+        SAFEHMPDF(par.err);
+
+        p[ii] *= 2.0; // symmetry
+        p[ii] -= 2.0*lout*d->c->rho_m[z_index];
+        p[ii] /= d->c->Scrit[z_index];
+    }
+
+    gsl_integration_workspace_free(integr_ws);
+
+    ENDFCT
+}
+// }}}
+
 // Battaglia profiles{{{
 typedef struct
 {
@@ -356,11 +450,19 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
     Rout *= d->p->rout_scale;
     double theta_out = atan(Rout/d->c->angular_diameter[z_index]);
 
-    if (d->p->stype == hmpdf_kappa)
+    if (d->p->stype == hmpdf_kappa
+        && d->bcm->Arico20_params == NULL)
     {
         SAFEHMPDF(kappa_profile(d, z_index, M_index,
                                 mass_resc,
                                 theta_out, Rout, p+1));
+    }
+    else if (d->p->stype == hmpdf_kappa
+             && d->bcm->Arico20_params != NULL)
+    {
+        SAFEHMPDF(kappabcm_profile(d, z_index, M_index,
+                                   mass_resc,
+                                   theta_out, Rout, p+1));
     }
     else if (d->p->stype == hmpdf_tsz)
     {
