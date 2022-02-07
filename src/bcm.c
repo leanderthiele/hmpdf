@@ -80,7 +80,7 @@ init_bcm(hmpdf_obj *d)
     SAFEALLOC(d->bcm->ws, malloc(d->Ncores * sizeof(bcm_ws *)));
     for (int ii=0; ii<d->Ncores; ii++)
     {
-        SAFEALLOC(d->bcm->ws, malloc(sizeof(bcm_ws)));
+        SAFEALLOC(d->bcm->ws[ii], malloc(sizeof(bcm_ws)));
         SAFEHMPDF(bcm_new_ws(d, d->bcm->ws[ii]));
     }
 
@@ -118,6 +118,71 @@ bcm_delete_ws(bcm_ws *ws)
     ENDFCT
 }//}}}
 
+#ifndef ARICO20
+inline static double
+rho_bg_g0(double x, bcm_ws *ws)
+{//{{{
+    return pow(log1p(x)/x, ws->bg_Gamma);
+}//}}}
+
+inline static double
+rho_bg_g1(double x, bcm_ws *ws)
+{//{{{
+    return 1.0/(x * gsl_pow_2(1.0+x));
+}//}}}
+
+inline static double
+rho_bg_x2g0(double x, void *p)
+{//{{{
+    if (x < 1e-8)
+        return 0.0; // prevent spurious divergence
+
+    double Gamma = *(double *)p;
+
+    return pow(log1p(x), Gamma) * pow(x, 2.0-Gamma);
+}//}}}
+
+static int
+M_bg0(double r, bcm_ws *ws, double other_mass, double *out)
+// return the mass enclosed in the inner part
+{//{{{
+    STARTFCT
+
+    double rout = GSL_MIN(r, ws->R200c/sqrt(5.0));
+
+    gsl_function integrand;
+
+    integrand.function = &rho_bg_x2g0;
+    integrand.params = &(ws->bg_Gamma);
+
+    double err;
+    SAFEGSL(gsl_integration_qag(&integrand, 0.0, rout/ws->rs,
+                                (other_mass > 0.0) ? BCM_BGINTEGR_EPSABS * other_mass : 0.0,
+                                BCM_BGINTEGR_EPSREL,
+                                BCM_BGINTEGR_LIMIT, BCM_BGINTEGR_KEY,
+                                ws->bg_integr_ws, out, &err));
+
+    // normalize properly
+    *out *= ws->bg_y0 * ws->rs;
+
+    ENDFCT
+}//}}}
+
+inline static double
+M_bg1(double r, bcm_ws *ws)
+// return mass enclosed in outer part
+{//{{{
+    const double rmin = ws->R200c/sqrt(5.0);
+
+    if (r < rmin)
+        return 0.0;
+    
+    return ws->bg_y1 * 4.0 * M_PI * gsl_pow_3(ws->rs)
+           * ( rmin/(rmin+ws->rs) - r/(r+ws->rs)
+              +log((r+ws->rs)/(rmin+ws->rs)) );
+}//}}}
+#endif // ifndef ARICO20
+
 inline static double 
 rho_bg(double r, bcm_ws *ws)
 // bound gas density profile
@@ -125,11 +190,20 @@ rho_bg(double r, bcm_ws *ws)
     if (r > ws->R200c)
         return 0.0;
 
+#ifdef ARICO20
     return ws->bg_y0 * pow(1.0+r/ws->bg_r_inn, -ws->bg_beta_i)
            / gsl_pow_2( 1.0+gsl_pow_2(r/ws->bg_r_out) );
+#else
+    double x = r / ws->rs;
+    if (r < ws->R200c/sqrt(5.0))
+        return ws->bg_y0 * rho_bg_g0(x, ws);
+    else
+        return ws->bg_y1 * rho_bg_g1(x, ws);
+#endif
 }//}}}
 
-static double
+#ifdef ARICO20
+inline static double
 M_bg_integrand(double r, void *p)
 // basically the same function as above only with 4pi r^2 Jacobian
 // and GSL-compatible
@@ -137,6 +211,7 @@ M_bg_integrand(double r, void *p)
     bcm_ws *ws = (bcm_ws *)p;
     return 4.0 * M_PI * gsl_pow_2(r) * rho_bg(r, ws);
 }//}}}
+#endif // ifdef Arico20
 
 static int
 M_bg(double r, bcm_ws *ws, double other_mass, double *out)
@@ -148,9 +223,10 @@ M_bg(double r, bcm_ws *ws, double other_mass, double *out)
 {//{{{
     // TODO there is a closed form expression for this but it has special
     //      functions of complex arguments...
-    static gsl_function integrand;
-    
     STARTFCT
+
+#ifdef ARICO20
+    gsl_function integrand;
 
     integrand.function = &M_bg_integrand;
     integrand.params = ws;
@@ -161,6 +237,10 @@ M_bg(double r, bcm_ws *ws, double other_mass, double *out)
                                 BCM_BGINTEGR_EPSREL,
                                 BCM_BGINTEGR_LIMIT, BCM_BGINTEGR_KEY,
                                 ws->bg_integr_ws, out, &err));
+#else 
+    SAFEHMPDF(M_bg0(r, ws, other_mass, out));
+    *out += M_bg1(r, ws);
+#endif
 
     ENDFCT
 }//}}}
@@ -179,17 +259,18 @@ M_cg(double r, bcm_ws *ws)
 {//{{{
     // y0 * 4 pi^(3/2) * Erf(r/2Rh)
     #define POW3(x) ((x)*(x)*(x))
-    static double pref = 4.0 * POW3(M_SQRTPI);
+    const double pref = 4.0 * POW3(M_SQRTPI);
     #undef POW3
 
     return ws->cg_y0 * pref * gsl_sf_erf(0.5*r/ws->cg_Rh);
 }//}}}
 
+#ifdef ARICO20
 inline static double
 rho_rg(double r, bcm_ws *ws)
 // re-accreted gas density profile
 {//{{{
-    static const double pref = 0.5 * M_SQRT1_2 * M_2_SQRTPI;
+    const double pref = 0.5 * M_SQRT1_2 * M_2_SQRTPI;
 
     if (r > ws->R200c)
         return 0.0;
@@ -210,13 +291,14 @@ M_rg(double r, bcm_ws *ws)
               +M_SQRTPI*(gsl_pow_2(ws->rg_mu)+2.0*gsl_pow_2(ws->rg_sigma))
                *(gsl_sf_erf(0.5*(rout-ws->rg_mu)/ws->rg_sigma)+gsl_sf_erf(0.5*ws->rg_mu/ws->rg_sigma)) );
 }//}}}
+#endif // ifdef ARICO20
 
 inline static double
 rho_eg(double r, bcm_ws *ws)
 // ejected gas density profile
 {//{{{
     #define POW3(x) ((x)*(x)*(x))
-    static const double pref = POW3(0.5 * M_SQRT1_2 * M_2_SQRTPI);
+    const double pref = POW3(0.5 * M_SQRT1_2 * M_2_SQRTPI);
     #undef POW3
 
     return ws->eg_f * ws->M200c * pref / gsl_pow_3(ws->eg_rej)
@@ -313,7 +395,11 @@ find_xi_at_rf(double rf, double xi_init, bcm_ws *ws, double *out)
 {//{{{
     STARTFCT
 
+#ifdef ARICO20
     double M_bary = M_cg(rf, ws) + M_rg(rf, ws) + M_eg(rf, ws);
+#else
+    double M_bary = M_cg(rf, ws) + M_eg(rf, ws);
+#endif
     double m_bg;
     SAFEHMPDF(M_bg(rf, ws, M_bary, &m_bg));
     M_bary += m_bg;
@@ -355,16 +441,6 @@ interpolate_xi(hmpdf_obj *d, bcm_ws *ws)
 
     SAFEGSL(gsl_interp_init(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi, d->bcm->Nradii));
 
-    // FIXME
-    /*
-    {
-        char buffer[256];
-        sprintf(buffer, "xi_%d.dat", THIS_THREAD);
-        savetxt(buffer, d->bcm->Nradii, 2, d->bcm->radii, ws->dm_xi);
-        return 1;
-    }
-    */
-
     ENDFCT
 }//}}}
 
@@ -373,15 +449,13 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
 {//{{{
     STARTFCT
 
-    // magic numbers that were set to fixed values
-    static const double beta_r = 2.0;
-
     // first compute basic NFW properties
-    double _c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &(ws->M200c), &(ws->R200c), &_c));
+    double c200c;
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &(ws->M200c), &(ws->R200c), &c200c));
     SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &(ws->rhos), &(ws->rs)));
 
     // compute the mass fractions
+#ifdef ARICO20
     double f_dm, f_cg, f_sg, f_hg, f_rg, f_bg, f_eg;
 
     f_dm = 1.0 - d->c->Ob_0 / d->c->Om_0;
@@ -393,6 +467,7 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
            / ( 1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
                          d->bcm->Arico20_params[hmpdf_Arico20_beta]) );
 
+    static const double beta_r = 2.0;
     f_rg = f_hg * pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
                       d->bcm->Arico20_params[hmpdf_Arico20_beta])
                 / ( 1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_r]/ws->M200c, beta_r) );
@@ -400,12 +475,26 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     f_bg = f_hg - f_rg;
 
     f_eg = d->c->Ob_0/d->c->Om_0 - f_cg - f_sg - f_hg;
+#else
+    double f_dm, f_cg, f_bg, f_eg;
+
+    f_dm = 1.0 - d->c->Ob_0/d->c->Om_0;
+
+    f_cg = f_cg_fit(d, z_index, ws->M200c);
+
+    f_bg = (d->c->Ob_0/d->c->Om_0 - f_cg)
+           / (1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
+                        d->bcm->Arico20_params[hmpdf_Arico20_beta]) );
+
+    f_eg = d->c->Ob_0/d->c->Om_0 - f_cg - f_bg;
+#endif
 
     ws->dm_f = f_dm;
     ws->eg_f = f_eg;
 
     // populate parameters and compute normalization factors
 
+#ifdef ARICO20
     ws->bg_y0 = 1.0;
     ws->bg_r_inn = d->bcm->Arico20_params[hmpdf_Arico20_theta_inn]*ws->R200c;
     ws->bg_r_out = d->bcm->Arico20_params[hmpdf_Arico20_theta_out]*ws->R200c;
@@ -413,15 +502,33 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     double m_bg;
     SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m_bg));
     ws->bg_y0 = f_bg * ws->M200c / m_bg;
+#else
+    ws->bg_y0 = 1.0;
+    ws->bg_y1 = 1.0;
+    double csqrt5 = c200c / sqrt(5.0);
+    ws->bg_Gamma = (1.0+3.0*csqrt5) * log1p(csqrt5)
+                   / ( (1.0+csqrt5)*log1p(csqrt5) - csqrt5 );
+    double m_bg0, m_bg1;
+    SAFEHMPDF(M_bg0(ws->R200c/sqrt(5.0), ws, -1, &m_bg0));
+    m_bg1 = M_bg1(ws->R200c, ws);
+    double g0, g1;
+    g0 = rho_bg_g0(ws->R200c/sqrt(5.0), ws);
+    g1 = rho_bg_g1(ws->R200c/sqrt(5.0), ws);
+    // fix y0, y1 by requiring continuity and correct integral
+    ws->bg_y0 = f_bg * ws->M200c * g1 / (g1*m_bg0 + g0*m_bg1);
+    ws->bg_y1 = f_bg * ws->M200c * g0 / (g1*m_bg0 + g0*m_bg1);
+#endif
 
     ws->cg_y0 = 1.0;
     ws->cg_Rh = 0.015 * ws->R200c;
     ws->cg_y0 = f_cg * ws->M200c / M_cg(ws->R200c, ws);
 
+#ifdef ARICO20
     ws->rg_y0 = 1.0;
     ws->rg_mu = 0.3 * ws->R200c;
     ws->rg_sigma = 0.1 * ws->R200c;
     ws->rg_y0 = f_rg * ws->M200c / M_rg(ws->R200c, ws);
+#endif
 
     double resc = 0.5 * 10.0 * M_SQRT2 * ws->R200c;
     ws->eg_rej = d->bcm->Arico20_params[hmpdf_Arico20_eta] * 0.75 * resc;
@@ -429,19 +536,6 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     // compute the dark matter relaxation
     
     SAFEHMPDF(interpolate_xi(d, ws));
-
-    // FIXME
-    {
-        double *rho = malloc((d->bcm->Nradii-2) * sizeof(double));
-        for (int ii=0; ii<d->bcm->Nradii-2; ii++)
-            SAFEHMPDF(bcm_density_profile(d, ws, d->bcm->radii[ii+1]*ws->R200c, rho+ii));
-        
-        char buffer[256];
-        sprintf(buffer, "rho_%d.dat", THIS_THREAD);
-        savetxt(buffer, d->bcm->Nradii-2, 2, d->bcm->radii+1, rho);
-        free(rho);
-        return 1;
-    }
 
     ENDFCT
 }//}}}
@@ -451,7 +545,11 @@ bcm_density_profile(hmpdf_obj *d, bcm_ws *ws, double r, double *out)
 {//{{{
     STARTFCT
 
+#ifdef ARICO20
     double rho_bary = rho_bg(r, ws) + rho_cg(r, ws) + rho_rg(r, ws) + rho_eg(r, ws);
+#else
+    double rho_bary = rho_bg(r, ws) + rho_cg(r, ws) + rho_eg(r, ws);
+#endif
     double rho_rdm;
     SAFEHMPDF(rho_dm(d, r, ws, &rho_rdm));
     *out = rho_bary + rho_rdm;

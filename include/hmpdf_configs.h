@@ -54,14 +54,16 @@ typedef enum
 /*! Ordering of the Arico+2020 parameters for the BCM */
 typedef enum
 {
-    hmpdf_Arico20_eta, /*!<.*/
     hmpdf_Arico20_M_c, /*!<.*/
+    hmpdf_Arico20_M_1_z0_cen, /*!<.*/
+    hmpdf_Arico20_eta, /*!<.*/
     hmpdf_Arico20_beta, /*!<.*/
+#ifdef ARICO20
     hmpdf_Arico20_theta_inn, /*!<.*/
     hmpdf_Arico20_theta_out, /*!<.*/
     hmpdf_Arico20_M_inn, /*!<.*/
     hmpdf_Arico20_M_r, /*!<.*/
-    hmpdf_Arico20_M_1_z0_cen, /*!<.*/
+#endif
 } hmpdf_Arico20_params_e;
 
 /*! Options to hmpdf_init().

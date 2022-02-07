@@ -7,6 +7,12 @@
 #include "hmpdf.h"
 #include "utils.h"
 
+#ifdef ARICO20
+#   pragma message( "Using the updated Arico BCM from 2009.14225" )
+#else
+#   pragma message( "Using the original Arico BCM from 1911.08471" )
+#endif
+
 typedef struct//{{{
 {
     // DMO NFW profile
@@ -16,18 +22,25 @@ typedef struct//{{{
            rhos;
 
     // bound gas properties
+#ifdef ARICO20
     double bg_y0,
            bg_r_inn, bg_r_out,
            bg_beta_i;
+#else
+    double bg_y0, bg_y1,
+           bg_Gamma;
+#endif
     gsl_integration_workspace *bg_integr_ws;
 
     // central galaxy properties
     double cg_y0,
            cg_Rh;
 
+#ifdef ARICO20
     // re-accreted gas properties
     double rg_y0,
            rg_sigma, rg_mu;
+#endif
 
     // ejected gas properties
     double eg_rej,

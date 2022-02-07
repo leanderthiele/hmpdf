@@ -301,6 +301,12 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
     gsl_integration_workspace *integr_ws;
     SAFEALLOC(integr_ws, gsl_integration_workspace_alloc(BATTINTEGR_LIMIT));
 
+    gsl_integration_cquad_workspace *cquad_ws;
+    SAFEALLOC(cquad_ws, gsl_integration_cquad_workspace_alloc(BATTINTEGR_LIMIT));
+
+    double epsabs = BATTINTEGR_EPSABS * (d->n->signalgrid[1]-d->n->signalgrid[0])
+                    * d->c->Scrit[z_index]; // note rescaling of integrals
+
     // loop over angles
     for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
     {
@@ -309,33 +315,18 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
         double lout = sqrt(Rout*Rout - par.rproj*par.rproj);
         double err;
 
-        if (Rout<ws->R200c || par.rproj>ws->R200c)
+        int errqag = gsl_integration_qag(&integrand, 0.0, lout,
+                                         epsabs, BATTINTEGR_EPSREL,
+                                         BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                                         integr_ws, p+ii, &err);
+        
+        if (errqag)
+        // QAG has failed (happens close to the center typically),
+        // in which case we turn to the more expensive CQUAD for help
         {
-            SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout,
-                                        BATTINTEGR_EPSABS
-                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
-                                        BATTINTEGR_EPSREL,
-                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
-                                        integr_ws, p+ii, &err));
-        }
-        else
-        // split integration in two parts to avoid discontinuity at R200c
-        {
-            double integr_inner, integr_outer;
-            double lout1 = sqrt(ws->R200c*ws->R200c - par.rproj*par.rproj);
-            SAFEGSL(gsl_integration_qag(&integrand, 0.0, lout1,
-                                        BATTINTEGR_EPSABS
-                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
-                                        BATTINTEGR_EPSREL,
-                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
-                                        integr_ws, &integr_inner, &err));
-            SAFEGSL(gsl_integration_qag(&integrand, lout1, lout,
-                                        BATTINTEGR_EPSABS
-                                        * (d->n->signalgrid[1]-d->n->signalgrid[0]),
-                                        BATTINTEGR_EPSREL,
-                                        BATTINTEGR_LIMIT, BATTINTEGR_KEY,
-                                        integr_ws, &integr_outer, &err));
-            p[ii] = integr_inner + integr_outer;
+            SAFEGSL(gsl_integration_cquad(&integrand, 0.0, lout,
+                                          epsabs, BATTINTEGR_EPSREL,
+                                          cquad_ws, p+ii, NULL, NULL));
         }
 
         SAFEHMPDF(par.err);
@@ -346,6 +337,8 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
     }
 
     gsl_integration_workspace_free(integr_ws);
+
+    gsl_integration_cquad_workspace_free(cquad_ws);
 
     ENDFCT
 }
