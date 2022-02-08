@@ -28,6 +28,9 @@
 #   pragma message( "Using the original Arico BCM from 1911.08471" )
 #endif
 
+#ifndef M_SQRT5
+#   define M_SQRT5 2.2360679774997896964091736687312762
+#endif
 
 int
 null_bcm(hmpdf_obj *d)
@@ -72,9 +75,9 @@ init_bcm(hmpdf_obj *d)
     HMPDFPRINT(1, "init_bcm\n");
 
     // TODO check that these settings make sense
-    d->bcm->Nradii = 1000;
+    d->bcm->Nradii = 10000;
     d->bcm->rmin = 1e-5;
-    d->bcm->rmax = 1e1;
+    d->bcm->rmax = 2e1;
     SAFEALLOC(d->bcm->radii, malloc(d->bcm->Nradii * sizeof(double)));
     SAFEHMPDF(logspace(d->bcm->Nradii, d->bcm->rmin, d->bcm->rmax, d->bcm->radii));
 
@@ -154,7 +157,7 @@ M_bg0(double r, bcm_ws *ws, double other_mass, double *out)
 {//{{{
     STARTFCT
 
-    double rout = GSL_MIN(r, ws->R200c/sqrt(5.0));
+    double rout = GSL_MIN(r, ws->R200c/M_SQRT5);
 
     gsl_function integrand;
 
@@ -180,7 +183,7 @@ inline static double
 M_bg1(double r, bcm_ws *ws)
 // return mass enclosed in outer part
 {//{{{
-    const double rmin = ws->R200c/sqrt(5.0);
+    const double rmin = ws->R200c/M_SQRT5;
 
     if (r < rmin)
         return 0.0;
@@ -203,7 +206,7 @@ rho_bg(double r, bcm_ws *ws)
            / gsl_pow_2( 1.0+gsl_pow_2(r/ws->bg_r_out) );
 #else
     double x = r / ws->rs;
-    if (r < ws->R200c/sqrt(5.0))
+    if (r < ws->R200c/M_SQRT5)
         return ws->bg_y0 * rho_bg_g0(x, ws);
     else
         return ws->bg_y1 * rho_bg_g1(x, ws);
@@ -229,8 +232,6 @@ M_bg(double r, bcm_ws *ws, double other_mass, double *out)
 // mass is well approximated.
 // Can also pass a negative number for this parameter in case it is not known.
 {//{{{
-    // TODO there is a closed form expression for this but it has special
-    //      functions of complex arguments...
     STARTFCT
 
 #ifdef ARICO20
@@ -306,7 +307,7 @@ rho_eg(double r, bcm_ws *ws)
 // ejected gas density profile
 {//{{{
     #define POW3(x) ((x)*(x)*(x))
-    const double pref = POW3(0.5 * M_SQRT1_2 * M_2_SQRTPI);
+    const double pref = POW3(0.5 * M_SQRT1_2 * M_2_SQRTPI); // 1/(2pi)^3/2
     #undef POW3
 
     return ws->eg_f * ws->M200c * pref / gsl_pow_3(ws->eg_rej)
@@ -356,7 +357,7 @@ rho_dm(hmpdf_obj *d, double r, bcm_ws *ws, double *out)
                                     r/ws->R200c, ws->dm_r_accel, &xiprime));
 
     // TODO check this expression
-    *out = ws->dm_f * rho_nfw(r, ws) * (xi - r/ws->R200c*xiprime) / gsl_pow_4(xi);
+    *out = ws->dm_f * rho_nfw(r / xi, ws) * (xi - r/ws->R200c*xiprime) / gsl_pow_4(xi);
 
     ENDFCT
 }//}}}
@@ -418,6 +419,7 @@ find_xi_at_rf(double rf, double xi_init, bcm_ws *ws, double *out)
     {
         double Mi = M_nfw(rf/xi_init, ws);
         double Mf = ws->dm_f * Mi + M_bary;
+
         xi = 1.0 + 0.3 * ( gsl_pow_2(Mi/Mf) - 1.0 );
         diff = fabs(xi - xi_init);
         xi_init = xi;
@@ -434,19 +436,23 @@ interpolate_xi(hmpdf_obj *d, bcm_ws *ws)
     STARTFCT
 
     // we know that at R200c xi=1, so this is a good place to start
-    SAFEHMPDF(find_xi_at_rf(d->bcm->radii[d->bcm->R200c_idx]*ws->R200c,
-                            1.0, ws, ws->dm_xi+d->bcm->R200c_idx));
+    int start_idx = d->bcm->R200c_idx;
+
+    SAFEHMPDF(find_xi_at_rf(d->bcm->radii[start_idx]*ws->R200c,
+                            1.0, ws, ws->dm_xi+start_idx));
 
     // now go upwards in r
-    for (int r_index=d->bcm->R200c_idx+1; r_index<d->bcm->Nradii; r_index++)
+    for (int r_index=start_idx+1; r_index<d->bcm->Nradii; r_index++)
         SAFEHMPDF(find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
                                 ws->dm_xi[r_index-1], ws, ws->dm_xi+r_index));
 
     // now go downwards in r
-    for (int r_index=d->bcm->R200c_idx-1; r_index>=0; r_index--)
+    for (int r_index=start_idx-1; r_index>=0; r_index--)
         SAFEHMPDF(find_xi_at_rf(d->bcm->radii[r_index]*ws->R200c,
                                 ws->dm_xi[r_index+1], ws, ws->dm_xi+r_index));
 
+    // TODO we may need a smoothing function here to get rid of small-scale noise
+    //      --> not sure if this is actually true, results look quite ok!
     SAFEGSL(gsl_interp_init(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi, d->bcm->Nradii));
 
     ENDFCT
@@ -513,15 +519,15 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
 #else
     ws->bg_y0 = 1.0;
     ws->bg_y1 = 1.0;
-    double csqrt5 = c200c / sqrt(5.0);
+    double csqrt5 = c200c / M_SQRT5;
     ws->bg_Gamma = (1.0+3.0*csqrt5) * log1p(csqrt5)
                    / ( (1.0+csqrt5)*log1p(csqrt5) - csqrt5 );
     double m_bg0, m_bg1;
-    SAFEHMPDF(M_bg0(ws->R200c/sqrt(5.0), ws, -1, &m_bg0));
+    SAFEHMPDF(M_bg0(ws->R200c/M_SQRT5, ws, -1, &m_bg0));
     m_bg1 = M_bg1(ws->R200c, ws);
     double g0, g1;
-    g0 = rho_bg_g0(ws->R200c/ws->rs/sqrt(5.0), ws);
-    g1 = rho_bg_g1(ws->R200c/ws->rs/sqrt(5.0), ws);
+    g0 = rho_bg_g0(ws->R200c/ws->rs/M_SQRT5, ws);
+    g1 = rho_bg_g1(ws->R200c/ws->rs/M_SQRT5, ws);
     // fix y0, y1 by requiring continuity and correct integral
     ws->bg_y0 = f_bg * ws->M200c * g1 / (g1*m_bg0 + g0*m_bg1);
     ws->bg_y1 = f_bg * ws->M200c * g0 / (g1*m_bg0 + g0*m_bg1);
@@ -542,19 +548,20 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     ws->eg_rej = d->bcm->Arico20_params[hmpdf_Arico20_eta] * 0.75 * resc;
 
     // compute the dark matter relaxation
-    
+
     SAFEHMPDF(interpolate_xi(d, ws));
 
-    // FIXME for debugging
-    if (z_index==0)
+    // FIXME give printouts and save profiles to disk for debugging
+    //       We have confirmed that we reproduce Fig 1 in Arico+19 (and by extension Fig 1 in Lee+22)
+    if (0 /*z_index==0*/)
     {
-        double m, Mtot=0.0; 
-        SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m));
-        Mtot += m;
-        Mtot += M_cg(ws->R200c, ws);
-        Mtot += M_eg(ws->R200c, ws);
-        SAFEHMPDF(M_dm(d, ws->R200c, ws, &m));
-        Mtot += m;
+        double m_bg, m_cg, m_eg, m_dm; 
+        SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m_bg));
+        m_cg = M_cg(ws->R200c, ws);
+        m_eg = M_eg(4e1*ws->R200c, ws);
+        SAFEHMPDF(M_dm(d, ws->R200c, ws, &m_dm));
+        double Mtot = m_bg + m_cg + m_eg + m_dm;
+        printf("M_bg=%g M_cg=%g M_eg=%g M_dm=%g\n", m_bg/Mtot, m_cg/Mtot, m_eg/Mtot, m_dm/Mtot);
         printf("Mtot=%g M200c=%g Delta=%g percent\n", Mtot, ws->M200c, 100.0*fabs(Mtot/ws->M200c-1.0));
 
         int Npoints = 1000;
@@ -565,7 +572,7 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
         double *dm = malloc(Npoints * sizeof(double));
         double *xi = malloc(Npoints * sizeof(double));
         double *xiprime = malloc(Npoints * sizeof(double));
-        logspace(Npoints, 1e-3, 2e0, r);
+        logspace(Npoints, 1e-2, 1e1, r);
         for (int ii=0; ii<Npoints; ii++)
         {
             double rphys = r[ii] * ws->R200c;
@@ -576,13 +583,15 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
             SAFEGSL(gsl_interp_eval_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
                                       r[ii], ws->dm_r_accel, xi+ii));
             SAFEGSL(gsl_interp_eval_deriv_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
-                                            r[ii], ws->dm_r_accel, xi+ii));
+                                            r[ii], ws->dm_r_accel, xiprime+ii));
         }
         char buffer[256];
         sprintf(buffer, "profiles_M%g.dat", ws->M200c);
         savetxt(buffer, Npoints, 5, r, bg, cg, eg, dm);
-        sprintf(buffer, "xi_M%g.dat", ws->M200c);
+        sprintf(buffer, "xi_interp_M%g.dat", ws->M200c);
         savetxt(buffer, Npoints, 3, r, xi, xiprime);
+        sprintf(buffer, "xi_M%g.dat", ws->M200c);
+        savetxt(buffer, d->bcm->Nradii, 2, d->bcm->radii, ws->dm_xi);
         free(r); free(bg); free(cg); free(eg); free(dm); free(xi); free(xiprime);
     }
 
