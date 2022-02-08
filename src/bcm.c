@@ -2,7 +2,6 @@
 #include <math.h>
 
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_sf_erf.h>
 #include <gsl/gsl_integration.h>
 
 #include "configs.h"
@@ -22,6 +21,13 @@
  * -- dm: (relaxed) dark matter
  *
  */
+
+#ifdef ARICO20
+#   pragma message( "Using the updated Arico BCM from 2009.14225" )
+#else
+#   pragma message( "Using the original Arico BCM from 1911.08471" )
+#endif
+
 
 int
 null_bcm(hmpdf_obj *d)
@@ -155,15 +161,17 @@ M_bg0(double r, bcm_ws *ws, double other_mass, double *out)
     integrand.function = &rho_bg_x2g0;
     integrand.params = &(ws->bg_Gamma);
 
+    double scaling = ws->bg_y0 * gsl_pow_3(ws->rs);
+
     double err;
     SAFEGSL(gsl_integration_qag(&integrand, 0.0, rout/ws->rs,
-                                (other_mass > 0.0) ? BCM_BGINTEGR_EPSABS * other_mass : 0.0,
+                                (other_mass > 0.0) ? BCM_BGINTEGR_EPSABS * other_mass / scaling : 0.0,
                                 BCM_BGINTEGR_EPSREL,
                                 BCM_BGINTEGR_LIMIT, BCM_BGINTEGR_KEY,
                                 ws->bg_integr_ws, out, &err));
 
     // normalize properly
-    *out *= ws->bg_y0 * ws->rs;
+    *out *= scaling;
 
     ENDFCT
 }//}}}
@@ -262,7 +270,7 @@ M_cg(double r, bcm_ws *ws)
     const double pref = 4.0 * POW3(M_SQRTPI);
     #undef POW3
 
-    return ws->cg_y0 * pref * gsl_sf_erf(0.5*r/ws->cg_Rh);
+    return ws->cg_y0 * pref * erf(0.5*r/ws->cg_Rh);
 }//}}}
 
 #ifdef ARICO20
@@ -289,7 +297,7 @@ M_rg(double r, bcm_ws *ws)
            * ( 2.0*ws->rg_mu*ws->rg_sigma*exp(-gsl_pow_2(0.5*ws->rg_mu/ws->rg_sigma))
               -2.0*(rout+ws->rg_mu)*ws->rg_sigma*exp(-gsl_pow_2(0.5*(rout-ws->rg_mu)/ws->rg_sigma))
               +M_SQRTPI*(gsl_pow_2(ws->rg_mu)+2.0*gsl_pow_2(ws->rg_sigma))
-               *(gsl_sf_erf(0.5*(rout-ws->rg_mu)/ws->rg_sigma)+gsl_sf_erf(0.5*ws->rg_mu/ws->rg_sigma)) );
+               *(erf(0.5*(rout-ws->rg_mu)/ws->rg_sigma)+sf_erf(0.5*ws->rg_mu/ws->rg_sigma)) );
 }//}}}
 #endif // ifdef ARICO20
 
@@ -311,7 +319,7 @@ M_eg(double r, bcm_ws *ws)
 {//{{{
     double x = r / ws->eg_rej;
     return ws->eg_f * ws->M200c
-           * (  gsl_sf_erf(M_SQRT1_2*x)
+           * (  erf(M_SQRT1_2*x)
               - M_SQRT1_2*M_2_SQRTPI*x*exp(-0.5*gsl_pow_2(x)) );
 }//}}}
 
@@ -512,8 +520,8 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     SAFEHMPDF(M_bg0(ws->R200c/sqrt(5.0), ws, -1, &m_bg0));
     m_bg1 = M_bg1(ws->R200c, ws);
     double g0, g1;
-    g0 = rho_bg_g0(ws->R200c/sqrt(5.0), ws);
-    g1 = rho_bg_g1(ws->R200c/sqrt(5.0), ws);
+    g0 = rho_bg_g0(ws->R200c/ws->rs/sqrt(5.0), ws);
+    g1 = rho_bg_g1(ws->R200c/ws->rs/sqrt(5.0), ws);
     // fix y0, y1 by requiring continuity and correct integral
     ws->bg_y0 = f_bg * ws->M200c * g1 / (g1*m_bg0 + g0*m_bg1);
     ws->bg_y1 = f_bg * ws->M200c * g0 / (g1*m_bg0 + g0*m_bg1);
@@ -536,6 +544,47 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     // compute the dark matter relaxation
     
     SAFEHMPDF(interpolate_xi(d, ws));
+
+    // FIXME for debugging
+    if (z_index==0)
+    {
+        double m, Mtot=0.0; 
+        SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m));
+        Mtot += m;
+        Mtot += M_cg(ws->R200c, ws);
+        Mtot += M_eg(ws->R200c, ws);
+        SAFEHMPDF(M_dm(d, ws->R200c, ws, &m));
+        Mtot += m;
+        printf("Mtot=%g M200c=%g Delta=%g percent\n", Mtot, ws->M200c, 100.0*fabs(Mtot/ws->M200c-1.0));
+
+        int Npoints = 1000;
+        double *r = malloc(Npoints * sizeof(double));
+        double *bg = malloc(Npoints * sizeof(double));
+        double *cg = malloc(Npoints * sizeof(double));
+        double *eg = malloc(Npoints * sizeof(double));
+        double *dm = malloc(Npoints * sizeof(double));
+        double *xi = malloc(Npoints * sizeof(double));
+        double *xiprime = malloc(Npoints * sizeof(double));
+        logspace(Npoints, 1e-3, 2e0, r);
+        for (int ii=0; ii<Npoints; ii++)
+        {
+            double rphys = r[ii] * ws->R200c;
+            bg[ii] = rho_bg(rphys, ws);
+            cg[ii] = rho_cg(rphys, ws);
+            eg[ii] = rho_eg(rphys, ws);
+            SAFEHMPDF(rho_dm(d, rphys, ws, dm+ii));
+            SAFEGSL(gsl_interp_eval_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
+                                      r[ii], ws->dm_r_accel, xi+ii));
+            SAFEGSL(gsl_interp_eval_deriv_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
+                                            r[ii], ws->dm_r_accel, xi+ii));
+        }
+        char buffer[256];
+        sprintf(buffer, "profiles_M%g.dat", ws->M200c);
+        savetxt(buffer, Npoints, 5, r, bg, cg, eg, dm);
+        sprintf(buffer, "xi_M%g.dat", ws->M200c);
+        savetxt(buffer, Npoints, 3, r, xi, xiprime);
+        free(r); free(bg); free(cg); free(eg); free(dm); free(xi); free(xiprime);
+    }
 
     ENDFCT
 }//}}}
