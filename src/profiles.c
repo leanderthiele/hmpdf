@@ -287,7 +287,7 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
 
     bcm_ws *ws = d->bcm->ws[THIS_THREAD];
 
-    bcm_init_ws(d, z_index, M_index, mass_resc, ws);
+    SAFEHMPDF(bcm_init_ws(d, z_index, M_index, mass_resc, ws));
 
     kappabcm_params par;
     par.d = d;
