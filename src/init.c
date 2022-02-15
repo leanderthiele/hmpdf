@@ -33,6 +33,7 @@ typedef enum
     vptr_type, // void *
     lf_type, // hmpdf_ell_filter_f
     kf_type, // hmpdf_k_filter_f
+    mf_type, // hmpdf_massfunc_mod_f
     np_type, // hmpdf_noise_pwr_f
 }//}}}
 dtype;
@@ -53,6 +54,7 @@ dtype;
             case (vptr_type) : expr(void *); break;                \
             case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
             case (kf_type) : expr(hmpdf_k_filter_f); break;        \
+            case (mf_type) : expr(hmpdf_massfunc_mod_f); break;    \
             case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
@@ -201,6 +203,10 @@ init_params(hmpdf_obj *d, param *p)
            d->f->custom_k, kf_type, def.custom_k_filter);
     INIT_P(hmpdf_custom_k_filter_params,
            d->f->custom_k_p, vptr_type, def.custom_k_filter_params);
+    INIT_P(hmpdf_massfunc_mod,
+           d->h->massfunc_mod, mf_type, def.massfunc_mod);
+    INIT_P(hmpdf_massfunc_mod_params,
+           d->h->massfunc_mod_params, vptr_type, def.massfunc_mod_params);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,

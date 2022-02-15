@@ -1,4 +1,4 @@
-PATHTOCLASS = /usr/local/class_public
+PATHTOCLASS = /home/lthiele/class_public
 
 CC = gcc
 ARCHIVE = libhmpdf.a

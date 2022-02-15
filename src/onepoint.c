@@ -315,8 +315,11 @@ pdf_adjust_binedges(hmpdf_obj *d, int Nbins,
     STARTFCT
 
     memcpy(binedges_out, binedges_in, (Nbins+1) * sizeof(double));
-    if (d->p->stype == hmpdf_kappa)
+    if (d->p->stype == hmpdf_kappa || d->ns->have_noise)
     {
+        if (d->p->stype == hmpdf_tsz)
+            fprintf(stderr, "***WARNING : we have the hacky mean=0 activated for tSZ!\n");
+
         for (int ii=0; ii<=Nbins; ii++)
         {
             binedges_out[ii] += mean;

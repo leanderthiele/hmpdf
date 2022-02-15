@@ -238,6 +238,16 @@ typedef enum
                                    *   Type: void *. Default: None.
                                    *   \attention not supported in the python wrapper.
                                    */
+    hmpdf_massfunc_mod, /*!< pass a user-defined modification to the mass function.
+                         *   Signature of this function pointer has to conform
+                         *   to the typedef #hmpdf_massfunc_mod_f.
+                         *   \par
+                         *   Type: #hmpdf_massfunc_mod_f. Default: None.
+                         */
+    hmpdf_massfunc_mod_params, /*! pass parameters to the mass function modification (as its last argument)
+                                *  \par
+                                *  Type: void *. Default: None.
+                                */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -390,5 +400,17 @@ typedef double (*hmpdf_k_filter_f)(double,
  */
 typedef double (*hmpdf_noise_pwr_f)(double,
                                     void *);
+
+/*! Function pointer typedef for user-defined mass function deformation.
+ *  Passed to hmpdf_init() as #hmpdf_massfunc_mod.
+ *  \param M        halo mass in M_sun
+ *  \param z        redshift
+ *  \param p        pointer that allowss user to pass other parameters.
+ *                  Passed to hmpdf_init() as #hmpdf_massfunc_mod_params.
+ *  \return r(M,z)  the factor by which the mass function will be multiplied
+ */
+typedef double (*hmpdf_massfunc_mod_f)(double,
+                                       double,
+                                       void *);
 
 #endif

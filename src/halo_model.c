@@ -266,6 +266,13 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
     *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
            / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
 
+    if (d->h->massfunc_mod != NULL)
+    {
+        *hmf *= d->h->massfunc_mod(d->n->Mgrid[M_index],
+                                   d->n->zgrid[z_index],
+                                   d->h->massfunc_mod_params);
+    }
+
     *bias = bnu_Tinker10(nu);
 
     ENDFCT

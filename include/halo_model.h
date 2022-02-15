@@ -15,6 +15,9 @@ typedef struct//{{{
     double **hmf;
     double **bias;
 
+    hmpdf_massfunc_mod_f massfunc_mod;
+    void *massfunc_mod_params;
+
     gsl_spline *c_interp;
     gsl_interp_accel **c_accel;
 }//}}}
