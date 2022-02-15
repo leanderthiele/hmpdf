@@ -166,5 +166,6 @@
 #include "hmpdf_covariance.h"
 #include "hmpdf_powerspectrum.h"
 #include "hmpdf_maps.h"
+#include "hmpdf_pk.h"
 
 #endif
