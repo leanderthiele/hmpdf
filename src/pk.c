@@ -187,16 +187,20 @@ pk_at_z(hmpdf_obj *d, int z_index, int N, double *k, double *pk_1h, double *pk_2
 
             double uk;
 
+            // TODO not entirely sure if this is correct but seems very likely that our internal
+            //      halo quantities are in physical Mpc
+            double kphys = k[ii] * (1.0 + d->n->zgrid[z_index]);
+
             if (!uk_analytic
-                && k[ii]*Rout>d->pk->dht_kgrid[0]
-                && k[ii]*Rout<d->pk->dht_kgrid[d->pk->dht_Nk-1])
+                && kphys*Rout>d->pk->dht_kgrid[0]
+                && kphys*Rout<d->pk->dht_kgrid[d->pk->dht_Nk-1])
             // use the interpolator. For low k outside the interpolated region we revert back to NFW
             {
-                SAFEHMPDF_NORETURN(interp1d_eval(i, k[ii]*Rout, &uk));
+                SAFEHMPDF_NORETURN(interp1d_eval(i, kphys*Rout, &uk));
                 CONTINUE_IF_ERR
             }
             else
-                uk = uk_nfw(rhos, rs, Rout, k[ii]);
+                uk = uk_nfw(rhos, rs, Rout, kphys);
 
             double this_1h = d->n->Mweights[M_index] * d->h->hmf[z_index][M_index]
                              * gsl_pow_2(uk / d->c->rho_m_0);

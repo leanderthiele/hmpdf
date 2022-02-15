@@ -8,7 +8,7 @@
  *
  *  \param[in, out] d   hmpdf_init() must have been called on d
  *  \param[in] Npoints  number of k stencils
- *  \param[in] k        k stencils in 1/Mpc
+ *  \param[in] k        k stencils in comoving 1/Mpc
  *  \param[out] Pk_1h   output array for 1-halo term
  *  \param[out] Pk_2h   output array for 2-halo term
  *  \return error code
