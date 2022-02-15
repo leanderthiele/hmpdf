@@ -487,9 +487,6 @@ create_profiles(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        // FIXME
-        printf("create_profiles: %d / %d\n", z_index+1, d->n->Nz);
-
         CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)));
         SETARRNULL(d->p->profiles[z_index], d->n->NM);
@@ -979,7 +976,7 @@ init_profiles(hmpdf_obj *d)
     HMPDFPRINT(1, "init_profiles\n");
 
     SAFEHMPDF(create_angle_grids(d));
-    SAFEHMPDF(create_profiles(d));
+//    SAFEHMPDF(create_profiles(d));
 
     d->p->inited_profiles = 1;
 
