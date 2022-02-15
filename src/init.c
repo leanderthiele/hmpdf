@@ -39,6 +39,7 @@ typedef enum
     np_type, // hmpdf_noise_pwr_f
     mc_type, // hmpdf_mass_cuts_f
     br_type, // hmpdf_bias_resc_f
+    hf_type, // hmpdf_custom_hmf_f
 }//}}}
 dtype;
 
@@ -64,6 +65,7 @@ dtype;
             case (mc_type) : expr(hmpdf_mass_cuts_f); break;       \
             case (br_type) : expr(hmpdf_bias_resc_f); break;       \
             case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
+            case (hf_type) : expr(hmpdf_custom_hmf_f); break;      \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
         }                                                          \
@@ -265,6 +267,10 @@ init_params(hmpdf_obj *d, param *p)
            d->ns->noise_pwr, np_type, def.noise_pwr);
     INIT_P(hmpdf_noise_pwr_params,
            d->ns->noise_pwr_params, vptr_type, def.noise_pwr_params);
+    INIT_P(hmpdf_custom_hmf,
+           d->h->custom_hmf, hf_type, def.custom_hmf);
+    INIT_P(hmpdf_custom_hmf_params,
+           d->h->custom_hmf_params, vptr_type, def.custom_hmf_params);
     INIT_P_B(hmpdf_map_fsky,
              d->m->area, dbl_type, def.fsky);
     INIT_P_B(hmpdf_map_pixelgrid,

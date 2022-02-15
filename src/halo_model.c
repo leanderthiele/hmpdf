@@ -304,24 +304,25 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
 
         double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
 
-        *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
-               / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
-
         *bias = bnu_Tinker10(nu);
 
+        if (d->h->custom_hmf != NULL)
+            *hmf = d->h->custom_hmf(d->n->zgrid[z_index],
+                                    d->n->Mgrid[M_index],
+                                    d->h->custom_hmf_params);
+        else
+            *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
+                   / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+
         if (d->h->massfunc_corr != NULL)
-        {
             *hmf *= d->h->massfunc_corr(d->n->zgrid[z_index],
                                         d->n->Mgrid[M_index] * d->c->h,
                                         d->h->massfunc_corr_params);
-        }
 
         if (d->h->bias_resc != NULL)
-        {
             *bias *= d->h->bias_resc(d->n->zgrid[z_index],
                                      d->n->Mgrid[M_index] * d->c->h,
                                      d->h->bias_resc_params);
-        }
     }
 
     ENDFCT
