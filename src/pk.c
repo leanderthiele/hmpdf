@@ -52,7 +52,7 @@ init_pk(hmpdf_obj *d)
     if (d->pk->inited_pk) { return 0; }
 
     // TODO make customizable or at least confirm that these are good choices
-    d->pk->dht_Nk = 1024;
+    d->pk->dht_Nk = 256;
 
     SAFEALLOC(d->pk->dht_kgrid, malloc(d->pk->dht_Nk * sizeof(double)));
     SAFEALLOC(d->pk->dht_rgrid, malloc(d->pk->dht_Nk * sizeof(double)));

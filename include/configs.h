@@ -120,6 +120,6 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  double kmin;
                  double fsky[3]; int pxlgrid[3]; int mappoisson; int mapseed; };
 
-struct DEFAULTS def;
+extern struct DEFAULTS def;
 
 #endif
