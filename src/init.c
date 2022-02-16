@@ -271,6 +271,8 @@ init_params(hmpdf_obj *d, param *p)
            d->h->custom_hmf, hf_type, def.custom_hmf);
     INIT_P(hmpdf_custom_hmf_params,
            d->h->custom_hmf_params, vptr_type, def.custom_hmf_params);
+    INIT_P(hmpdf_kmin,
+           d->h->kmin, dbl_type, def.kmin);
     INIT_P_B(hmpdf_map_fsky,
              d->m->area, dbl_type, def.fsky);
     INIT_P_B(hmpdf_map_pixelgrid,

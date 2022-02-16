@@ -130,7 +130,9 @@ power_integrand(double k, void *params)
 }//}}}
 
 static int
-power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
+power_integral(hmpdf_obj *d, power_integrand_params *p, double kmin, double *out)
+// set kmin to negative/zero to avoid effect
+// kmin not affected by LOGK
 {//{{{
     STARTFCT
 
@@ -143,16 +145,16 @@ power_integral(hmpdf_obj *d, power_integrand_params *p, double *out)
     integrand.params = p;
     double err;
     #ifdef LOGK
-    double kmin = log(PKINTEGR_KMIN);
-    double kmax = nl->ln_k[nl->k_size-1];
+    double klo = log(GSL_MAX(PKINTEGR_KMIN, kmin));
+    double khi = nl->ln_k[nl->k_size-1];
     #else
-    double kmin = PKINTEGR_KMIN;
-    double kmax = exp(nl->ln_k[nl->k_size-1]);
+    double klo = GSL_MAX(PKINTEGR_KMIN, kmin);
+    double khi = exp(nl->ln_k[nl->k_size-1]);
     #endif
 
     gsl_integration_workspace *ws;
     SAFEALLOC(ws, gsl_integration_workspace_alloc(PKINTEGR_LIMIT));
-    SAFEGSL(gsl_integration_qag(&integrand, kmin, kmax,
+    SAFEGSL(gsl_integration_qag(&integrand, klo, khi,
                                 PKINTEGR_EPSABS, PKINTEGR_EPSREL,
                                 PKINTEGR_LIMIT,  PKINTEGR_KEY,
                                 ws, out, &err));
@@ -199,11 +201,11 @@ ssq(hmpdf_obj *d, double M, double *ssq, double *dssq)
     p.F.params = &R;
     // cmpute derivative d sigma^2 / dlogM
     p.F.function = tophat_Wsqprime;
-    SAFEHMPDF(power_integral(d, &p, dssq));
+    SAFEHMPDF(power_integral(d, &p, d->c->h * d->h->kmin, dssq));
     *dssq *= (R/3.0);
     // compute sigma^2(M)
     p.F.function = tophat_Wsq;
-    SAFEHMPDF(power_integral(d, &p, ssq));
+    SAFEHMPDF(power_integral(d, &p, d->c->h * d->h->kmin, ssq));
 
     ENDFCT
 }//}}}
@@ -247,7 +249,7 @@ autocorr(hmpdf_obj *d, double *out)
     p.d = d;
     p.F.params = NULL;
     p.F.function = autocorr_kernel;
-    SAFEHMPDF(power_integral(d, &p, out));
+    SAFEHMPDF(power_integral(d, &p, -1.0/*do not have kmin*/, out));
 
     ENDFCT
 }//}}}

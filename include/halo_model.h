@@ -30,6 +30,8 @@ typedef struct//{{{
 
     hmpdf_custom_hmf_f custom_hmf;
     void *custom_hmf_params;
+
+    double kmin;
 }//}}}
 halo_model_t;
 

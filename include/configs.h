@@ -117,6 +117,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  double *Duffy08_p; double *Tinker10_p; double *Battaglia12_p;
                  hmpdf_noise_pwr_f noise_pwr; void *noise_pwr_params;
                  hmpdf_custom_hmf_f custom_hmf; void *custom_hmf_params;
+                 double kmin;
                  double fsky[3]; int pxlgrid[3]; int mappoisson; int mapseed; };
 
 struct DEFAULTS def;

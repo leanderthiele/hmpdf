@@ -399,6 +399,12 @@ typedef enum
                               *   \par
                               *   Type: void *. Default: None.
                               */
+    hmpdf_kmin, /*! k-space integrations in mass function will be terminated here.
+                 *  Useful to test lack of large-scale modes.
+                 *  In h/Mpc.
+                 *  \par
+                 *  Type: double *. Default: 0.0.
+                 */
     hmpdf_map_fsky, /*!< If you want to use the stochastic map-mapmaking algorithm
                      *   (simplified simulations), this is a required setting.
                      *   It is the sky fraction spanned by the map.
