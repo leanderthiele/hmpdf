@@ -143,6 +143,9 @@ pk_at_z(hmpdf_obj *d, int z_index, int N, double *k, double *pk_1h, double *pk_2
         CONTINUE_IF_ERR
         Rout *= d->p->rout_scale;
 
+        // correction factor used if !uk_analytic to rescale the analytic part of the profile
+        double correction_factor = 1.0;
+
         double rhos, rs;
 
         SAFEHMPDF_NORETURN(NFW_fundamental(d, z_index, M_index, 1.0, &rhos, &rs));
@@ -179,6 +182,9 @@ pk_at_z(hmpdf_obj *d, int z_index, int N, double *k, double *pk_1h, double *pk_2
             SAFEHMPDF_NORETURN(new_interp1d(d->pk->dht_Nk, d->pk->dht_kgrid, profile_reci,
                                             profile_reci[0], 0.0, interp_steffen, NULL, &i));
             CONTINUE_IF_ERR
+
+            // compute the rescaling factor that makes the profile continuous (TODO play with this)
+            correction_factor = profile_reci[0] / uk_nfw(rhos, rs, Rout, d->pk->dht_kgrid[0]/Rout);
         }
 
         for (int ii=0; ii<N; ii++)
@@ -200,7 +206,7 @@ pk_at_z(hmpdf_obj *d, int z_index, int N, double *k, double *pk_1h, double *pk_2
                 CONTINUE_IF_ERR
             }
             else
-                uk = uk_nfw(rhos, rs, Rout, kphys);
+                uk = uk_nfw(rhos, rs, Rout, kphys) * correction_factor;
 
             double this_1h = d->n->Mweights[M_index] * d->h->hmf[z_index][M_index]
                              * gsl_pow_2(uk / d->c->rho_m_0);
@@ -218,7 +224,6 @@ pk_at_z(hmpdf_obj *d, int z_index, int N, double *k, double *pk_1h, double *pk_2
             #endif
             pk_2h[ii] += this_2h;
         }
-
 
         if (rgrid != NULL) free(rgrid);
         if (profile_real != NULL) free(profile_real);

@@ -1,5 +1,9 @@
-PATHTOCLASS = /mnt/home/lthiele/class_public
-#PATHTOFFTW = /usr/local/fftw-3.3.9
+ifeq ($(MACHINE),lft)
+PATHTOCLASS = /usr/local/class_public-3.0.1
+PATHTOFFTW = /usr/local/fftw-3.3.9
+else ifeq ($(MACHINE),rusty)
+PATHTOCLASS:=$(HOME)/class_public
+endif
 
 CC = gcc
 ARCHIVE = libhmpdf.a
