@@ -434,6 +434,8 @@ new_gsl_error_handler(const char *reason, const char *file,
 
 int ispwr2(int N, int *k);
 
+int find_closest(int N, double *x, double target);
+
 int linspace(int N, double xmin, double xmax, double *x);
 int logspace(int N, double xmin, double xmax, double *x);
 void zero_real(long N, double *x);

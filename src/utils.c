@@ -50,6 +50,18 @@ ispwr2(int N, int *k)
     return ((temp == N) ? 1 : 0);
 }//}}}
 
+int
+find_closest(int N, double *x, double target)
+// identify the index of the element in x that is closest to the target value
+{//{{{
+    double temp = HUGE_VAL;
+    int out;
+    for (int ii=0; ii<N; ii++)
+        if (fabs(x[ii] - target) < temp)
+            out = ii;
+    return out;
+}//}}}
+
 static int 
 linlogspace_sanity_checks(int N, double xmin, double xmax)
 {//{{{

@@ -29,6 +29,7 @@ typedef enum
     integr_type, // hmpdf_integr_mode_e
     end_comparable_dtypes,
     str_type, // char *
+    strptr_type, // char **
     dptr_type, // double *
     vptr_type, // void *
     lf_type, // hmpdf_ell_filter_f
@@ -49,6 +50,7 @@ dtype;
         switch (dt)                                                \
         {                                                          \
             case (str_type) : expr(char *); break;                 \
+            case (strptr_type) : expr(char **); break;             \
             case (int_type) : expr(int); break;                    \
             case (long_type) : expr(long); break;                  \
             case (dbl_type) : expr(double); break;                 \
@@ -233,6 +235,16 @@ init_params(hmpdf_obj *d, param *p)
            d->h->bias_resc_params, vptr_type, def.bias_resc_params);
     INIT_P(hmpdf_Arico20_params,
            d->bcm->Arico20_params, dptr_type, def.Arico20_params);
+    INIT_P(hmpdf_profiles_N,
+           d->bcm->profiles_N, int_type, def.profiles_N);
+    INIT_P(hmpdf_profiles_fnames,
+           d->bcm->profiles_fnames, strptr_type, def.profiles_fnames);
+    INIT_P(hmpdf_profiles_where,
+           d->bcm->profiles_where, dptr_type, def.profiles_where);
+    INIT_P(hmpdf_profiles_Nr,
+           d->bcm->profiles_Nr, int_type, def.profiles_Nr);
+    INIT_P(hmpdf_profiles_r,
+           d->bcm->profiles_r, dptr_type, def.profiles_r);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,

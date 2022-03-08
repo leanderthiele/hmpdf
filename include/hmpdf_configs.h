@@ -302,6 +302,31 @@ typedef enum
                            *   \par
                            *   Type: double *. Default: None.
                            */
+    hmpdf_profiles_N, /*!< Number of profiles to write to file.
+                       *   This is a hack for that only works with the BCM.
+                       *   Will print the component density profiles to disk.
+                       *   \par
+                       *   Type: int. Default: 0.
+                       */
+    hmpdf_profiles_fnames, /*!< The file names the profiles should be printed to.
+                            *   \par
+                            *   Type: char **. Default: None.
+                            */
+    hmpdf_profiles_where, /*! The redshifts and masses for which to evaluate profiles.
+                           *  In the order [z0, M0, z1, M1, z2, M2, ... ]
+                           *  Masses in units of M200m, Msun/h.
+                           *  \par
+                           *  Type: double *. Default: None.
+                           */
+    hmpdf_profiles_Nr, /*! Number of radii where to evaluate profiles.
+                        *  \par
+                        *  Type: int. Default: 0.
+                        */
+    hmpdf_profiles_r, /*! The radii for which to evaluate profiles.
+                       *  In units of R200c.
+                       *  \par
+                       *  Type: double *. Default: None.
+                       */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.

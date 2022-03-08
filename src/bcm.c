@@ -40,6 +40,7 @@ null_bcm(hmpdf_obj *d)
     d->bcm->inited_bcm = 0;
     d->bcm->radii = NULL;
     d->bcm->ws = NULL;
+    d->bcm->profiles_indices = NULL;
 
     ENDFCT
 }//}}}
@@ -61,6 +62,7 @@ reset_bcm(hmpdf_obj *d)
         }
         free(d->bcm->ws);
     }
+    if (d->bcm->profiles_indices != NULL) { free(d->bcm->profiles_indices); }
 
     ENDFCT
 }//}}}
@@ -91,6 +93,25 @@ init_bcm(hmpdf_obj *d)
     {
         SAFEALLOC(d->bcm->ws[ii], malloc(sizeof(bcm_ws)));
         SAFEHMPDF(bcm_new_ws(d, d->bcm->ws[ii]));
+    }
+
+    // if user requested, compute the profiles indices
+    if (d->bcm->profiles_N)
+    {
+        HMPDFCHECK(!d->bcm->profiles_fnames, "profiles_fnames not provided");
+        HMPDFCHECK(!d->bcm->profiles_where, "profiles_where not provided");
+        HMPDFCHECK(!d->bcm->profiles_r, "profiles_r not provided");
+        HMPDFCHECK(!d->bcm->profiles_Nr, "profiles_Nr not provided");
+
+        SAFEALLOC(d->bcm->profiles_indices, malloc(2 * d->bcm->profiles_N * sizeof(int)));
+
+        for (int ii=0; ii<d->bcm->profiles_N; ii++)
+        {
+            double ztarg = d->bcm->profiles_where[2*ii];
+            double Mtarg = d->bcm->profiles_where[2*ii+1] / d->c->h;
+            d->bcm->profiles_indices[2*ii] = find_closest(d->n->Nz, d->n->zgrid, ztarg);
+            d->bcm->profiles_indices[2*ii+1] = find_closest(d->n->NM, d->n->Mgrid, Mtarg);
+        }
     }
 
     d->bcm->inited_bcm = 1;
@@ -548,51 +569,22 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     ws->eg_rej = d->bcm->Arico20_params[hmpdf_Arico20_eta] * 0.75 * resc;
 
     // compute the dark matter relaxation
-
     SAFEHMPDF(interpolate_xi(d, ws));
 
-    // FIXME give printouts and save profiles to disk for debugging
-    //       We have confirmed that we reproduce Fig 1 in Arico+19 (and by extension Fig 1 in Lee+22)
-    if (0 /*z_index==0*/)
+    // if requested, save corresponding profiles to file
+    if (d->bcm->profiles_indices)
     {
-        double m_bg, m_cg, m_eg, m_dm; 
-        SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m_bg));
-        m_cg = M_cg(ws->R200c, ws);
-        m_eg = M_eg(4e1*ws->R200c, ws);
-        SAFEHMPDF(M_dm(d, ws->R200c, ws, &m_dm));
-        double Mtot = m_bg + m_cg + m_eg + m_dm;
-        printf("M_bg=%g M_cg=%g M_eg=%g M_dm=%g\n", m_bg/Mtot, m_cg/Mtot, m_eg/Mtot, m_dm/Mtot);
-        printf("Mtot=%g M200c=%g Delta=%g percent\n", Mtot, ws->M200c, 100.0*fabs(Mtot/ws->M200c-1.0));
+        int do_it = -1;
+        for (int ii=0; ii<d->bcm->profiles_N; ii++)
+            if (   z_index == d->bcm->profiles_indices[2*ii]
+                && M_index == d->bcm->profiles_indices[2*ii+1])
+            {
+                do_it = ii;
+                break;
+            }
 
-        int Npoints = 1000;
-        double *r = malloc(Npoints * sizeof(double));
-        double *bg = malloc(Npoints * sizeof(double));
-        double *cg = malloc(Npoints * sizeof(double));
-        double *eg = malloc(Npoints * sizeof(double));
-        double *dm = malloc(Npoints * sizeof(double));
-        double *xi = malloc(Npoints * sizeof(double));
-        double *xiprime = malloc(Npoints * sizeof(double));
-        logspace(Npoints, 1e-2, 1e1, r);
-        for (int ii=0; ii<Npoints; ii++)
-        {
-            double rphys = r[ii] * ws->R200c;
-            bg[ii] = rho_bg(rphys, ws);
-            cg[ii] = rho_cg(rphys, ws);
-            eg[ii] = rho_eg(rphys, ws);
-            SAFEHMPDF(rho_dm(d, rphys, ws, dm+ii));
-            SAFEGSL(gsl_interp_eval_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
-                                      r[ii], ws->dm_r_accel, xi+ii));
-            SAFEGSL(gsl_interp_eval_deriv_e(ws->dm_xi_interp, d->bcm->radii, ws->dm_xi,
-                                            r[ii], ws->dm_r_accel, xiprime+ii));
-        }
-        char buffer[256];
-        sprintf(buffer, "profiles_M%g.dat", ws->M200c);
-        savetxt(buffer, Npoints, 5, r, bg, cg, eg, dm);
-        sprintf(buffer, "xi_interp_M%g.dat", ws->M200c);
-        savetxt(buffer, Npoints, 3, r, xi, xiprime);
-        sprintf(buffer, "xi_M%g.dat", ws->M200c);
-        savetxt(buffer, d->bcm->Nradii, 2, d->bcm->radii, ws->dm_xi);
-        free(r); free(bg); free(cg); free(eg); free(dm); free(xi); free(xiprime);
+        if (do_it >= 0)
+            SAFEHMPDF(bcm_profiles_to_file(d, z_index, M_index, ws, d->bcm->profiles_fnames[do_it]));
     }
 
     ENDFCT
@@ -611,6 +603,49 @@ bcm_density_profile(hmpdf_obj *d, bcm_ws *ws, double r, double *out)
     double rho_rdm;
     SAFEHMPDF(rho_dm(d, r, ws, &rho_rdm));
     *out = rho_bary + rho_rdm;
+
+    ENDFCT
+}//}}}
+
+int
+bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *fname)
+{//{{{
+    STARTFCT
+
+    FILE *fp = fopen(fname, "w");
+    HMPDFCHECK(!fp, "failed to open file %s", fname);
+
+    // print information about the object
+    fprintf(fp, "# z=%.18e\n# M200m[Msun]=%.18e\n# R200c[Mpc]=%.18e\n\n",
+                d->n->zgrid[z_index], d->n->Mgrid[M_index], ws->R200c); 
+
+    // print header
+#ifdef ARICO20
+    fprintf(fp, "# r[Mpc], rho_bg, rho_cg, rho_rg, rho_eg, rho_dm [Msun/Mpc^3]\n");
+#else
+    fprintf(fp, "# r[Mpc], rho_bg, rho_cg, rho_eg, rho_dm [Msun/Mpc^3]\n");
+#endif
+
+    // now print the profiles
+    for (int ii=0; ii<d->bcm->profiles_Nr; ii++)
+    {
+        double r = ws->R200c * d->bcm->profiles_r[ii];
+        double bg = rho_bg(r, ws);
+        double cg = rho_cg(r, ws);
+#ifdef ARICO20
+        double rg = rho_rg(r, ws);
+#endif
+        double eg = rho_eg(r, ws);
+        double dm;
+        SAFEHMPDF(rho_dm(d, r, ws, &dm));
+#ifdef ARICO20
+        fprintf(fp, "%.18e %.18e %.18e %.18e %.18e %.18e\n", r, bg, cg, rg, eg, dm);
+#else
+        fprintf(fp, "%.18e %.18e %.18e %.18e %.18e\n", r, bg, cg, eg, dm);
+#endif
+    }
+
+    fclose(fp);
 
     ENDFCT
 }//}}}

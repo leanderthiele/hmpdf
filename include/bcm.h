@@ -62,6 +62,17 @@ typedef struct//{{{
     double rmin, rmax; // in units of R200c
     double *radii; // where xi(r) will be evaluated
 
+    // for printing profiles to file
+    int profiles_N;
+    char **profiles_fnames;
+    double *profiles_where;
+    int profiles_Nr;
+    double *profiles_r;
+
+    // populated later -- contains the redshift, mass indices closest to requested
+    // in the format [z_idx1, M_idx1, z_idx2, M_idx2, ...]
+    int *profiles_indices;
+
     bcm_ws **ws; // one for each thread
                  // probably want to have these somewhat separate in memory to avoid false sharing
 }//}}}
@@ -80,6 +91,8 @@ int bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws
 int bcm_delete_ws(bcm_ws *ws);
 
 int bcm_density_profile(hmpdf_obj *d, bcm_ws *ws, double r, double *out);
+
+int bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *fname);
 
 
 
