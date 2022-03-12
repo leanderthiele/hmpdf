@@ -109,6 +109,7 @@ init_bcm(hmpdf_obj *d)
         {
             double ztarg = d->bcm->profiles_where[2*ii];
             double Mtarg = d->bcm->profiles_where[2*ii+1] / d->c->h;
+
             d->bcm->profiles_indices[2*ii] = find_closest(d->n->Nz, d->n->zgrid, ztarg);
             d->bcm->profiles_indices[2*ii+1] = find_closest(d->n->NM, d->n->Mgrid, Mtarg);
         }
@@ -496,7 +497,7 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     f_dm = 1.0 - d->c->Ob_0 / d->c->Om_0;
 
     f_cg = f_cg_fit(d, z_index, ws->M200c);
-    f_sg = f_cg; // according to Acori, this is OK and shouldn't matter much -- TODO test variations here
+    f_sg = f_cg; // according to Arico, this is OK and shouldn't matter much -- TODO test variations here
 
     f_hg = ( d->c->Ob_0/d->c->Om_0 - f_cg - f_sg )
            / ( 1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
@@ -604,6 +605,14 @@ bcm_density_profile(hmpdf_obj *d, bcm_ws *ws, double r, double *out)
     SAFEHMPDF(rho_dm(d, r, ws, &rho_rdm));
     *out = rho_bary + rho_rdm;
 
+    // do the DM particles that have not been translated (outside R200c)
+    // FIXME
+    if (r > ws->R200c)
+    {
+        double x = r / ws->rs;
+        *out += ws->dm_f * ws->rhos / (x * gsl_pow_2(1.0 + x));
+    }
+
     ENDFCT
 }//}}}
 
@@ -616,8 +625,8 @@ bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *f
     HMPDFCHECK(!fp, "failed to open file %s", fname);
 
     // print information about the object
-    fprintf(fp, "# z=%.18e\n# M200m[Msun]=%.18e\n# R200c[Mpc]=%.18e\n\n",
-                d->n->zgrid[z_index], d->n->Mgrid[M_index], ws->R200c); 
+    fprintf(fp, "# z=%.18e\n# M200m[Msun/h]=%.18e\n# R200c[Mpc]=%.18e\n\n",
+                d->n->zgrid[z_index], d->n->Mgrid[M_index]*d->c->h, ws->R200c); 
 
     // print header
 #ifdef ARICO20
@@ -638,6 +647,14 @@ bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *f
         double eg = rho_eg(r, ws);
         double dm;
         SAFEHMPDF(rho_dm(d, r, ws, &dm));
+
+        // add the undisturbed NFW component
+        if (r > ws->R200c)
+        {
+            double x = r / ws->rs;
+            dm += ws->dm_f * ws->rhos / (x * gsl_pow_2(1.0 + x));
+        }
+
 #ifdef ARICO20
         fprintf(fp, "%.18e %.18e %.18e %.18e %.18e %.18e\n", r, bg, cg, rg, eg, dm);
 #else

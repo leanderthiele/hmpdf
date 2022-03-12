@@ -57,8 +57,14 @@ find_closest(int N, double *x, double target)
     double temp = HUGE_VAL;
     int out;
     for (int ii=0; ii<N; ii++)
-        if (fabs(x[ii] - target) < temp)
+    {
+        double diff = fabs(x[ii] - target);
+        if (diff < temp)
+        {
             out = ii;
+            temp = diff;
+        }
+    }
     return out;
 }//}}}
 
