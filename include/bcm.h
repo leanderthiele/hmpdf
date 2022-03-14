@@ -54,6 +54,8 @@ typedef struct//{{{
 
     // parameterization according to 2009.14225
     // { eta, M_c, beta, theta_inn, theta_out, M_inn, M_r, M1_z0_cen, }
+    int Arico20_Nz;
+    double *Arico20_z;
     double *Arico20_params;
 
     // for the relaxed dark matter profile interpolation

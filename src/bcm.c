@@ -149,6 +149,51 @@ bcm_delete_ws(bcm_ws *ws)
     ENDFCT
 }//}}}
 
+inline static double
+interpolate_param(hmpdf_obj *d, int idx, double ztarg, int logarithmic)
+// do the redshift interpolation of the Arico20 parameters
+{//{{{
+    int Nz = d->bcm->Arico20_Nz;
+    double *z = d->bcm->Arico20_z;
+    double *params = d->bcm->Arico20_params;
+
+    // trivial cases
+    if (Nz==1 || ztarg<z[0])
+        return params[idx];
+
+    if (ztarg > z[Nz-1])
+        return params[(Nz-1)*hmpdf_Arico20_Nparams + idx];
+
+    double zlo, zhi, plo, phi;
+    int found = 0;
+    for (int ii=0; ii<Nz-1; ii++)
+        if (ztarg > z[ii] && ztarg < z[ii+1])
+        {
+            zlo = z[ii];
+            zhi = z[ii+1]; 
+            plo = params[ii*hmpdf_Arico20_Nparams + idx];
+            phi = params[(ii+1)*hmpdf_Arico20_Nparams + idx];
+            found = 1;
+            break;
+        }
+
+    if (!found)
+        return NAN;
+    
+    if (logarithmic)
+    {
+        plo = log(plo);
+        phi = log(phi);
+    }
+
+    double out = plo + (phi - plo) * (ztarg - zlo) / (zhi - zlo);
+
+    if (logarithmic)
+        out = exp(out);
+
+    return out;
+}//}}}
+
 #ifndef ARICO20
 inline static double
 rho_bg_g0(double x, bcm_ws *ws)
@@ -320,7 +365,7 @@ M_rg(double r, bcm_ws *ws)
            * ( 2.0*ws->rg_mu*ws->rg_sigma*exp(-gsl_pow_2(0.5*ws->rg_mu/ws->rg_sigma))
               -2.0*(rout+ws->rg_mu)*ws->rg_sigma*exp(-gsl_pow_2(0.5*(rout-ws->rg_mu)/ws->rg_sigma))
               +M_SQRTPI*(gsl_pow_2(ws->rg_mu)+2.0*gsl_pow_2(ws->rg_sigma))
-               *(erf(0.5*(rout-ws->rg_mu)/ws->rg_sigma)+sf_erf(0.5*ws->rg_mu/ws->rg_sigma)) );
+               *(erf(0.5*(rout-ws->rg_mu)/ws->rg_sigma)+erf(0.5*ws->rg_mu/ws->rg_sigma)) );
 }//}}}
 #endif // ifdef ARICO20
 
@@ -404,8 +449,10 @@ f_cg_fit(hmpdf_obj *d, int z_index, double M200c)
     double z = d->n->zgrid[z_index];
     double a = 1.0 / (1.0+z);
     double nu = exp( -gsl_pow_2(2.0*a) );
-    double log10_M1 = d->bcm->Arico20_params[hmpdf_Arico20_M_1_z0_cen]
-                      + nu * (-1.793*(a-1.0)-0.251*z);
+
+    double log10M1z0cen = interpolate_param(d, hmpdf_Arico20_M_1_z0_cen, z, 0);
+
+    double log10_M1 = log10M1z0cen + nu * (-1.793*(a-1.0)-0.251*z);
     double log10_eps = -1.6382721639824072 + nu*-0.006*(a-1.0) + -0.119*(a-1.0);
     double alpha = -1.779 + nu*0.731*(a-1.0);
     double delta = 4.394 + nu*(2.608*(a-1.0) + -0.043*z);
@@ -490,6 +537,19 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &(ws->M200c), &(ws->R200c), &c200c));
     SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &(ws->rhos), &(ws->rs)));
 
+    // compute Arico parameters at our redshift
+    double z = d->n->zgrid[z_index];
+    double M_c_this_z = interpolate_param(d, hmpdf_Arico20_M_c, z, 1);
+    double beta_this_z = interpolate_param(d, hmpdf_Arico20_beta, z, 0);
+    double eta_this_z = interpolate_param(d, hmpdf_Arico20_eta, z, 0);
+
+#ifdef ARICO20
+    double M_r_this_z = interpolate_param(d, hmpdf_Arico20_M_r, z, 1);
+    double theta_inn_this_z = interpolate_param(d, hmpdf_Arico20_theta_inn, z, 0);
+    double theta_out_this_z = interpolate_param(d, hmpdf_Arico20_theta_out, z, 0);
+    double M_inn_this_z = interpolate_param(d, hmpdf_Arico20_M_inn, z, 1);
+#endif
+
     // compute the mass fractions
 #ifdef ARICO20
     double f_dm, f_cg, f_sg, f_hg, f_rg, f_bg, f_eg;
@@ -500,13 +560,11 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     f_sg = f_cg; // according to Arico, this is OK and shouldn't matter much -- TODO test variations here
 
     f_hg = ( d->c->Ob_0/d->c->Om_0 - f_cg - f_sg )
-           / ( 1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
-                         d->bcm->Arico20_params[hmpdf_Arico20_beta]) );
+           / ( 1.0 + pow(M_c_this_z/ws->M200c, beta_this_z) );
 
     static const double beta_r = 2.0;
-    f_rg = f_hg * pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
-                      d->bcm->Arico20_params[hmpdf_Arico20_beta])
-                / ( 1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_r]/ws->M200c, beta_r) );
+    f_rg = f_hg * pow(M_c_this_z/ws->M200c, beta_this_z)
+                / ( 1.0 + pow(M_r_this_z/ws->M200c, beta_r) );
 
     f_bg = f_hg - f_rg;
 
@@ -519,8 +577,7 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     f_cg = f_cg_fit(d, z_index, ws->M200c);
 
     f_bg = (d->c->Ob_0/d->c->Om_0 - f_cg)
-           / (1.0 + pow(d->bcm->Arico20_params[hmpdf_Arico20_M_c]/ws->M200c,
-                        d->bcm->Arico20_params[hmpdf_Arico20_beta]) );
+           / (1.0 + pow(M_c_this_z/ws->M200c, beta_this_z) );
 
     f_eg = d->c->Ob_0/d->c->Om_0 - f_cg - f_bg;
 #endif
@@ -532,9 +589,9 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
 
 #ifdef ARICO20
     ws->bg_y0 = 1.0;
-    ws->bg_r_inn = d->bcm->Arico20_params[hmpdf_Arico20_theta_inn]*ws->R200c;
-    ws->bg_r_out = d->bcm->Arico20_params[hmpdf_Arico20_theta_out]*ws->R200c;
-    ws->bg_beta_i = 3.0 - pow(d->bcm->Arico20_params[hmpdf_Arico20_M_inn]/ws->M200c, 0.31);
+    ws->bg_r_inn = theta_inn_this_z * ws->R200c;
+    ws->bg_r_out = theta_out_this_z * ws->R200c;
+    ws->bg_beta_i = 3.0 - pow(M_inn_this_z/ws->M200c, 0.31);
     double m_bg;
     SAFEHMPDF(M_bg(ws->R200c, ws, -1, &m_bg));
     ws->bg_y0 = f_bg * ws->M200c / m_bg;
@@ -567,7 +624,7 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
 #endif
 
     double resc = 0.5 * 10.0 * M_SQRT2 * ws->R200c;
-    ws->eg_rej = d->bcm->Arico20_params[hmpdf_Arico20_eta] * 0.75 * resc;
+    ws->eg_rej = eta_this_z * 0.75 * resc;
 
     // compute the dark matter relaxation
     SAFEHMPDF(interpolate_xi(d, ws));
@@ -606,7 +663,6 @@ bcm_density_profile(hmpdf_obj *d, bcm_ws *ws, double r, double *out)
     *out = rho_bary + rho_rdm;
 
     // do the DM particles that have not been translated (outside R200c)
-    // FIXME
     if (r > ws->R200c)
     {
         double x = r / ws->rs;

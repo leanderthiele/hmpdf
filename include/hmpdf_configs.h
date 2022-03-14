@@ -64,6 +64,7 @@ typedef enum
     hmpdf_Arico20_M_inn, /*!<.*/
     hmpdf_Arico20_M_r, /*!<.*/
 #endif
+    hmpdf_Arico20_Nparams, /*!<. Internal use only. */
 } hmpdf_Arico20_params_e;
 
 /*! Options to hmpdf_init().
@@ -295,10 +296,22 @@ typedef enum
                              *   \par
                              *   Type: void *. Default: None.
                              */
+    hmpdf_Arico20_Nz, /*!< The number of parameter samples (in redshift) for the BCM.
+                       *   The code interpolates in redshift between the ones that are given.
+                       *   \par
+                       *   Type: int. Default: 1.
+                       */
+    hmpdf_Arico20_z, /*!< The redshifts where the parameter values are given.
+                      *   Must be in increasing order.
+                      *   Does not need to be passed if Nz==1.
+                      *   \par
+                      *   Type: double *. Default: None.
+                      */
     hmpdf_Arico20_params, /*!< The parameters for the Arico+2020 BCM.
                            *   If passed, the convergence profiles will be computed using the BCM.
                            *   Only applicable if computing the kappa PDF.
                            *   The ordering is specified by #hmpdf_Arico20_params_e.
+                           *   Each redshift corresponds to a contiguous block in the array.
                            *   \par
                            *   Type: double *. Default: None.
                            */

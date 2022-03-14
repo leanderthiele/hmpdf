@@ -109,7 +109,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  hmpdf_conc_resc_f conc_resc; void *conc_resc_params;
                  hmpdf_mass_cuts_f mass_cuts; void *mass_cuts_params;
                  hmpdf_bias_resc_f bias_resc; void *bias_resc_params;
-                 double *Arico20_params;
+                 int Arico20_Nz; double *Arico20_z; double *Arico20_params;
                  int profiles_N; char **profiles_fnames; double *profiles_where; int profiles_Nr; double *profiles_r;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;

@@ -233,6 +233,10 @@ init_params(hmpdf_obj *d, param *p)
            d->h->bias_resc, br_type, def.bias_resc);
     INIT_P(hmpdf_bias_resc_params,
            d->h->bias_resc_params, vptr_type, def.bias_resc_params);
+    INIT_P(hmpdf_Arico20_Nz,
+           d->bcm->Arico20_Nz, int_type, def.Arico20_Nz);
+    INIT_P(hmpdf_Arico20_z,
+           d->bcm->Arico20_z, dptr_type, def.Arico20_z);
     INIT_P(hmpdf_Arico20_params,
            d->bcm->Arico20_params, dptr_type, def.Arico20_params);
     INIT_P(hmpdf_profiles_N,
