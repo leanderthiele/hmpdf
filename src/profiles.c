@@ -213,15 +213,11 @@ fix_endpoints(int N, double *x, double *y)
 }//}}}
 
 static int
-kappa_profile(hmpdf_obj *d, int z_index, int M_index,
-              double mass_resc,
-              double theta_out, double Rout, double *p)
+kappa_profile_1(hmpdf_obj *d, int z_index, double theta_out, double Rout,
+                double rhos, double rs, double *p)
+// *adds* to the profile, need to zero before passing
 {//{{{
     STARTFCT
-
-    // find the NFW parameters
-    double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &rhos, &rs));
 
     // fill the profile
     for (int ii=0; ii<d->p->Ntheta; ii++)
@@ -232,27 +228,69 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
 
         if (Rproj > rs)
         {
-            p[ii] = 2.0*rhos*gsl_pow_3(rs)/(2.0*(Rout+rs)*pow((Rproj-rs)*(Rproj+rs),1.5))
-                            *(+M_PI*rs*(Rout+rs)
-                              +2.0*sqrt((Rout-Rproj)*(Rout+Rproj)*(Rproj-rs)*(Rproj+rs))
-                              -2.0*rs*(Rout+rs)*atan2(Rproj*Rproj+Rout*rs,                
-                                                      -sqrt((Rout-Rproj)*(Rout+Rproj)          
-                                                            *(Rproj-rs)*(Rproj+rs))));
+            p[ii] += 2.0*rhos*gsl_pow_3(rs)/(2.0*(Rout+rs)*pow((Rproj-rs)*(Rproj+rs),1.5))
+                             *(+M_PI*rs*(Rout+rs)
+                               +2.0*sqrt((Rout-Rproj)*(Rout+Rproj)*(Rproj-rs)*(Rproj+rs))
+                               -2.0*rs*(Rout+rs)*atan2(Rproj*Rproj+Rout*rs,                
+                                                       -sqrt((Rout-Rproj)*(Rout+Rproj)          
+                                                             *(Rproj-rs)*(Rproj+rs))));
         }
         else if (Rproj < rs)
         {
-            p[ii] = 2.0*rhos*gsl_pow_3(rs)/((Rout+rs)*pow(rs*rs-Rproj*Rproj,1.5))
-                            *(-sqrt((Rout-Rproj)*(Rout+Rproj)*(rs*rs-Rproj*Rproj))
-                              +rs*(Rout+rs)*log(Rproj*(Rout+rs)/(Rproj*Rproj+Rout*rs
-                                                                 -sqrt((Rout-Rproj)*(Rout+Rproj)
-                                                                       *(rs*rs-Rproj*Rproj)))));
+            p[ii] += 2.0*rhos*gsl_pow_3(rs)/((Rout+rs)*pow(rs*rs-Rproj*Rproj,1.5))
+                             *(-sqrt((Rout-Rproj)*(Rout+Rproj)*(rs*rs-Rproj*Rproj))
+                               +rs*(Rout+rs)*log(Rproj*(Rout+rs)/(Rproj*Rproj+Rout*rs
+                                                                  -sqrt((Rout-Rproj)*(Rout+Rproj)
+                                                                        *(rs*rs-Rproj*Rproj)))));
         }
         else
         {
-            p[ii] = 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
+            p[ii] += 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
         p[ii] -= 2.0*lout*d->c->rho_m[z_index];
         p[ii] /= d->c->Scrit[z_index];
+    }
+
+    ENDFCT
+}//}}}
+
+static int
+kappa_profile(hmpdf_obj *d, int z_index, int M_index,
+              double mass_resc,
+              double theta_out, double Rout, double *p)
+{//{{{
+    STARTFCT
+
+    // zero the profile, since the auxiliary function only adds
+    zero_real(d->p->Ntheta, p);
+
+    if (d->h->DM_conc_params == NULL)
+    // no split into baryonic / DM components
+    {
+        // find the NFW parameters
+        double rhos, rs;
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, NULL, &rhos, &rs));
+
+        // add to the profile
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos, rs, p));
+    }
+    else
+    // we have a split into baryonic and dark matter components
+    {
+        // find the NFW parameters
+        double rhos_DM, rs_DM, rhos_bar, rs_bar;
+
+        // assume baryon fraction matches background
+        double fbar = d->c->Ob_0 / d->c->Om_0;
+
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc * (1.0-fbar),
+                                  d->h->DM_conc_params, &rhos_DM, &rs_DM));
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc * fbar,
+                                  d->h->bar_conc_params, &rhos_bar, &rs_bar));
+
+        // add both components to the profile
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_DM, rs_DM, p));
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_bar, rs_bar, p));
     }
 
     ENDFCT

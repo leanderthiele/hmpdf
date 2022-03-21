@@ -249,6 +249,10 @@ init_params(hmpdf_obj *d, param *p)
            d->bcm->profiles_Nr, int_type, def.profiles_Nr);
     INIT_P(hmpdf_profiles_r,
            d->bcm->profiles_r, dptr_type, def.profiles_r);
+    INIT_P(hmpdf_DM_conc_params,
+           d->h->DM_conc_params, dptr_type, def.DM_conc_params);
+    INIT_P(hmpdf_bar_conc_params,
+           d->h->bar_conc_params, dptr_type, def.bar_conc_params);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,
@@ -504,6 +508,15 @@ sanity_checks(hmpdf_obj *d)
                "hmpdf_M_min must be less than hmpdf_M_max.");
     HMPDFCHECK(d->bcm->Arico20_params != NULL && d->p->stype != hmpdf_kappa,
                "hmpdf_Arico20_params only works for signal type hmpdf_kappa");
+
+    HMPDFCHECK((d->h->DM_conc_params != NULL && d->h->bar_conc_params == NULL)
+               || (d->h->DM_conc_params == NULL && d->h->bar_conc_params != NULL),
+               "either none or both of hmpdf_DM_conc_params and hmpdf_bar_conc_params"
+               "must be passed");
+    HMPDFCHECK(d->h->DM_conc_params != NULL && d->bcm->Arico20_params != NULL,
+               "either use BCM or split concentration model");
+    HMPDFCHECK(d->h->DM_conc_params != NULL && d->p->stype != hmpdf_kappa,
+               "tSZ does not use the split concentration model");
 
     ENDFCT
 }//}}}

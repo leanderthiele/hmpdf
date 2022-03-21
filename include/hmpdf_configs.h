@@ -340,6 +340,20 @@ typedef enum
                        *  \par
                        *  Type: double *. Default: None.
                        */
+    hmpdf_DM_conc_params, /*! The concentration parameters for the DM component.
+                           *  If passed, also those for the baryonic component must be given.
+                           *  Same format as #hmpdf_Duffy08_conc_params.
+                           *  The parameterization is in terms of the hydro mass.
+                           *  \par
+                           *  Type: double *. Default: None.
+                           */
+    hmpdf_bar_conc_params, /*! The concentration parameters for the baryonic component.
+                            *  If passed, also those for the DM component must be given.
+                            *  Same format as #hmpdf_Duffy08_conc_params.
+                            *  The parameterization is in terms of the hydro mass.
+                            *  \par
+                            *  Type: double *. Default: None.
+                            */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -403,8 +417,10 @@ typedef enum
     hmpdf_Duffy08_conc_params, /*!< Fit parameters in the
                                 *   <a href="https://arxiv.org/abs/0804.2486">Duffy+2008</a>
                                 *   concentration model.
+                                *   Still relevant even if #hmpdf_DM_conc_params and #hmpdf_bar_conc_params
+                                *   are passed (then it is used for mass conversions).
                                 *   \par
-                                *   Type: double[9]. Default: see src/configs.c.
+                                *   Type: double *. Default: see src/configs.c.
                                 *   \remark in the python wrapper, pass a 1d numpy array
                                 */
     hmpdf_Tinker10_hmf_params, /*!< Fit parameters in the

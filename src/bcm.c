@@ -535,7 +535,9 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     // first compute basic NFW properties
     double c200c;
     SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &(ws->M200c), &(ws->R200c), &c200c));
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &(ws->rhos), &(ws->rs)));
+
+    // use the default concentration model
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, NULL, &(ws->rhos), &(ws->rs)));
 
     // compute Arico parameters at our redshift
     double z = d->n->zgrid[z_index];
@@ -569,6 +571,9 @@ bcm_init_ws(hmpdf_obj *d, int z_index, int M_index, double mass_resc, bcm_ws *ws
     f_bg = f_hg - f_rg;
 
     f_eg = d->c->Ob_0/d->c->Om_0 - f_cg - f_sg - f_hg;
+
+    // this is a bit of a hack -- Arico+20 model the satellites in exactly the same way as the dark matter
+    f_dm += f_sg;
 #else
     double f_dm, f_cg, f_bg, f_eg;
 

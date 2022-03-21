@@ -111,6 +111,7 @@ struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  hmpdf_bias_resc_f bias_resc; void *bias_resc_params;
                  int Arico20_Nz; double *Arico20_z; double *Arico20_params;
                  int profiles_N; char **profiles_fnames; double *profiles_where; int profiles_Nr; double *profiles_r;
+                 double *DM_conc_params; double *bar_conc_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;

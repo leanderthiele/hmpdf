@@ -123,36 +123,42 @@ MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef, double *out)
 }//}}}
 
 static inline double
-c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
+c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef, double *conc_params)
+// for conc_params, can pass NULL to use the default d->h->Duffy08_params
 {//{{{
     // convert to Msun/h
     M *= d->c->h / 2e12;
-    const double *params = d->h->Duffy08_params + (int)(mdef)*3;
+
+    if (conc_params == NULL)
+        conc_params = d->h->Duffy08_params;
+
+    // take the correct mass definition
+    conc_params += (int)(mdef) * 3;
 
     switch (mdef)
     {
         // this case is special, since it has more parameters
         //     (the other definitions are not used for important things)
         case (hmpdf_mdef_m) :
-            return params[0]
-                   * pow(M,     params[1])
-                   * pow(1.0+z, params[2])
-                   * exp( params[3] * gsl_pow_2(z-params[4])
-                                    * gsl_pow_2(log(M) - params[5]) );
+            return conc_params[0]
+                   * pow(M,     conc_params[1])
+                   * pow(1.0+z, conc_params[2])
+                   * exp( conc_params[3] * gsl_pow_2(z-conc_params[4])
+                                    * gsl_pow_2(log(M) - conc_params[5]) );
         // use the Duffy08 parameterization
         default :
-            return params[0]
-                   * pow(M,      params[1])
-                   * pow(1.0+z,  params[2]);
+            return conc_params[0]
+                   * pow(M,      conc_params[1])
+                   * pow(1.0+z,  conc_params[2]);
     }
 }//}}}
 static inline double
 c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
-          double mass_resc)
+          double mass_resc, double *conc_params)
 {//{{{
     double out = c_Duffy08_1(d, d->n->zgrid[z_index],
                              mass_resc * d->n->Mgrid[M_index],
-                             MDEF_GLOBAL);
+                             MDEF_GLOBAL, conc_params);
 
     if (d->h->conc_resc != NULL)
     {
@@ -166,14 +172,14 @@ c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
 
 int
 NFW_fundamental(hmpdf_obj *d, int z_index, int M_index,
-                double mass_resc,
+                double mass_resc, double *conc_params,
                 double *rhos, double *rs)
 // returns rhos via function call and rs via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
     STARTFCT
 
-    double c = c_Duffy08(d, z_index, M_index, mass_resc);
+    double c = c_Duffy08(d, z_index, M_index, mass_resc, conc_params);
     SAFEHMPDF(RofM(d, z_index, M_index, rs, mass_resc));
     *rs /= c;
     *rhos = mass_resc * d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
@@ -238,7 +244,10 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     STARTFCT
 
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, &rhos, &rs));
+
+    // use default concentration model here
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, NULL, &rhos, &rs));
+
     double dt;
     SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt));
     SAFEHMPDF(c_of_y(d, dt/rhos, c));
