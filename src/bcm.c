@@ -325,8 +325,14 @@ inline static double
 rho_cg(double r, bcm_ws *ws)
 // central galaxy density profile
 {//{{{
-    return ws->cg_y0 / (ws->cg_Rh * gsl_pow_2(r))
-           * exp( -gsl_pow_2(0.5 * r / ws->cg_Rh) );
+    double pref = ws->cg_y0 / (ws->cg_Rh * gsl_pow_2(r));
+    double arg = gsl_pow_2(0.5 * r / ws->cg_Rh);
+    
+    // avoid underflow
+    if (arg > log(fmin(1.0, pref)) - log((double)FLT_RADIX) * (double)DBL_MIN_EXP - 2.0)
+        return 0;
+
+    return pref * exp( -arg );
 }//}}}
 
 inline static double
@@ -350,9 +356,15 @@ rho_rg(double r, bcm_ws *ws)
 
     if (r > ws->R200c)
         return 0.0;
+
+    double pref1 = ws->rg_y0 * pref / ws->rg_sigma;
+    double arg = gsl_pow_2(0.5 * (r-ws->rg_mu) / ws->rg_sigma);
+
+    // avoid underflow
+    if (arg > log(fmin(1.0, pref1)) -log((double)FLT_RADIX) * (double)DBL_MIN_EXP - 2.0)
+        return 0.0;
     
-    return ws->rg_y0 * pref / ws->rg_sigma
-           * exp( -gsl_pow_2(0.5 * (r-ws->rg_mu) / ws->rg_sigma) );
+    return pref1 * exp( -arg );
 }//}}}
 
 inline static double

@@ -224,7 +224,6 @@ kappa_profile_1(hmpdf_obj *d, int z_index, double theta_out, double Rout,
     {
         double t = d->p->decr_tgrid[ii] * theta_out;
         double Rproj = tan(t) * d->c->angular_diameter[z_index];
-        double lout = sqrt(Rout*Rout - Rproj*Rproj);
 
         if (Rproj > rs)
         {
@@ -247,8 +246,6 @@ kappa_profile_1(hmpdf_obj *d, int z_index, double theta_out, double Rout,
         {
             p[ii] += 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
-        p[ii] -= 2.0*lout*d->c->rho_m[z_index];
-        p[ii] /= d->c->Scrit[z_index];
     }
 
     ENDFCT
@@ -280,17 +277,30 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
         // find the NFW parameters
         double rhos_DM, rs_DM, rhos_bar, rs_bar;
 
-        // assume baryon fraction matches background
-        double fbar = d->c->Ob_0 / d->c->Om_0;
-
-        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc * (1.0-fbar),
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc,
                                   d->h->DM_conc_params, &rhos_DM, &rs_DM));
-        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc * fbar,
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc,
                                   d->h->bar_conc_params, &rhos_bar, &rs_bar));
+
+        // assume baryon fraction matches background
+        double fbar = 0.7 * d->c->Ob_0 / d->c->Om_0;
+        rhos_DM *= 1.0 - fbar;
+        rhos_bar *= fbar;
 
         // add both components to the profile
         SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_DM, rs_DM, p));
         SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_bar, rs_bar, p));
+    }
+
+    // perform final normalization
+    for (int ii=0; ii<d->p->Ntheta; ii++)
+    {
+        double t = d->p->decr_tgrid[ii] * theta_out;
+        double Rproj = tan(t) * d->c->angular_diameter[z_index];
+        double lout = sqrt(Rout*Rout - Rproj*Rproj);
+
+        p[ii] -= 2.0 * lout * d->c->rho_m[z_index];
+        p[ii] /= d->c->Scrit[z_index];
     }
 
     ENDFCT
@@ -525,9 +535,6 @@ create_profiles(hmpdf_obj *d)
     #endif
     for (int z_index=0; z_index<d->n->Nz; z_index++)
     {
-        // FIXME
-        printf("create_profiles: %d / %d\n", z_index+1, d->n->Nz);
-
         CONTINUE_IF_ERR
         SAFEALLOC_NORETURN(d->p->profiles[z_index], malloc(d->n->NM * sizeof(double *)));
         SETARRNULL(d->p->profiles[z_index], d->n->NM);
