@@ -241,6 +241,8 @@ init_params(hmpdf_obj *d, param *p)
            d->m->mappoisson, int_type, def.mappoisson);
     INIT_P(hmpdf_map_seed,
            d->m->mapseed, int_type, def.mapseed);
+    INIT_P_B(hmpdf_map_usefrac,
+             d->m->usefrac, dbl_type, def.map_usefrac);
 
     HMPDFCHECK(ctr != hmpdf_end_configs, "Not all params filled, ctr = %d.", ctr);
 

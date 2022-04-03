@@ -353,6 +353,13 @@ typedef enum
                      *  \par
                      *  Type: int. Default: None.
                      */
+    hmpdf_map_usefrac, /*! Use only this fraction of the generated map when computing a histogram.
+                        *  This option in useful if the maps are sufficiently small that the periodic
+                        *  boundary conditions approximation becomes a problem.
+                        *  Must be in (0, 1).
+                        *  \par
+                        *  Type: double. Default: None.
+                        */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.
                         */

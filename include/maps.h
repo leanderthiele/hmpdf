@@ -33,6 +33,7 @@ typedef struct//{{{
 
     int mappoisson;
     int mapseed;
+    double usefrac;
 
     int pxlgrid;
 

@@ -991,10 +991,17 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     SAFEALLOC(h, gsl_histogram_alloc(Nbins));
     SAFEGSL(gsl_histogram_set_ranges(h, binedges, Nbins+1));
 
+    // if requested, use only part of the map
+    long max_pix;
+    if (d->m->usefrac > 0.0)
+        max_pix = (long)round((double)(d->m->Nside) * sqrt(d->m->usefrac));
+    else
+        max_pix = d->m->Nside;
+
     // accumulate the histogram
-    for (long ii=0; ii<d->m->Nside; ii++)
+    for (long ii=0; ii<max_pix; ii++)
     {
-        for (long jj=0; jj<d->m->Nside; jj++)
+        for (long jj=0; jj<max_pix; jj++)
         {
             double val = d->m->map_real[ii*d->m->ldmap+jj];
             if (val < binedges[0] || val >= binedges[Nbins])
@@ -1009,7 +1016,7 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     }
 
     // normalize
-    SAFEGSL(gsl_histogram_scale(h, 1.0/(double)(d->m->Nside * d->m->Nside)));
+    SAFEGSL(gsl_histogram_scale(h, 1.0/(double)(max_pix * max_pix)));
 
     // write into output
     for (int ii=0; ii<Nbins; ii++)

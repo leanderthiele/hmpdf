@@ -51,7 +51,8 @@ struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .Tinker10_p=def_Tinker10_hmf_params,
                         .Battaglia12_p=def_Battaglia12_tsz_params,
                         .noise_pwr=NULL, .noise_pwr_params=NULL,
-                        .fsky={-1.0,0.0,1.0}, .pxlgrid={3,1,20}, .mappoisson=1, .mapseed=INT_MAX};
+                        .fsky={-1.0,0.0,1.0}, .pxlgrid={3,1,20}, .mappoisson=1, .mapseed=INT_MAX,
+                        .map_usefrac={-1.0,0.0,1.0} };
 
 // The following is only needed for more reliable interaction
 //     with the python wrapper
