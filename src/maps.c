@@ -458,6 +458,10 @@ do_this_bin(hmpdf_obj *d, int z_index, int M_index, map_ws *ws)
     {
         SAFEHMPDF(fill_buf(d, z_index, M_index, ws));
 
+        // FIXME this is a quick fix to deal with small HSC maps
+        if (ws->bufside >= d->m->Nside)
+            return 0;
+
         HMPDFCHECK(ws->bufside >= d->m->Nside,
                    "attempting to add a halo that is larger than the map. "
                    "You should make the map larger.");
