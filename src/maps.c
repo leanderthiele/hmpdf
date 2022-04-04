@@ -994,7 +994,7 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
     // if requested, use only part of the map
     long max_pix;
     if (d->m->usefrac > 0.0)
-        max_pix = (long)round((double)(d->m->Nside) * sqrt(d->m->usefrac));
+        max_pix = GSL_MIN(d->m->Nside, (long)round((double)(d->m->Nside) * sqrt(d->m->usefrac)));
     else
         max_pix = d->m->Nside;
 
