@@ -1034,6 +1034,70 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
 }//}}}
 
 int
+hmpdf_get_map_op_split(hmpdf_obj *d, int Nsplit, int Nbins, double binedges[Nbins+1],
+                       double op[Nsplit*Nsplit][Nbins], int new_map)
+// same as the above function, but splits the map into Nsplit * Nsplit sub-maps
+// and measures the PDF in each
+{//{{{
+    STARTFCT
+
+    HMPDFCHECK(not_monotonic(Nbins+1, binedges, 1),
+               "binedges not monotonically increasing.");
+
+    SAFEHMPDF(common_input_processing(d, new_map));
+    
+    // usefrac and this function are not compatible at the moment
+    HMPDFCHECK(d->m->usefrac > 0.0, "hmpdf_map_usefrac not compatible with hmpdf_get_map_op_split");
+
+    // the side length of each split map
+    long split_Nside = d->m->Nside / Nsplit;
+
+    // accumulate the histograms
+    int nn = 0; // index counting the PDF
+    for (int ii=0; ii<Nsplit; ii++)
+    {
+        for (int jj=0; jj<Nsplit; jj++)
+        {
+            // prepare a histogram
+            gsl_histogram *h;
+            SAFEALLOC(h, gsl_histogram_alloc(Nbins));
+            SAFEGSL(gsl_histogram_set_ranges(h, binedges, Nbins+1));
+
+            for (long kk=ii*split_Nside; kk<(ii+1)*split_Nside; kk++)
+            {
+                for (long ll=jj*split_Nside; ll<(jj+1)*split_Nside; ll++)
+                {
+                    double val = d->m->map_real[kk*d->m->ldmap+ll];
+                    if (val < binedges[0] || val >= binedges[Nbins])
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        SAFEGSL(gsl_histogram_increment(h, val));
+                    }
+                }
+            }
+
+            // normalize
+            SAFEGSL(gsl_histogram_scale(h, 1.0/(double)(split_Nside * split_Nside)));
+
+            // write into output
+            for (int kk=0; kk<Nbins; kk++)
+            {
+                op[nn][kk] = gsl_histogram_get(h, kk);
+            }
+
+            gsl_histogram_free(h);
+
+            nn++;
+        }
+    }
+
+    ENDFCT
+}//}}}
+
+int
 perform_map_FT(hmpdf_obj *d)
 // creates the fourier space representation of the map
 //     in the 0th workspace (which is needed as buffer)

@@ -20,6 +20,26 @@ int hmpdf_get_map_op(hmpdf_obj *d,
                      double op[Nbins],
                      int new_map);
 
+/*! Returns histograms of simplified simulation (map),
+ *  split into Nsplit * Nsplit sub-maps.
+ *  Useful for some efficiency reasons.
+ *
+ *  \param[in,out] d    hmpdf_init() must have been called on d
+ *  \param[in] Nsplit   map will be split into Nsplit * Nsplit equal-size sub-maps
+ *  \param[in] Nbins    number of bins the histogram will be binned into
+ *  \param[in] binedges monotonically increasing array of length Nbins+1
+ *  \param[out] op      the binned histogram, normalized
+ *  \param[in] new_map  if set to non-zero, the simplified simulation will
+ *                      be rerun even if a map has already been generated
+ *  \return error code
+ */
+int hmpdf_get_map_op_split(hmpdf_obj *d,
+                           int Nsplit,
+                           int Nbins,
+                           double binedges[Nbins+1],
+                           double op[Nsplit*Nsplit][Nbins],
+                           int new_map);
+
 /*! Returns the power spectrum of a simplified simulation (map).
  *
  *  \param[in,out] d    hmpdf_init() must have been called on d
