@@ -63,7 +63,7 @@ maps_t;
 int null_maps(hmpdf_obj *d);
 int reset_maps(hmpdf_obj *d);
 int hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nbins], int new_map);
-int hmpdf_get_map_op_split(hmpdf_obj *d, int Nsplit, int Nbins, double binedges[Nbins+1], double op[Nsplit*Nsplit][Nbins], int new_map);
+int hmpdf_get_map_op_split(hmpdf_obj *d, int Nsplit, int Nbins, double binedges[Nbins+1], double op[Nsplit*Nsplit*Nbins], int new_map);
 int hmpdf_get_map_ps(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double ps[Nbins], int new_map);
 int hmpdf_get_map(hmpdf_obj *d, double **map, long *Nside, int new_map);
 

@@ -1035,7 +1035,7 @@ hmpdf_get_map_op(hmpdf_obj *d, int Nbins, double binedges[Nbins+1], double op[Nb
 
 int
 hmpdf_get_map_op_split(hmpdf_obj *d, int Nsplit, int Nbins, double binedges[Nbins+1],
-                       double op[Nsplit*Nsplit][Nbins], int new_map)
+                       double op[Nsplit*Nsplit*Nbins], int new_map)
 // same as the above function, but splits the map into Nsplit * Nsplit sub-maps
 // and measures the PDF in each
 {//{{{
@@ -1085,7 +1085,7 @@ hmpdf_get_map_op_split(hmpdf_obj *d, int Nsplit, int Nbins, double binedges[Nbin
             // write into output
             for (int kk=0; kk<Nbins; kk++)
             {
-                op[nn][kk] = gsl_histogram_get(h, kk);
+                op[nn*Nbins+kk] = gsl_histogram_get(h, kk);
             }
 
             gsl_histogram_free(h);

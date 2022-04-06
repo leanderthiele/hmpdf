@@ -37,7 +37,7 @@ int hmpdf_get_map_op_split(hmpdf_obj *d,
                            int Nsplit,
                            int Nbins,
                            double binedges[Nbins+1],
-                           double op[Nsplit*Nsplit][Nbins],
+                           double op[Nsplit*Nsplit*Nbins],
                            int new_map);
 
 /*! Returns the power spectrum of a simplified simulation (map).
