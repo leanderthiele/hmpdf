@@ -74,6 +74,13 @@ init_bcm(hmpdf_obj *d)
 
     if (d->bcm->inited_bcm) { return 0; }
 
+    // to avoid bugs
+    #ifdef ARICO20
+    HMPDFPRINT(0, "Using updated Arico+20 model\n");
+    #else
+    HMPDFPRINT(0, "WARNING: Using old Arico+20 model\n");
+    #endif
+
     HMPDFPRINT(1, "init_bcm\n");
 
     // TODO check that these settings make sense
@@ -727,6 +734,9 @@ bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *f
             double x = r / ws->rs;
             dm += ws->dm_f * ws->rhos / (x * gsl_pow_2(1.0 + x));
         }
+
+        // FIXME bug check -- look at the original NFW profile instead of the relaxed one
+        // dm = rho_nfw(r, ws);
 
 #ifdef ARICO20
         fprintf(fp, "%.18e %.18e %.18e %.18e %.18e %.18e\n", r, bg, cg, rg, eg, dm);
