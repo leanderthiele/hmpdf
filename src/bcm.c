@@ -122,6 +122,14 @@ init_bcm(hmpdf_obj *d)
         }
     }
 
+    /* FIXME for debugging */
+    #if 0
+    if (d->bcm->Arico20_params)
+        for (int ii=0; ii<d->bcm->Arico20_Nz; ++ii)
+            for (int jj=0; jj<hmpdf_Arico20_Nparams; ++jj)
+                printf("BCM z=%.4f param #%d = %.4e\n", d->bcm->Arico20_z[ii], jj, d->bcm->Arico20_params[ii*hmpdf_Arico20_Nparams+jj]);
+    #endif
+
     d->bcm->inited_bcm = 1;
 
     ENDFCT

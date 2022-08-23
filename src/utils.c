@@ -55,7 +55,7 @@ find_closest(int N, double *x, double target)
 // identify the index of the element in x that is closest to the target value
 {//{{{
     double temp = HUGE_VAL;
-    int out;
+    int out = 0; // avoid maybe-uninitialized
     for (int ii=0; ii<N; ii++)
     {
         double diff = fabs(x[ii] - target);
