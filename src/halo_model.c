@@ -143,7 +143,7 @@ c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef, double *conc_pa
         case (hmpdf_mdef_m) :
         {
             // we harden this a bit against weird outputs during MCMC sampling
-            static const double min_out=1e-2, max_out=1e3;
+            static const double min_out=CINTERP_CMIN*1.01, max_out=CINTERP_CMAX*0.99;
 
             double pref = conc_params[0]
                           * pow(M,     conc_params[1])

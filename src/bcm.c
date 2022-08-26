@@ -22,10 +22,13 @@
  *
  */
 
+// TODO
+#if 0
 #ifdef ARICO20
 #   pragma message( "Using the updated Arico BCM from 2009.14225" )
 #else
 #   pragma message( "Using the original Arico BCM from 1911.08471" )
+#endif
 #endif
 
 #ifndef M_SQRT5
