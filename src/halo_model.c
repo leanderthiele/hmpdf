@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp.h>
@@ -140,11 +141,24 @@ c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef, double *conc_pa
         // this case is special, since it has more parameters
         //     (the other definitions are not used for important things)
         case (hmpdf_mdef_m) :
-            return conc_params[0]
-                   * pow(M,     conc_params[1])
-                   * pow(1.0+z, conc_params[2])
-                   * exp( conc_params[3] * gsl_pow_2(z-conc_params[4])
-                                    * gsl_pow_2(log(M) - conc_params[5]) );
+        {
+            // we harden this a bit against weird outputs during MCMC sampling
+            static const double min_out=1e-2, max_out=1e3;
+
+            double pref = conc_params[0]
+                          * pow(M,     conc_params[1])
+                          * pow(1.0+z, conc_params[2]);
+            double arg = conc_params[3]
+                         * gsl_pow_2(z-conc_params[4])
+                         * gsl_pow_2(log(M) - conc_params[5]);
+            // avoid underflow and overflow
+            if (arg < log(fmin(1.0, pref)) + log((double)FLT_RADIX) * (double)DBL_MIN_EXP + 2.0)
+                return min_out;
+            else if (arg > -log(fmax(1.0, pref)) + log((double)FLT_RADIX) * (double)DBL_MAX_EXP - 2.0)
+                return max_out;
+            double out = pref * exp( arg );
+            return (out<min_out) ? min_out : (out>max_out) ? max_out : out;
+        }
         // use the Duffy08 parameterization
         default :
             return conc_params[0]
