@@ -26,7 +26,7 @@
 
 #define CINTERP_NC 10000
 #define CINTERP_CMIN 0.1
-#define CINTERP_CMAX 100.0
+#define CINTERP_CMAX 200.0
 #define CINTERP_TYPE interp_cspline
 
 #define PRINTERP_TYPE    interp_steffen
