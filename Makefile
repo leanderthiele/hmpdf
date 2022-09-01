@@ -1,5 +1,12 @@
-PATHTOCLASS = /home/lthiele/class_public
-PATHTOFFTW = /usr/local/fftw/gcc/3.3.4
+# make these work for both my remotes and my local
+user=$(shell whoami)
+ifeq ($(user),leander)
+  PATHTOCLASS = /usr/local/class_public-3.0.1
+  PATHTOFFTW = /usr/local/fftw-3.3.9
+else
+  PATHTOCLASS = /home/lthiele/class_public
+  PATHTOFFTW = /usr/local/fftw/gcc/3.3.4
+endif
 
 CC = gcc
 ARCHIVE = libhmpdf.a

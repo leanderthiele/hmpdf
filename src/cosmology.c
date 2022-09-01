@@ -88,7 +88,7 @@ typedef struct
     int status;
 } dndz_integr_params;
 
-static int
+static inline int
 dndz_integr_kernel(double z, dndz_integr_params *p, double *out)
 {
     STARTFCT
@@ -111,7 +111,7 @@ dndz_integr_f(double z, void *params)
 {
     dndz_integr_params *p = (dndz_integr_params *)params;
 
-    double out;
+    double out = 0.0; // to avoid maybe-uninitialized
     p->status = dndz_integr_kernel(z, p, &out);
     return out;
 }
