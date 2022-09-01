@@ -1,10 +1,10 @@
 var a00068 =
 [
-    [ "__init__", "a00068.html#ae64f0875afe3067b97ba370b354b9213", null ],
-    [ "init", "a00068.html#a368155a9f5dbf3bc7fd94808ef1d09e2", null ],
-    [ "get_op", "a00068.html#ac044118e925a03c6e9f30604a5880cca", null ],
-    [ "get_tp", "a00068.html#aaa0157b2535030efd185612d14eaa1aa", null ],
-    [ "get_cov", "a00068.html#a0ea319e1e428e1af16e1cea1e40bc3cc", null ],
-    [ "get_Cell", "a00068.html#a4b4e349d95c5193db6e0da3adaab66cc", null ],
-    [ "get_Cphi", "a00068.html#acfc861803e66b39eef67e6a06ea11bed", null ]
+    [ "hmpdf_Cell_mode_e", "a00068.html#aa70f8a433e0c64a93e457ab55016caf3", [
+      [ "hmpdf_onehalo", "a00068.html#aa70f8a433e0c64a93e457ab55016caf3a83bca372e476e7d2e05b52694b5abb79", null ],
+      [ "hmpdf_twohalo", "a00068.html#aa70f8a433e0c64a93e457ab55016caf3a2ffab0e37882c2ee27cc426e76dacf26", null ],
+      [ "hmpdf_total", "a00068.html#aa70f8a433e0c64a93e457ab55016caf3a19954c75c085aa484ddd41869f2e2409", null ]
+    ] ],
+    [ "hmpdf_get_Cell", "a00068.html#a8e7948bd21269d4a26f126255db45063", null ],
+    [ "hmpdf_get_Cphi", "a00068.html#abf66b768e57cf7db8551cba341d8d9e2", null ]
 ];
