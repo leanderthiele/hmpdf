@@ -22,15 +22,6 @@
  *
  */
 
-// TODO
-#if 0
-#ifdef ARICO20
-#   pragma message( "Using the updated Arico BCM from 2009.14225" )
-#else
-#   pragma message( "Using the original Arico BCM from 1911.08471" )
-#endif
-#endif
-
 #ifndef M_SQRT5
 #   define M_SQRT5 2.2360679774997896964091736687312762
 #endif
@@ -124,14 +115,6 @@ init_bcm(hmpdf_obj *d)
             d->bcm->profiles_indices[2*ii+1] = find_closest(d->n->NM, d->n->Mgrid, Mtarg);
         }
     }
-
-    /* FIXME for debugging */
-    #if 0
-    if (d->bcm->Arico20_params)
-        for (int ii=0; ii<d->bcm->Arico20_Nz; ++ii)
-            for (int jj=0; jj<hmpdf_Arico20_Nparams; ++jj)
-                printf("BCM z=%.4f param #%d = %.4e\n", d->bcm->Arico20_z[ii], jj, d->bcm->Arico20_params[ii*hmpdf_Arico20_Nparams+jj]);
-    #endif
 
     d->bcm->inited_bcm = 1;
 
@@ -745,9 +728,6 @@ bcm_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, bcm_ws *ws, char *f
             double x = r / ws->rs;
             dm += ws->dm_f * ws->rhos / (x * gsl_pow_2(1.0 + x));
         }
-
-        // FIXME bug check -- look at the original NFW profile instead of the relaxed one
-        // dm = rho_nfw(r, ws);
 
 #ifdef ARICO20
         fprintf(fp, "%.18e %.18e %.18e %.18e %.18e %.18e\n", r, bg, cg, rg, eg, dm);

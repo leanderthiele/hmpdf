@@ -224,11 +224,6 @@ fill_background(hmpdf_obj *d)
                                           / dA_s;
             }
         }
-
-        // FIXME
-        for (int z_index=0; z_index<d->n->Nz; z_index++)
-            printf("%g ", d->c->invScrit[z_index]);
-        printf("\n");
     } // if kappa
 
     free(pvecback);
