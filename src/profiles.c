@@ -300,7 +300,7 @@ kappa_profile(hmpdf_obj *d, int z_index, int M_index,
         double lout = sqrt(Rout*Rout - Rproj*Rproj);
 
         p[ii] -= 2.0 * lout * d->c->rho_m[z_index];
-        p[ii] /= d->c->Scrit[z_index];
+        p[ii] *= d->c->invScrit[z_index];
     }
 
     ENDFCT
@@ -353,7 +353,7 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
     SAFEALLOC(cquad_ws, gsl_integration_cquad_workspace_alloc(BATTINTEGR_LIMIT));
 
     double epsabs = BATTINTEGR_EPSABS * (d->n->signalgrid[1]-d->n->signalgrid[0])
-                    * d->c->Scrit[z_index]; // note rescaling of integrals
+                    / d->c->invScrit[z_index]; // note rescaling of integrals
 
     // loop over angles
     for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
@@ -381,7 +381,7 @@ kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
 
         p[ii] *= 2.0; // symmetry
         p[ii] -= 2.0*lout*d->c->rho_m[z_index];
-        p[ii] /= d->c->Scrit[z_index];
+        p[ii] *= d->c->invScrit[z_index];
     }
 
     gsl_integration_workspace_free(integr_ws);

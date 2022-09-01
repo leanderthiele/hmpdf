@@ -22,7 +22,7 @@ null_cosmology(hmpdf_obj *d)
     d->c->hubble = NULL;
     d->c->comoving = NULL;
     d->c->angular_diameter = NULL;
-    d->c->Scrit = NULL;
+    d->c->invScrit = NULL;
     d->c->Dsq = NULL;
     d->c->rho_m = NULL;
     d->c->rho_c = NULL;
@@ -41,7 +41,7 @@ reset_cosmology(hmpdf_obj *d)
     if (d->c->hubble != NULL) { free(d->c->hubble); }
     if (d->c->comoving != NULL) { free(d->c->comoving); }
     if (d->c->angular_diameter != NULL) { free(d->c->angular_diameter); }
-    if (d->c->Scrit != NULL) { free(d->c->Scrit); }
+    if (d->c->invScrit != NULL) { free(d->c->invScrit); }
     if (d->c->Dsq != NULL) { free(d->c->Dsq); }
     if (d->c->rho_m != NULL) { free(d->c->rho_m); }
     if (d->c->rho_c != NULL) { free(d->c->rho_c); }
@@ -67,7 +67,7 @@ alloc_cosmo(hmpdf_obj *d)
 
     if (d->p->stype == hmpdf_kappa)
     {
-        SAFEALLOC(d->c->Scrit, malloc(d->n->Nz * sizeof(double)));
+        SAFEALLOC(d->c->invScrit, malloc(d->n->Nz * sizeof(double)));
     }
 
     ENDFCT
@@ -197,9 +197,9 @@ fill_background(hmpdf_obj *d)
 
                 HMPDFCHECK(p.status, "error encountered during integration");
 
-                d->c->Scrit[z_index] = 4.0*M_PI*GNEWTON*p.chi_z
-                                       /gsl_pow_2(SPEEDOFLIGHT)/(1.0 + d->n->zgrid[z_index])
-                                       * out / norm;
+                d->c->invScrit[z_index] = 4.0*M_PI*GNEWTON*p.chi_z
+                                          /gsl_pow_2(SPEEDOFLIGHT)/(1.0 + d->n->zgrid[z_index])
+                                          * out / norm;
             }
             
             // clean up
@@ -219,10 +219,9 @@ fill_background(hmpdf_obj *d)
             // fill the Scrit grid
             for (int z_index=0; z_index<d->n->Nz; z_index++)
             {
-                d->c->Scrit[z_index] = gsl_pow_2(SPEEDOFLIGHT)/4.0/M_PI/GNEWTON
-                                       * dA_s / d->c->angular_diameter[z_index]
-                                       * (1.0+d->n->zsource)
-                                       / (chi_s - d->c->comoving[z_index]);
+                d->c->invScrit[z_index] = 4.0*M_PI*GNEWTON/gsl_pow_2(SPEEDOFLIGHT)/(1.0+d->n->zsource)
+                                          * (chi_s - d->c->comoving[z_index]) * d->c->angular_diameter[z_index]
+                                          / dA_s;
             }
         }
     }
