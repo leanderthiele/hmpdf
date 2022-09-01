@@ -40,6 +40,7 @@ typedef enum
     np_type, // hmpdf_noise_pwr_f
     mc_type, // hmpdf_mass_cuts_f
     br_type, // hmpdf_bias_resc_f
+    nz_type, // hmpdf_dndz_f
 }//}}}
 dtype;
 
@@ -65,6 +66,7 @@ dtype;
             case (cr_type) : expr(hmpdf_conc_resc_f); break;       \
             case (mc_type) : expr(hmpdf_mass_cuts_f); break;       \
             case (br_type) : expr(hmpdf_bias_resc_f); break;       \
+            case (nz_type) : expr(hmpdf_dndz_f); break;            \
             case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
@@ -181,6 +183,10 @@ init_params(hmpdf_obj *d, param *p)
              d->n->zmin, dbl_type, def.z_min);
     INIT_P2_BT(hmpdf_z_max,
                d->n->zmax, dbl_type, d->n->zsource, def.z_max);
+    INIT_P(hmpdf_dndz,
+           d->n->dndz, nz_type, def.dndz);
+    INIT_P(hmpdf_dndz_params,
+           d->n->dndz_params, vptr_type, def.dndz_params);
     INIT_P_B(hmpdf_N_M,
              d->n->NM, int_type, def.Npoints_M);
     INIT_P_B(hmpdf_M_min,
@@ -517,6 +523,9 @@ sanity_checks(hmpdf_obj *d)
                "either use BCM or split concentration model");
     HMPDFCHECK(d->h->DM_conc_params != NULL && d->p->stype != hmpdf_kappa,
                "tSZ does not use the split concentration model");
+
+    HMPDFCHECK(d->n->dndz != NULL && d->p->stype != hmpdf_kappa,
+               "dndz does not make sense for a non-WL signal");
 
     ENDFCT
 }//}}}

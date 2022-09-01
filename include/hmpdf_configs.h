@@ -148,6 +148,19 @@ typedef enum
                   *   \par
                   *   Type: double. Default: 6 for tSZ, source redshift for weak lensing.
                   */
+    hmpdf_dndz, /*!< source redshift distribution for #hmpdf_kappa.
+                 *   If set to null (default), a delta distribution
+                 *   is assumed at source redshift. Otherwise, source redshift should be chosen
+                 *   such that the source distribution is essentially zero for larger redshifts.
+                 *   \par
+                 *   Type: #hmpdf_dndz_f. Default: None.
+                 *   \remark it is not assumed that the distribution is normalized, the code
+                 *           will do this automatically.
+                 */
+    hmpdf_dndz_params, /*!< additional parameters to pass to hmpdf_dndz.
+                        *   \par
+                        *   Type: void *. Default: None.
+                        */
     hmpdf_N_M, /*!< number of sample points in halo mass integration.
                 *   \par
                 *   Type: int. Default: 65.
@@ -561,5 +574,14 @@ typedef double (*hmpdf_noise_pwr_f)(double,
 typedef double (*hmpdf_bias_resc_f)(double,
                                     double,
                                     void *);
+
+/*! Function pointer typedef for user-defined source redshift distribution.
+ *  Passed to hmpdf_iniit() as #hmpdf_dndz.
+ *  \param z        redshift
+ *  \param p        pointer for additional parameters
+ *  \return         dn/dz, the source redshift distribution
+ */
+typedef double (*hmpdf_dndz_f)(double,
+                               void *);
 
 #endif

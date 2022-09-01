@@ -98,6 +98,7 @@
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  char *class_pre;
                  int Npoints_z[3]; double z_min[3]; double z_max[3];
+                 hmpdf_dndz_f dndz; void *dndz_params;
                  int Npoints_M[3]; double M_min[3]; double M_max[3];
                  long Npoints_signal[3]; double min_kappa[3]; double min_tsz[3]; double max_kappa[3]; double max_tsz[3];
                  int Npoints_theta[3]; double rout_scale[3]; hmpdf_mdef_e rout_rdef[3];

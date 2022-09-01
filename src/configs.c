@@ -27,6 +27,7 @@ def_Battaglia12_tsz_params[] = { 18.1  ,  0.154  , -0.758,   // P0
 struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .class_pre="none",
                         .Npoints_z={65,10,1000}, .z_min={0.0,0.0,6.0}, .z_max={6.0,0.1,10.0},
+                        .dndz=NULL, .dndz_params=NULL,
                         .Npoints_M={65,10,1000}, .M_min={1e11,1e7,1e14}, .M_max={1e16,1e13,1e19},
                         .Npoints_signal={1024UL,32UL,10000UL},
                         .min_kappa={0.0,-10.0,0.0}, .min_tsz={0.0, -1e-2, 0.0},

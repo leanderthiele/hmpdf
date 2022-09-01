@@ -15,6 +15,9 @@ typedef struct//{{{
     double *zgrid;
     double *zweights;
 
+    hmpdf_dndz_f dndz;
+    void *dndz_params;
+
     int NM;
     double Mmin;
     double Mmax;
