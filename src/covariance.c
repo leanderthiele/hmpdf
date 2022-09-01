@@ -598,10 +598,6 @@ create_cov(hmpdf_obj *d)
         SAFEHMPDF_NORETURN(corr_diagn(d, d->cov->ws[THIS_THREAD],
                                       d->cov->corr_diagn+pp));
         CONTINUE_IF_ERR
-        
-        // add to covariance
-        SAFEHMPDF_NORETURN(add_tp_to_cov(d, pp));
-        CONTINUE_IF_ERR
 
         // status update
         #ifdef _OPENMP
@@ -614,6 +610,17 @@ create_cov(hmpdf_obj *d)
                 TIMEREMAIN(Nstatus, d->n->Nphi, "create_cov");
             }
         }
+        CONTINUE_IF_ERR
+
+        // This is a pretty dirty hack but it should be ok for the low separations
+        // where we have a large number of sample points and a few mess up sometimes
+        // Always need to check the diagnostics that only a very small number of points
+        // is messed up!!!
+        if (d->cov->corr_diagn[pp] < 0.0 || d->cov->corr_diagn[pp] > 1e-3)
+            continue;
+        
+        // add to covariance
+        SAFEHMPDF_NORETURN(add_tp_to_cov(d, pp));
         CONTINUE_IF_ERR
     }
 

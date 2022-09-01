@@ -1,15 +1,27 @@
-PATHTOCLASS = /home/lthiele/class_public
+# make these work for both my remotes and my local
+user=$(shell whoami)
+ifeq ($(user),leander)
+  PATHTOCLASS = /usr/local/class_public-3.0.1
+  PATHTOFFTW = /usr/local/fftw-3.3.9
+else
+  PATHTOCLASS = /home/lthiele/class_public
+  PATHTOFFTW = /usr/local/fftw/gcc/3.3.4
+endif
 
 CC = gcc
 ARCHIVE = libhmpdf.a
 SHARED = libhmpdf.so
 
-CFLAGS = --std=gnu99 -fPIC -Wall -Wextra -Wpedantic -Wno-variadic-macros -Winline -DHAVE_INLINE -DDEBUG
-OPTFLAGS = -O4 -g3 -ffast-math
+CFLAGS = --std=gnu99 -fPIC -Wall -Wextra -Wpedantic -Wno-variadic-macros -Winline -DHAVE_INLINE -DDEBUG -DARICO20
+OPTFLAGS = -O4 -ggdb3 -ffast-math
 OMPFLAGS = -fopenmp
 
 INCLUDE = -I./include
-INCLUDE += -I$(PATHTOCLASS)/include
+INCLUDE += -I$(PATHTOCLASS)/include \
+           -I$(PATHTOCLASS)/external/HyRec2020 \
+           -I$(PATHTOCLASS)/external/RecfastCLASS \
+           -I$(PATHTOCLASS)/external/heating \
+           -I$(PATHTOFFTW)/api
 
 LINKER = -L$(PATHTOCLASS)
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3

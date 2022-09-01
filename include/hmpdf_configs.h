@@ -10,6 +10,7 @@
  */
 typedef enum
 {
+    // NOTE do not change ordering here!
     hmpdf_mdef_c, /*!< M200c (200x critial density) */
     hmpdf_mdef_v, /*!< Mvir (virial mass according to Bryan+Norman 1998) */
     hmpdf_mdef_m, /*!< M200m (200x mean matter density) */
@@ -49,6 +50,22 @@ typedef enum
     hmpdf_rational, /*!< .*/
     hmpdf_chebyshev2, /*!< .*/
 } hmpdf_integr_mode_e;
+
+/*! Ordering of the Arico+2020 parameters for the BCM */
+typedef enum
+{
+    hmpdf_Arico20_M_c, /*!<.*/
+    hmpdf_Arico20_M_1_z0_cen, /*!<.*/
+    hmpdf_Arico20_eta, /*!<.*/
+    hmpdf_Arico20_beta, /*!<.*/
+#ifdef ARICO20
+    hmpdf_Arico20_theta_inn, /*!<.*/
+    hmpdf_Arico20_theta_out, /*!<.*/
+    hmpdf_Arico20_M_inn, /*!<.*/
+    hmpdf_Arico20_M_r, /*!<.*/
+#endif
+    hmpdf_Arico20_Nparams, /*!<. Internal use only. */
+} hmpdf_Arico20_params_e;
 
 /*! Options to hmpdf_init().
  *
@@ -131,6 +148,19 @@ typedef enum
                   *   \par
                   *   Type: double. Default: 6 for tSZ, source redshift for weak lensing.
                   */
+    hmpdf_dndz, /*!< source redshift distribution for #hmpdf_kappa.
+                 *   If set to null (default), a delta distribution
+                 *   is assumed at source redshift. Otherwise, source redshift should be chosen
+                 *   such that the source distribution is essentially zero for larger redshifts.
+                 *   \par
+                 *   Type: #hmpdf_dndz_f. Default: None.
+                 *   \remark it is not assumed that the distribution is normalized, the code
+                 *           will do this automatically.
+                 */
+    hmpdf_dndz_params, /*!< additional parameters to pass to hmpdf_dndz.
+                        *   \par
+                        *   Type: void *. Default: None.
+                        */
     hmpdf_N_M, /*!< number of sample points in halo mass integration.
                 *   \par
                 *   Type: int. Default: 65.
@@ -238,6 +268,105 @@ typedef enum
                                    *   Type: void *. Default: None.
                                    *   \attention not supported in the python wrapper.
                                    */
+    hmpdf_massfunc_corr, /*!< Correction prefactor for the Tinker mass function.
+                          *   \par
+                          *   Type: #hmpdf_massfunc_f. Default: None.
+                          */
+    hmpdf_massfunc_corr_params, /*!< Additional parameters to pass to the above function.
+                                 *   \par
+                                 *   Type: void *. Default: None.
+                                 */
+    hmpdf_mass_resc, /*!< Rescaling function for halo masses going into the profiles
+                      *   (masses going into mass function and bias are not affected).
+                      *   \par
+                      *   Type: #hmpdf_mass_resc_f. Default: None.
+                      */
+    hmpdf_mass_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_conc_resc, /*!< Rescaling function for concentration.
+                      *   \par
+                      *   Type: #hmpdf_conc_resc_f. Default: None.
+                      */
+    hmpdf_conc_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_mass_cuts, /*!< Redshift-dependent upper mass limits.
+                      *   \par
+                      *   Type: #hmpdf_mass_cuts_f. Default: None.
+                      */
+    hmpdf_mass_cuts_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_bias_resc, /*!< Rescaling function for bias.
+                      *   \par
+                      *   Type: #hmpdf_bias_resc_f. Default: None.
+                      */
+    hmpdf_bias_resc_params, /*!< Additional parameters to pass to the above function.
+                             *   \par
+                             *   Type: void *. Default: None.
+                             */
+    hmpdf_Arico20_Nz, /*!< The number of parameter samples (in redshift) for the BCM.
+                       *   The code interpolates in redshift between the ones that are given.
+                       *   \par
+                       *   Type: int. Default: 1.
+                       */
+    hmpdf_Arico20_z, /*!< The redshifts where the parameter values are given.
+                      *   Must be in increasing order.
+                      *   Does not need to be passed if Nz==1.
+                      *   \par
+                      *   Type: double *. Default: None.
+                      */
+    hmpdf_Arico20_params, /*!< The parameters for the Arico+2020 BCM.
+                           *   If passed, the convergence profiles will be computed using the BCM.
+                           *   Only applicable if computing the kappa PDF.
+                           *   The ordering is specified by #hmpdf_Arico20_params_e.
+                           *   Each redshift corresponds to a contiguous block in the array.
+                           *   \par
+                           *   Type: double *. Default: None.
+                           */
+    hmpdf_profiles_N, /*!< Number of profiles to write to file.
+                       *   This is a hack for that only works with the BCM.
+                       *   Will print the component density profiles to disk.
+                       *   \par
+                       *   Type: int. Default: 0.
+                       */
+    hmpdf_profiles_fnames, /*!< The file names the profiles should be printed to.
+                            *   \par
+                            *   Type: char **. Default: None.
+                            */
+    hmpdf_profiles_where, /*! The redshifts and masses for which to evaluate profiles.
+                           *  In the order [z0, M0, z1, M1, z2, M2, ... ]
+                           *  Masses in units of M200m, Msun/h.
+                           *  \par
+                           *  Type: double *. Default: None.
+                           */
+    hmpdf_profiles_Nr, /*! Number of radii where to evaluate profiles.
+                        *  \par
+                        *  Type: int. Default: 0.
+                        */
+    hmpdf_profiles_r, /*! The radii for which to evaluate profiles.
+                       *  In units of R200c.
+                       *  \par
+                       *  Type: double *. Default: None.
+                       */
+    hmpdf_DM_conc_params, /*! The concentration parameters for the DM component.
+                           *  If passed, also those for the baryonic component must be given.
+                           *  Same format as #hmpdf_Duffy08_conc_params.
+                           *  The parameterization is in terms of the hydro mass.
+                           *  \par
+                           *  Type: double *. Default: None.
+                           */
+    hmpdf_bar_conc_params, /*! The concentration parameters for the baryonic component.
+                            *  If passed, also those for the DM component must be given.
+                            *  Same format as #hmpdf_Duffy08_conc_params.
+                            *  The parameterization is in terms of the hydro mass.
+                            *  \par
+                            *  Type: double *. Default: None.
+                            */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
                   *   Type: int. Default: 1000.
@@ -301,8 +430,10 @@ typedef enum
     hmpdf_Duffy08_conc_params, /*!< Fit parameters in the
                                 *   <a href="https://arxiv.org/abs/0804.2486">Duffy+2008</a>
                                 *   concentration model.
+                                *   Still relevant even if #hmpdf_DM_conc_params and #hmpdf_bar_conc_params
+                                *   are passed (then it is used for mass conversions).
                                 *   \par
-                                *   Type: double[9]. Default: see src/configs.c.
+                                *   Type: double *. Default: see src/configs.c.
                                 *   \remark in the python wrapper, pass a 1d numpy array
                                 */
     hmpdf_Tinker10_hmf_params, /*!< Fit parameters in the
@@ -381,6 +512,48 @@ typedef double (*hmpdf_k_filter_f)(double,
                                    double,
                                    void *);
 
+/*! Function pointer typedef for user-defined mass function rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_massfunc_corr.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         hmf_new / hmf_Tinker at z and M
+ */
+typedef double (*hmpdf_massfunc_corr_f)(double,
+                                        double,
+                                        void *);
+
+/*! Function pointer typedef for user-defined mass rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_mass_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         M_new / M_old
+ */
+typedef double (*hmpdf_mass_resc_f)(double,
+                                    double,
+                                    void *);
+
+/*! Function pointer typedef for user-defined concentration rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_conc_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         c_new / c_old
+ */
+typedef double (*hmpdf_conc_resc_f)(double,
+                                    double,
+                                    void *);
+
+/*! Function pointer typedef to pass redshift-dependent upper limit in mass.
+ *  Passed to hmpdf_init() as #hmpdf_mass_cuts.
+ *  \param z        redshift
+ *  \param p        pointer for additional parameters
+ *  \return         upper mass limit (M200m, Msun/h)
+ */
+typedef double (*hmpdf_mass_cuts_f)(double,
+                                    void *);
+
 /*! Function pointer typedef for user-defined noise power spectrum.
  *  Passed to hmpdf_init() as #hmpdf_noise_pwr.
  *  \param ell       angular wavenumber
@@ -390,5 +563,25 @@ typedef double (*hmpdf_k_filter_f)(double,
  */
 typedef double (*hmpdf_noise_pwr_f)(double,
                                     void *);
+
+/*! Function pointer typedef for user-defined bias rescaling.
+ *  Passed to hmpdf_init() as #hmpdf_bias_resc.
+ *  \param z        redshift
+ *  \param M        halo mass (M200m, Msun/h)
+ *  \param p        pointer for additional parameters
+ *  \return         rescaling of the halo bias
+ */
+typedef double (*hmpdf_bias_resc_f)(double,
+                                    double,
+                                    void *);
+
+/*! Function pointer typedef for user-defined source redshift distribution.
+ *  Passed to hmpdf_iniit() as #hmpdf_dndz.
+ *  \param z        redshift
+ *  \param p        pointer for additional parameters
+ *  \return         dn/dz, the source redshift distribution
+ */
+typedef double (*hmpdf_dndz_f)(double,
+                               void *);
 
 #endif

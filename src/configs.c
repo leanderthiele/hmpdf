@@ -6,7 +6,7 @@
 static double
 def_Duffy08_conc_params[] = { 5.71, -0.087, -0.47,   // M200c
                               7.85, -0.081, -0.71,   // Mvir
-                             10.14, -0.081, -1.01, };// M200m
+                             10.14, -0.081, -1.01, 0.0, 0.0, 0.0};// M200m
 
 //                 param = factor * (1+z)^pwr
 static double
@@ -27,6 +27,7 @@ def_Battaglia12_tsz_params[] = { 18.1  ,  0.154  , -0.758,   // P0
 struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .class_pre="none",
                         .Npoints_z={65,10,1000}, .z_min={0.0,0.0,6.0}, .z_max={6.0,0.1,10.0},
+                        .dndz=NULL, .dndz_params=NULL,
                         .Npoints_M={65,10,1000}, .M_min={1e11,1e7,1e14}, .M_max={1e16,1e13,1e19},
                         .Npoints_signal={1024UL,32UL,10000UL},
                         .min_kappa={0.0,-10.0,0.0}, .min_tsz={0.0, -1e-2, 0.0},
@@ -38,6 +39,14 @@ struct DEFAULTS def = { .Ncores={1,1,1000}, .verbosity=0, .warn_is_err=1,
                         .gaussian_fwhm={-1.0,0.0,100.0},
                         .custom_ell_filter=NULL, .custom_ell_filter_params=NULL,
                         .custom_k_filter=NULL, .custom_k_filter_params=NULL,
+                        .massfunc_corr=NULL, .massfunc_corr_params=NULL,
+                        .mass_resc=NULL, .mass_resc_params=NULL,
+                        .conc_resc=NULL, .conc_resc_params=NULL,
+                        .mass_cuts=NULL, .mass_cuts_params=NULL,
+                        .bias_resc=NULL, .bias_resc_params=NULL,
+                        .Arico20_Nz=1, .Arico20_z=NULL, .Arico20_params=NULL,
+                        .profiles_N=0, .profiles_fnames=NULL, .profiles_where=NULL, .profiles_Nr=0, .profiles_r=NULL,
+                        .DM_conc_params=NULL, .bar_conc_params=NULL,
                         .Nphi={1000,50,50000}, .phimax={150.0,10.0,1000.0},
                         .pixelexactmax={20,3,50},
                         .phijitter={0.02,1e-10,1e0}, .phipwr=2.0,

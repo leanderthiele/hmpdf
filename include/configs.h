@@ -26,7 +26,7 @@
 
 #define CINTERP_NC 10000
 #define CINTERP_CMIN 0.1
-#define CINTERP_CMAX 100.0
+#define CINTERP_CMAX 200.0
 #define CINTERP_TYPE interp_cspline
 
 #define PRINTERP_TYPE    interp_steffen
@@ -79,7 +79,6 @@
 #define MAPNOZ_STATUS_PERIOD 400
 #define MAPWZ_STATUS_PERIOD  8
 
-
 #define NOISE_ELLMIN 1e-2
 #define NOISE_ELLMAX 1e12
 #define NOISE_LIMIT  1000
@@ -87,17 +86,38 @@
 #define NOISE_EPSREL 1e-3
 #define NOISE_KEY    6
 #define NOISE_ZETAINTERP_N 1000
+
+#define BCM_XI_SEARCH_TOL 1e-2 // choice in Max Lee's code
+
+#define BCM_BGINTEGR_LIMIT 1000
+#define BCM_BGINTEGR_KEY 6
+#define BCM_BGINTEGR_EPSABS 1e-3 // in units of remaining baryonic mass
+#define BCM_BGINTEGR_EPSREL 1e-4
+
+#define DNDZ_INTEGR_LIMIT 1000
+#define DNDZ_INTEGR_KEY 6
+#define DNDZ_INTEGR_EPSABS 0.0 // in units of the normalization
+#define DNDZ_INTEGR_EPSREL 1e-6
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
                  char *class_pre;
                  int Npoints_z[3]; double z_min[3]; double z_max[3];
+                 hmpdf_dndz_f dndz; void *dndz_params;
                  int Npoints_M[3]; double M_min[3]; double M_max[3];
                  long Npoints_signal[3]; double min_kappa[3]; double min_tsz[3]; double max_kappa[3]; double max_tsz[3];
                  int Npoints_theta[3]; double rout_scale[3]; hmpdf_mdef_e rout_rdef[3];
                  double pixel_sidelength[3]; double tophat_radius[3]; double gaussian_fwhm[3];
                  hmpdf_ell_filter_f custom_ell_filter; void *custom_ell_filter_params;
                  hmpdf_k_filter_f custom_k_filter; void *custom_k_filter_params;
+                 hmpdf_massfunc_corr_f massfunc_corr; void *massfunc_corr_params;
+                 hmpdf_mass_resc_f mass_resc; void *mass_resc_params;
+                 hmpdf_conc_resc_f conc_resc; void *conc_resc_params;
+                 hmpdf_mass_cuts_f mass_cuts; void *mass_cuts_params;
+                 hmpdf_bias_resc_f bias_resc; void *bias_resc_params;
+                 int Arico20_Nz; double *Arico20_z; double *Arico20_params;
+                 int profiles_N; char **profiles_fnames; double *profiles_where; int profiles_Nr; double *profiles_r;
+                 double *DM_conc_params; double *bar_conc_params;
                  int Nphi[3]; double phimax[3]; int pixelexactmax[3];
                  double phijitter[3]; double phipwr;
                  hmpdf_integr_mode_e zintegr_type[3]; double zintegr_alpha; double zintegr_beta;

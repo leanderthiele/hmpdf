@@ -10,7 +10,7 @@ typedef struct//{{{
     double *hubble;
     double *comoving;
     double *angular_diameter;
-    double *Scrit;
+    double *invScrit;
     double *Dsq;
     // simple quantities
     double h;

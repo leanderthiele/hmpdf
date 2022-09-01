@@ -17,6 +17,7 @@ null_data(hmpdf_obj *d)
     SAFEHMPDF(null_halo_model(d));
     SAFEHMPDF(null_filters(d));
     SAFEHMPDF(null_profiles(d));
+    SAFEHMPDF(null_bcm(d));
     SAFEHMPDF(null_noise(d));
     SAFEHMPDF(null_onepoint(d));
     SAFEHMPDF(null_twopoint(d));
@@ -56,6 +57,7 @@ hmpdf_new(void)
     HMPDFNEW_ALLOC(d->h,   malloc(sizeof(halo_model_t)));
     HMPDFNEW_ALLOC(d->f,   malloc(sizeof(filters_t)));
     HMPDFNEW_ALLOC(d->p,   malloc(sizeof(profiles_t)));
+    HMPDFNEW_ALLOC(d->bcm, malloc(sizeof(bcm_t)));
     HMPDFNEW_ALLOC(d->ns,  malloc(sizeof(noise_t)));
     HMPDFNEW_ALLOC(d->op,  malloc(sizeof(onepoint_t)));
     HMPDFNEW_ALLOC(d->tp,  malloc(sizeof(twopoint_t)));
@@ -94,6 +96,7 @@ reset_obj(hmpdf_obj *d)
     SAFEHMPDF(reset_powerspectrum(d));
     SAFEHMPDF(reset_covariance(d));
     SAFEHMPDF(reset_profiles(d));
+    SAFEHMPDF(reset_bcm(d));
     SAFEHMPDF(reset_maps(d));
 
     SAFEHMPDF(null_data(d));
@@ -115,6 +118,7 @@ hmpdf_delete(hmpdf_obj *d)
     free(d->pwr);
     free(d->f);
     free(d->p);
+    free(d->bcm);
     free(d->h);
     free(d->n);
     free(d->ns);

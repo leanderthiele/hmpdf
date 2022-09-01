@@ -26,10 +26,12 @@ void
 new_gsl_error_handler(const char *reason, const char *file,
                       int line, int UNUSED(gsl_errno))
 {//{{{
+    /*
     #ifdef DEBUG
     fprintf(stderr, "***GSL error: %s in %s line %d\n", reason, file, line);
     fflush(stderr);
     #endif
+    */
     return;
 }//}}}
 
@@ -46,6 +48,24 @@ ispwr2(int N, int *k)
         *k += 1;
     }
     return ((temp == N) ? 1 : 0);
+}//}}}
+
+int
+find_closest(int N, double *x, double target)
+// identify the index of the element in x that is closest to the target value
+{//{{{
+    double temp = HUGE_VAL;
+    int out = 0; // avoid maybe-uninitialized
+    for (int ii=0; ii<N; ii++)
+    {
+        double diff = fabs(x[ii] - target);
+        if (diff < temp)
+        {
+            out = ii;
+            temp = diff;
+        }
+    }
+    return out;
 }//}}}
 
 static int 

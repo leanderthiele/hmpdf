@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp.h>
@@ -98,13 +99,14 @@ density_threshold(hmpdf_obj *d, int z_index, hmpdf_mdef_e mdef, double *out)
 }//}}}
 
 static int 
-RofM(hmpdf_obj *d, int z_index, int M_index, double *out)
+RofM(hmpdf_obj *d, int z_index, int M_index, double *out,
+     double mass_resc)
 {//{{{
     STARTFCT
 
     double dt;
     SAFEHMPDF(density_threshold(d, z_index, MDEF_GLOBAL, &dt));
-    *out = cbrt(3.0*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
+    *out = cbrt(3.0*mass_resc*d->n->Mgrid[M_index] / 4.0 / M_PI / dt);
 
     ENDFCT
 }//}}}
@@ -122,33 +124,79 @@ MofR(hmpdf_obj *d, int z_index, double R, hmpdf_mdef_e mdef, double *out)
 }//}}}
 
 static inline double
-c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef)
+c_Duffy08_1(hmpdf_obj *d, double z, double M, hmpdf_mdef_e mdef, double *conc_params)
+// for conc_params, can pass NULL to use the default d->h->Duffy08_params
 {//{{{
     // convert to Msun/h
-    M *= d->c->h;
-    return d->h->Duffy08_params[(int)mdef*3+0]
-           * pow(M/2e12, d->h->Duffy08_params[(int)mdef*3+1])
-           * pow(1.0 + z,  d->h->Duffy08_params[(int)mdef*3+2]);
+    M *= d->c->h / 2e12;
+
+    if (conc_params == NULL)
+        conc_params = d->h->Duffy08_params;
+
+    // take the correct mass definition
+    conc_params += (int)(mdef) * 3;
+
+    switch (mdef)
+    {
+        // this case is special, since it has more parameters
+        //     (the other definitions are not used for important things)
+        case (hmpdf_mdef_m) :
+        {
+            // we harden this a bit against weird outputs during MCMC sampling
+            static const double min_out=CINTERP_CMIN*1.01, max_out=CINTERP_CMAX*0.99;
+
+            double pref = conc_params[0]
+                          * pow(M,     conc_params[1])
+                          * pow(1.0+z, conc_params[2]);
+            double arg = conc_params[3]
+                         * gsl_pow_2(z-conc_params[4])
+                         * gsl_pow_2(log(M) - conc_params[5]);
+            // avoid underflow and overflow
+            if (arg < log(fmin(1.0, pref)) + log((double)FLT_RADIX) * (double)DBL_MIN_EXP + 2.0)
+                return min_out;
+            else if (arg > -log(fmax(1.0, pref)) + log((double)FLT_RADIX) * (double)DBL_MAX_EXP - 2.0)
+                return max_out;
+            double out = pref * exp( arg );
+            return (out<min_out) ? min_out : (out>max_out) ? max_out : out;
+        }
+        // use the Duffy08 parameterization
+        default :
+            return conc_params[0]
+                   * pow(M,      conc_params[1])
+                   * pow(1.0+z,  conc_params[2]);
+    }
 }//}}}
 static inline double
-c_Duffy08(hmpdf_obj *d, int z_index, int M_index)
+c_Duffy08(hmpdf_obj *d, int z_index, int M_index,
+          double mass_resc, double *conc_params)
 {//{{{
-    return c_Duffy08_1(d, d->n->zgrid[z_index],
-                       d->n->Mgrid[M_index],
-                       MDEF_GLOBAL);
+    double out = c_Duffy08_1(d, d->n->zgrid[z_index],
+                             mass_resc * d->n->Mgrid[M_index],
+                             MDEF_GLOBAL, conc_params);
+
+    if (d->h->conc_resc != NULL)
+    {
+        out *= d->h->conc_resc(d->n->zgrid[z_index],
+                               mass_resc * d->n->Mgrid[M_index] * d->c->h,
+                               d->h->conc_resc_params);
+    }
+
+    return out;
 }//}}}
 
 int
-NFW_fundamental(hmpdf_obj *d, int z_index, int M_index, double *rhos, double *rs)
+NFW_fundamental(hmpdf_obj *d, int z_index, int M_index,
+                double mass_resc, double *conc_params,
+                double *rhos, double *rs)
 // returns rhos via function call and rs via return value
 // this function is tested against Colossus --> everything here works
 {//{{{
     STARTFCT
 
-    double c = c_Duffy08(d, z_index, M_index);
-    SAFEHMPDF(RofM(d, z_index, M_index, rs));
+    double c = c_Duffy08(d, z_index, M_index, mass_resc, conc_params);
+    SAFEHMPDF(RofM(d, z_index, M_index, rs, mass_resc));
     *rs /= c;
-    *rhos = d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
+    *rhos = mass_resc * d->n->Mgrid[M_index]/4.0/M_PI/gsl_pow_3(*rs)
             / (log1p(c)-c/(1.0+c));
 
     ENDFCT
@@ -202,6 +250,7 @@ c_of_y(hmpdf_obj *d, double y, double *out)
 
 int
 Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
+      double mass_resc,
       double *M, double *R, double *c)
 // returns the converted mass via function call and the new radius and concentration via return value
 // this function is tested against Colossus --> everything here works
@@ -209,7 +258,10 @@ Mconv(hmpdf_obj *d, int z_index, int M_index, hmpdf_mdef_e mdef_out,
     STARTFCT
 
     double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
+
+    // use default concentration model here
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, NULL, &rhos, &rs));
+
     double dt;
     SAFEHMPDF(density_threshold(d, z_index, mdef_out, &dt));
     SAFEHMPDF(c_of_y(d, dt/rhos, c));
@@ -257,16 +309,43 @@ dndlogM(hmpdf_obj *d, int z_index, int M_index, double *hmf, double *bias)
 {//{{{
     STARTFCT
 
-    double sigma_squared = d->pwr->ssq[M_index][0];
-    double sigma_squared_prime = d->pwr->ssq[M_index][1];
-    double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
+    // case where we are above the possible mass cut
+    if (d->n->mass_cuts != NULL
+        && d->n->Mgrid[M_index]
+           > d->n->mass_cuts(d->n->zgrid[z_index], d->n->mass_cuts_params)
+             / d->c->h)
+    {
+        *hmf = 0.0;
+        *bias = 0.0;
+    }
+    // we are below the mass cut (or none is given)
+    else
+    {
+        double sigma_squared = d->pwr->ssq[M_index][0];
+        double sigma_squared_prime = d->pwr->ssq[M_index][1];
+        double nu = 1.686/sqrt(d->c->Dsq[z_index] * sigma_squared);
 
-    double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
+        double fnu = fnu_Tinker10(d, nu, d->n->zgrid[z_index]);
 
-    *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
-           / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
+        *hmf = -fnu * d->c->rho_m_0 * sigma_squared_prime
+               / (2.0 * sigma_squared * d->n->Mgrid[M_index]);
 
-    *bias = bnu_Tinker10(nu);
+        *bias = bnu_Tinker10(nu);
+
+        if (d->h->massfunc_corr != NULL)
+        {
+            *hmf *= d->h->massfunc_corr(d->n->zgrid[z_index],
+                                        d->n->Mgrid[M_index] * d->c->h,
+                                        d->h->massfunc_corr_params);
+        }
+
+        if (d->h->bias_resc != NULL)
+        {
+            *bias *= d->h->bias_resc(d->n->zgrid[z_index],
+                                     d->n->Mgrid[M_index] * d->c->h,
+                                     d->h->bias_resc_params);
+        }
+    }
 
     ENDFCT
 }//}}}

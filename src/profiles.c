@@ -21,6 +21,7 @@
 #include "cosmology.h"
 #include "halo_model.h"
 #include "filter.h"
+#include "bcm.h"
 #include "profiles.h"
 
 #include "hmpdf.h"
@@ -212,49 +213,184 @@ fix_endpoints(int N, double *x, double *y)
 }//}}}
 
 static int
-kappa_profile(hmpdf_obj *d, int z_index, int M_index,
-              double theta_out, double Rout, double *p)
+kappa_profile_1(hmpdf_obj *d, int z_index, double theta_out, double Rout,
+                double rhos, double rs, double *p)
+// *adds* to the profile, need to zero before passing
 {//{{{
     STARTFCT
-
-    // find the NFW parameters
-    double rhos, rs;
-    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, &rhos, &rs));
 
     // fill the profile
     for (int ii=0; ii<d->p->Ntheta; ii++)
     {
         double t = d->p->decr_tgrid[ii] * theta_out;
         double Rproj = tan(t) * d->c->angular_diameter[z_index];
-        double lout = sqrt(Rout*Rout - Rproj*Rproj);
 
         if (Rproj > rs)
         {
-            p[ii] = 2.0*rhos*gsl_pow_3(rs)/(2.0*(Rout+rs)*pow((Rproj-rs)*(Rproj+rs),1.5))
-                            *(+M_PI*rs*(Rout+rs)
-                              +2.0*sqrt((Rout-Rproj)*(Rout+Rproj)*(Rproj-rs)*(Rproj+rs))
-                              -2.0*rs*(Rout+rs)*atan2(Rproj*Rproj+Rout*rs,                
-                                                      -sqrt((Rout-Rproj)*(Rout+Rproj)          
-                                                            *(Rproj-rs)*(Rproj+rs))));
+            p[ii] += 2.0*rhos*gsl_pow_3(rs)/(2.0*(Rout+rs)*pow((Rproj-rs)*(Rproj+rs),1.5))
+                             *(+M_PI*rs*(Rout+rs)
+                               +2.0*sqrt((Rout-Rproj)*(Rout+Rproj)*(Rproj-rs)*(Rproj+rs))
+                               -2.0*rs*(Rout+rs)*atan2(Rproj*Rproj+Rout*rs,                
+                                                       -sqrt((Rout-Rproj)*(Rout+Rproj)          
+                                                             *(Rproj-rs)*(Rproj+rs))));
         }
         else if (Rproj < rs)
         {
-            p[ii] = 2.0*rhos*gsl_pow_3(rs)/((Rout+rs)*pow(rs*rs-Rproj*Rproj,1.5))
-                            *(-sqrt((Rout-Rproj)*(Rout+Rproj)*(rs*rs-Rproj*Rproj))
-                              +rs*(Rout+rs)*log(Rproj*(Rout+rs)/(Rproj*Rproj+Rout*rs
-                                                                 -sqrt((Rout-Rproj)*(Rout+Rproj)
-                                                                       *(rs*rs-Rproj*Rproj)))));
+            p[ii] += 2.0*rhos*gsl_pow_3(rs)/((Rout+rs)*pow(rs*rs-Rproj*Rproj,1.5))
+                             *(-sqrt((Rout-Rproj)*(Rout+Rproj)*(rs*rs-Rproj*Rproj))
+                               +rs*(Rout+rs)*log(Rproj*(Rout+rs)/(Rproj*Rproj+Rout*rs
+                                                                  -sqrt((Rout-Rproj)*(Rout+Rproj)
+                                                                        *(rs*rs-Rproj*Rproj)))));
         }
         else
         {
-            p[ii] = 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
+            p[ii] += 2.0*rhos*sqrt(Rout-rs)*rs*(Rout+2.0*rs)/(3.0*pow(Rout+rs,1.5));
         }
-        p[ii] -= 2.0*lout*d->c->rho_m[z_index];
-        p[ii] /= d->c->Scrit[z_index];
     }
 
     ENDFCT
 }//}}}
+
+static int
+kappa_profile(hmpdf_obj *d, int z_index, int M_index,
+              double mass_resc,
+              double theta_out, double Rout, double *p)
+{//{{{
+    STARTFCT
+
+    // zero the profile, since the auxiliary function only adds
+    zero_real(d->p->Ntheta, p);
+
+    if (d->h->DM_conc_params == NULL)
+    // no split into baryonic / DM components
+    {
+        // find the NFW parameters
+        double rhos, rs;
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, NULL, &rhos, &rs));
+
+        // add to the profile
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos, rs, p));
+    }
+    else
+    // we have a split into baryonic and dark matter components
+    {
+        // find the NFW parameters
+        double rhos_DM, rs_DM, rhos_bar, rs_bar;
+
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc,
+                                  d->h->DM_conc_params, &rhos_DM, &rs_DM));
+        SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc,
+                                  d->h->bar_conc_params, &rhos_bar, &rs_bar));
+
+        // assume baryon fraction matches background
+        double fbar = 0.7 * d->c->Ob_0 / d->c->Om_0;
+        rhos_DM *= 1.0 - fbar;
+        rhos_bar *= fbar;
+
+        // add both components to the profile
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_DM, rs_DM, p));
+        SAFEHMPDF(kappa_profile_1(d, z_index, theta_out, Rout, rhos_bar, rs_bar, p));
+    }
+
+    // perform final normalization
+    for (int ii=0; ii<d->p->Ntheta; ii++)
+    {
+        double t = d->p->decr_tgrid[ii] * theta_out;
+        double Rproj = tan(t) * d->c->angular_diameter[z_index];
+        double lout = sqrt(Rout*Rout - Rproj*Rproj);
+
+        p[ii] -= 2.0 * lout * d->c->rho_m[z_index];
+        p[ii] *= d->c->invScrit[z_index];
+    }
+
+    ENDFCT
+}//}}}
+
+// kappa BCM profiles {{{
+typedef struct
+{
+    double rproj;
+    bcm_ws *ws;
+    hmpdf_obj *d;
+    int err;
+}
+kappabcm_params;
+
+static double
+kappabcm_integrand(double z, void *params)
+{
+    kappabcm_params *p = (kappabcm_params *)params;
+    double r = hypot(z, p->rproj);
+    double out;
+    p->err = bcm_density_profile(p->d, p->ws, r, &out);
+    return out;
+}
+
+static int
+kappabcm_profile(hmpdf_obj *d, int z_index, int M_index,
+                 double mass_resc,
+                 double theta_out, double Rout, double *p)
+{
+    STARTFCT
+
+    bcm_ws *ws = d->bcm->ws[THIS_THREAD];
+
+    bcm_init_ws(d, z_index, M_index, mass_resc, ws);
+
+    kappabcm_params par;
+    par.d = d;
+    par.err = 0;
+    par.ws = ws;
+
+    gsl_function integrand;
+    integrand.function = &kappabcm_integrand;
+    integrand.params = &par;
+
+    gsl_integration_workspace *integr_ws;
+    SAFEALLOC(integr_ws, gsl_integration_workspace_alloc(BATTINTEGR_LIMIT));
+
+    gsl_integration_cquad_workspace *cquad_ws;
+    SAFEALLOC(cquad_ws, gsl_integration_cquad_workspace_alloc(BATTINTEGR_LIMIT));
+
+    double epsabs = BATTINTEGR_EPSABS * (d->n->signalgrid[1]-d->n->signalgrid[0])
+                    / d->c->invScrit[z_index]; // note rescaling of integrals
+
+    // loop over angles
+    for (int ii=1/*start one inside, outermost value=0*/; ii<d->p->Ntheta; ii++)
+    {
+        double t = d->p->decr_tgrid[ii] * theta_out;
+        par.rproj = tan(t) * d->c->angular_diameter[z_index];
+        double lout = sqrt(Rout*Rout - par.rproj*par.rproj);
+        double err;
+
+        int errqag = gsl_integration_qag(&integrand, 0.0, lout,
+                                         epsabs, BATTINTEGR_EPSREL,
+                                         BATTINTEGR_LIMIT, BATTINTEGR_KEY,
+                                         integr_ws, p+ii, &err);
+        
+        if (errqag)
+        // QAG has failed (happens close to the center typically),
+        // in which case we turn to the more expensive CQUAD for help
+        {
+            SAFEGSL(gsl_integration_cquad(&integrand, 0.0, lout,
+                                          epsabs, BATTINTEGR_EPSREL,
+                                          cquad_ws, p+ii, NULL, NULL));
+        }
+
+        SAFEHMPDF(par.err);
+
+        p[ii] *= 2.0; // symmetry
+        p[ii] -= 2.0*lout*d->c->rho_m[z_index];
+        p[ii] *= d->c->invScrit[z_index];
+    }
+
+    gsl_integration_workspace_free(integr_ws);
+
+    gsl_integration_cquad_workspace_free(cquad_ws);
+
+    ENDFCT
+}
+// }}}
 
 // Battaglia profiles{{{
 typedef struct
@@ -282,13 +418,14 @@ Battmodel_integrand(double z, void *params)
 }
 static int
 tsz_profile(hmpdf_obj *d, int z_index, int M_index,
+            double mass_resc,
             double theta_out, double Rout, double *p)
 {
     STARTFCT
 
     // convert to 200c
     double M200c, R200c, c200c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, &M200c, &R200c, &c200c));
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &M200c, &R200c, &c200c));
     double P0 = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 0);
     double xc = Battmodel_primitive(d, M200c, d->n->zgrid[z_index], 1);
     Rout /= R200c * xc;
@@ -342,20 +479,36 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
 {//{{{
     STARTFCT
 
+    double mass_resc = (d->p->mass_resc == NULL)
+                       ? 1.0
+                       : d->p->mass_resc(d->n->zgrid[z_index],
+                                         d->n->Mgrid[M_index] * d->c->h,
+                                         d->p->mass_resc_params);
+
     // find the outer radius on the sky
     double M, Rout, c;
-    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, &M, &Rout, &c));
+    SAFEHMPDF(Mconv(d, z_index, M_index, d->p->rout_def, mass_resc, &M, &Rout, &c));
     Rout *= d->p->rout_scale;
     double theta_out = atan(Rout/d->c->angular_diameter[z_index]);
 
-    if (d->p->stype == hmpdf_kappa)
+    if (d->p->stype == hmpdf_kappa
+        && d->bcm->Arico20_params == NULL)
     {
         SAFEHMPDF(kappa_profile(d, z_index, M_index,
+                                mass_resc,
                                 theta_out, Rout, p+1));
+    }
+    else if (d->p->stype == hmpdf_kappa
+             && d->bcm->Arico20_params != NULL)
+    {
+        SAFEHMPDF(kappabcm_profile(d, z_index, M_index,
+                                   mass_resc,
+                                   theta_out, Rout, p+1));
     }
     else if (d->p->stype == hmpdf_tsz)
     {
         SAFEHMPDF(tsz_profile(d, z_index, M_index,
+                              mass_resc,
                               theta_out, Rout, p+1));
     }
     else

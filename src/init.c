@@ -29,11 +29,18 @@ typedef enum
     integr_type, // hmpdf_integr_mode_e
     end_comparable_dtypes,
     str_type, // char *
+    strptr_type, // char **
     dptr_type, // double *
     vptr_type, // void *
     lf_type, // hmpdf_ell_filter_f
     kf_type, // hmpdf_k_filter_f
+    mf_type, // hmpdf_massfunc_corr_f
+    mr_type, // hmpdf_mass_resc_f
+    cr_type, // hmpdf_conc_resc_f
     np_type, // hmpdf_noise_pwr_f
+    mc_type, // hmpdf_mass_cuts_f
+    br_type, // hmpdf_bias_resc_f
+    nz_type, // hmpdf_dndz_f
 }//}}}
 dtype;
 
@@ -44,6 +51,7 @@ dtype;
         switch (dt)                                                \
         {                                                          \
             case (str_type) : expr(char *); break;                 \
+            case (strptr_type) : expr(char **); break;             \
             case (int_type) : expr(int); break;                    \
             case (long_type) : expr(long); break;                  \
             case (dbl_type) : expr(double); break;                 \
@@ -53,6 +61,12 @@ dtype;
             case (vptr_type) : expr(void *); break;                \
             case (lf_type) : expr(hmpdf_ell_filter_f); break;      \
             case (kf_type) : expr(hmpdf_k_filter_f); break;        \
+            case (mf_type) : expr(hmpdf_massfunc_corr_f); break;   \
+            case (mr_type) : expr(hmpdf_mass_resc_f); break;       \
+            case (cr_type) : expr(hmpdf_conc_resc_f); break;       \
+            case (mc_type) : expr(hmpdf_mass_cuts_f); break;       \
+            case (br_type) : expr(hmpdf_bias_resc_f); break;       \
+            case (nz_type) : expr(hmpdf_dndz_f); break;            \
             case (np_type) : expr(hmpdf_noise_pwr_f); break;       \
             default : HMPDFERR("Unknown dtype.");                  \
                       break;                                       \
@@ -169,6 +183,10 @@ init_params(hmpdf_obj *d, param *p)
              d->n->zmin, dbl_type, def.z_min);
     INIT_P2_BT(hmpdf_z_max,
                d->n->zmax, dbl_type, d->n->zsource, def.z_max);
+    INIT_P(hmpdf_dndz,
+           d->n->dndz, nz_type, def.dndz);
+    INIT_P(hmpdf_dndz_params,
+           d->n->dndz_params, vptr_type, def.dndz_params);
     INIT_P_B(hmpdf_N_M,
              d->n->NM, int_type, def.Npoints_M);
     INIT_P_B(hmpdf_M_min,
@@ -201,6 +219,46 @@ init_params(hmpdf_obj *d, param *p)
            d->f->custom_k, kf_type, def.custom_k_filter);
     INIT_P(hmpdf_custom_k_filter_params,
            d->f->custom_k_p, vptr_type, def.custom_k_filter_params);
+    INIT_P(hmpdf_massfunc_corr,
+           d->h->massfunc_corr, mf_type, def.massfunc_corr);
+    INIT_P(hmpdf_massfunc_corr_params,
+           d->h->massfunc_corr_params, vptr_type, def.massfunc_corr_params);
+    INIT_P(hmpdf_mass_resc,
+           d->p->mass_resc, mr_type, def.mass_resc);
+    INIT_P(hmpdf_mass_resc_params,
+           d->p->mass_resc_params, vptr_type, def.mass_resc_params);
+    INIT_P(hmpdf_conc_resc,
+           d->h->conc_resc, cr_type, def.conc_resc);
+    INIT_P(hmpdf_conc_resc_params,
+           d->h->conc_resc_params, vptr_type, def.conc_resc_params);
+    INIT_P(hmpdf_mass_cuts,
+           d->n->mass_cuts, mc_type, def.mass_cuts);
+    INIT_P(hmpdf_mass_cuts_params,
+           d->n->mass_cuts_params, vptr_type, def.mass_cuts_params);
+    INIT_P(hmpdf_bias_resc,
+           d->h->bias_resc, br_type, def.bias_resc);
+    INIT_P(hmpdf_bias_resc_params,
+           d->h->bias_resc_params, vptr_type, def.bias_resc_params);
+    INIT_P(hmpdf_Arico20_Nz,
+           d->bcm->Arico20_Nz, int_type, def.Arico20_Nz);
+    INIT_P(hmpdf_Arico20_z,
+           d->bcm->Arico20_z, dptr_type, def.Arico20_z);
+    INIT_P(hmpdf_Arico20_params,
+           d->bcm->Arico20_params, dptr_type, def.Arico20_params);
+    INIT_P(hmpdf_profiles_N,
+           d->bcm->profiles_N, int_type, def.profiles_N);
+    INIT_P(hmpdf_profiles_fnames,
+           d->bcm->profiles_fnames, strptr_type, def.profiles_fnames);
+    INIT_P(hmpdf_profiles_where,
+           d->bcm->profiles_where, dptr_type, def.profiles_where);
+    INIT_P(hmpdf_profiles_Nr,
+           d->bcm->profiles_Nr, int_type, def.profiles_Nr);
+    INIT_P(hmpdf_profiles_r,
+           d->bcm->profiles_r, dptr_type, def.profiles_r);
+    INIT_P(hmpdf_DM_conc_params,
+           d->h->DM_conc_params, dptr_type, def.DM_conc_params);
+    INIT_P(hmpdf_bar_conc_params,
+           d->h->bar_conc_params, dptr_type, def.bar_conc_params);
     INIT_P_B(hmpdf_N_phi,
              d->n->Nphi, int_type, def.Nphi);
     INIT_P_B(hmpdf_phi_max,
@@ -454,6 +512,20 @@ sanity_checks(hmpdf_obj *d)
                "hmpdf_z_min must be less than hmpdf_z_max.");
     HMPDFCHECK(d->n->Mmin >= d->n->Mmax,
                "hmpdf_M_min must be less than hmpdf_M_max.");
+    HMPDFCHECK(d->bcm->Arico20_params != NULL && d->p->stype != hmpdf_kappa,
+               "hmpdf_Arico20_params only works for signal type hmpdf_kappa");
+
+    HMPDFCHECK((d->h->DM_conc_params != NULL && d->h->bar_conc_params == NULL)
+               || (d->h->DM_conc_params == NULL && d->h->bar_conc_params != NULL),
+               "either none or both of hmpdf_DM_conc_params and hmpdf_bar_conc_params"
+               "must be passed");
+    HMPDFCHECK(d->h->DM_conc_params != NULL && d->bcm->Arico20_params != NULL,
+               "either use BCM or split concentration model");
+    HMPDFCHECK(d->h->DM_conc_params != NULL && d->p->stype != hmpdf_kappa,
+               "tSZ does not use the split concentration model");
+
+    HMPDFCHECK(d->n->dndz != NULL && d->p->stype != hmpdf_kappa,
+               "dndz does not make sense for a non-WL signal");
 
     ENDFCT
 }//}}}
@@ -469,6 +541,7 @@ compute_necessary_for_all(hmpdf_obj *d)
     SAFEHMPDF(init_power(d));
     SAFEHMPDF(init_halo_model(d));
     SAFEHMPDF(init_filters(d));
+    SAFEHMPDF(init_bcm(d));
     SAFEHMPDF(init_profiles(d));
     SAFEHMPDF(init_noise(d));
 
