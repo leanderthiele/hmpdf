@@ -93,6 +93,11 @@
 #define BCM_BGINTEGR_KEY 6
 #define BCM_BGINTEGR_EPSABS 1e-3 // in units of remaining baryonic mass
 #define BCM_BGINTEGR_EPSREL 1e-4
+
+#define DNDZ_INTEGR_LIMIT 1000
+#define DNDZ_INTEGR_KEY 6
+#define DNDZ_INTEGR_EPSABS 1e-6 // in units of the normalization
+#define DNDZ_INTEGR_EPSREL 1e-4
 //}}}
 
 struct DEFAULTS {int Ncores[3]; int verbosity; int warn_is_err;
