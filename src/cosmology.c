@@ -101,7 +101,7 @@ dndz_integr_kernel(double z, dndz_integr_params *p, double *out)
 
     double chi_this_z = p->pvecback[p->ba->index_bg_conf_distance];
 
-    *out = (1.0 - chi_this_z/p->chi_z) * p->dndz(z, p->dndz_params);
+    *out = (1.0 - p->chi_z/chi_this_z) * p->dndz(z, p->dndz_params);
 
     ENDFCT
 }
@@ -224,7 +224,12 @@ fill_background(hmpdf_obj *d)
                                           / dA_s;
             }
         }
-    }
+
+        // FIXME
+        for (int z_index=0; z_index<d->n->Nz; z_index++)
+            printf("%g ", d->c->invScrit[z_index]);
+        printf("\n");
+    } // if kappa
 
     free(pvecback);
 
