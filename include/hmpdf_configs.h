@@ -270,7 +270,7 @@ typedef enum
                                    */
     hmpdf_massfunc_corr, /*!< Correction prefactor for the Tinker mass function.
                           *   \par
-                          *   Type: #hmpdf_massfunc_f. Default: None.
+                          *   Type: #hmpdf_massfunc_corr_f. Default: None.
                           */
     hmpdf_massfunc_corr_params, /*!< Additional parameters to pass to the above function.
                                  *   \par
