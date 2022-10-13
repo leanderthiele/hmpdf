@@ -255,6 +255,16 @@ init_params(hmpdf_obj *d, param *p)
            d->bcm->profiles_Nr, int_type, def.profiles_Nr);
     INIT_P(hmpdf_profiles_r,
            d->bcm->profiles_r, dptr_type, def.profiles_r);
+    INIT_P(hmpdf_tot_profiles_N,
+           d->p->tot_profiles_N, int_type, def.tot_profiles_N);
+    INIT_P(hmpdf_tot_profiles_fnames,
+           d->p->tot_profiles_fnames, strptr_type, def.tot_profiles_fnames);
+    INIT_P(hmpdf_tot_profiles_where,
+           d->p->tot_profiles_where, dptr_type, def.tot_profiles_where);
+    INIT_P(hmpdf_tot_profiles_Nr,
+           d->p->tot_profiles_Nr, int_type, def.tot_profiles_Nr);
+    INIT_P(hmpdf_tot_profiles_r,
+           d->p->tot_profiles_r, dptr_type, def.tot_profiles_r);
     INIT_P(hmpdf_DM_conc_params,
            d->h->DM_conc_params, dptr_type, def.DM_conc_params);
     INIT_P(hmpdf_bar_conc_params,

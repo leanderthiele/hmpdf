@@ -47,6 +47,7 @@ null_profiles(hmpdf_obj *d)
     d->p->filtered_profiles = NULL;
     d->p->incr_tgrid_accel = NULL;
     d->p->reci_tgrid_accel = NULL;
+    d->p->tot_profiles_indices = NULL;
 
     ENDFCT
 }//}}}
@@ -148,6 +149,7 @@ reset_profiles(hmpdf_obj *d)
         free(d->p->segment_boundaries);
     }
     if (d->p->dht_ws != NULL) { gsl_dht_free(d->p->dht_ws); }
+    if (d->p->tot_profiles_indices != NULL) { free(d->p->tot_profiles_indices); }
 
     ENDFCT
 }//}}}
@@ -522,6 +524,43 @@ profile(hmpdf_obj *d, int z_index, int M_index, double *p)
 }//}}}
 
 static int
+tot_profiles_to_file(hmpdf_obj *d, int z_index, int M_index, char *fname)
+{
+    STARTFCT
+
+    FILE *fp = fopen(fname, "w");
+    HMPDFCHECK(!fp, "failed to open file %s", fname);
+
+    double mass_resc = (d->p->mass_resc == NULL)
+                       ? 1.0
+                       : d->p->mass_resc(d->n->zgrid[z_index],
+                                         d->n->Mgrid[M_index] * d->c->h,
+                                         d->p->mass_resc_params);
+
+    double M200c, R200c, c200c;
+    SAFEHMPDF(Mconv(d, z_index, M_index, hmpdf_mdef_c, mass_resc, &M200c, &R200c, &c200c));
+
+    fprintf(fp, "# z=%.18e\n# M200m[Msun/h]=%.18e\n# R200c[Mpc]=%.18e\n\n",
+                d->n->zgrid[z_index], d->n->Mgrid[M_index]*d->c->h, R200c);
+    fprintf(fp, "# r[Mpc], rho_nfw[Msun/Mpc^3]\n");
+
+    double rhos, rs;
+    SAFEHMPDF(NFW_fundamental(d, z_index, M_index, mass_resc, d->h->Duffy08_params, &rhos, &rs));
+
+    for (int ii=0; ii<d->p->tot_profiles_Nr; ii++)
+    {
+        double r = R200c * d->p->tot_profiles_r[ii];
+        double x = r / rs;
+        double rho = rhos / (x * gsl_pow_2(1.0+x));
+        fprintf(fp, "%.18e %.18e\n", r, rho);
+    }
+
+    fclose(fp);
+
+    ENDFCT
+}
+
+static int
 create_profiles(hmpdf_obj *d)
 {//{{{
     STARTFCT
@@ -549,6 +588,23 @@ create_profiles(hmpdf_obj *d)
             CONTINUE_IF_ERR
             SAFEHMPDF_NORETURN(fix_endpoints(d->p->Ntheta, d->p->decr_tgrid,
                                              d->p->profiles[z_index][M_index]+1));
+
+            CONTINUE_IF_ERR
+            // if requested, save corresponding profiles to file
+            if (d->p->tot_profiles_indices)
+            {
+                int do_it = -1;
+                for (int ii=0; ii<d->p->tot_profiles_N; ii++)
+                    if (   z_index == d->p->tot_profiles_indices[2*ii]
+                        && M_index == d->p->tot_profiles_indices[2*ii+1])
+                    {
+                        do_it = ii;
+                        break;
+                    }
+
+                if (do_it >= 0)
+                    SAFEHMPDF_NORETURN(tot_profiles_to_file(d, z_index, M_index, d->p->tot_profiles_fnames[do_it]));
+            }
         }
     }
 
@@ -1022,6 +1078,25 @@ init_profiles(hmpdf_obj *d)
     if (d->p->inited_profiles) { return 0; }
 
     HMPDFPRINT(1, "init_profiles\n");
+
+    if (d->p->tot_profiles_N)
+    {
+        HMPDFCHECK(!d->p->tot_profiles_fnames, "tot_profiles_fnames not provided");
+        HMPDFCHECK(!d->p->tot_profiles_where, "tot_profiles_where not provided");
+        HMPDFCHECK(!d->p->tot_profiles_r, "tot_profiles_r not provided");
+        HMPDFCHECK(!d->p->tot_profiles_Nr, "tot_profiles_Nr not provided");
+
+        SAFEALLOC(d->p->tot_profiles_indices, malloc(2 * d->p->tot_profiles_N * sizeof(int)));
+
+        for (int ii=0; ii<d->p->tot_profiles_N; ii++)
+        {
+            double ztarg = d->p->tot_profiles_where[2*ii];
+            double Mtarg = d->p->tot_profiles_where[2*ii+1] / d->c->h;
+
+            d->p->tot_profiles_indices[2*ii] = find_closest(d->n->Nz, d->n->zgrid, ztarg);
+            d->p->tot_profiles_indices[2*ii+1] = find_closest(d->n->NM, d->n->Mgrid, Mtarg);
+        }
+    }
 
     SAFEHMPDF(create_angle_grids(d));
     SAFEHMPDF(create_profiles(d));

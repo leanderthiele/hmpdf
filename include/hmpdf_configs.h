@@ -338,34 +338,41 @@ typedef enum
                             *   \par
                             *   Type: char **. Default: None.
                             */
-    hmpdf_profiles_where, /*! The redshifts and masses for which to evaluate profiles.
-                           *  In the order [z0, M0, z1, M1, z2, M2, ... ]
-                           *  Masses in units of M200m, Msun/h.
-                           *  \par
-                           *  Type: double *. Default: None.
+    hmpdf_profiles_where, /*!< The redshifts and masses for which to evaluate profiles.
+                           *   In the order [z0, M0, z1, M1, z2, M2, ... ]
+                           *   Masses in units of M200m, Msun/h.
+                           *   \par
+                           *   Type: double *. Default: None.
                            */
-    hmpdf_profiles_Nr, /*! Number of radii where to evaluate profiles.
-                        *  \par
-                        *  Type: int. Default: 0.
+    hmpdf_profiles_Nr, /*!< Number of radii where to evaluate profiles.
+                        *   \par
+                        *   Type: int. Default: 0.
                         */
-    hmpdf_profiles_r, /*! The radii for which to evaluate profiles.
-                       *  In units of R200c.
-                       *  \par
-                       *  Type: double *. Default: None.
+    hmpdf_profiles_r, /*!< The radii for which to evaluate profiles.
+                       *   In units of R200c.
+                       *   \par
+                       *   Type: double *. Default: None.
                        */
-    hmpdf_DM_conc_params, /*! The concentration parameters for the DM component.
-                           *  If passed, also those for the baryonic component must be given.
-                           *  Same format as #hmpdf_Duffy08_conc_params.
-                           *  The parameterization is in terms of the hydro mass.
-                           *  \par
-                           *  Type: double *. Default: None.
+    hmpdf_tot_profiles_N, /*!< The following (all tot_profiles) are for the NFW profiles,
+                               everything analogous to the above.
                            */
-    hmpdf_bar_conc_params, /*! The concentration parameters for the baryonic component.
-                            *  If passed, also those for the DM component must be given.
-                            *  Same format as #hmpdf_Duffy08_conc_params.
-                            *  The parameterization is in terms of the hydro mass.
-                            *  \par
-                            *  Type: double *. Default: None.
+    hmpdf_tot_profiles_fnames, /*!< see above */
+    hmpdf_tot_profiles_where, /*!< see above */
+    hmpdf_tot_profiles_Nr, /*!< see above */
+    hmpdf_tot_profiles_r, /*!< see above */
+    hmpdf_DM_conc_params, /*!< The concentration parameters for the DM component.
+                           *   If passed, also those for the baryonic component must be given.
+                           *   Same format as #hmpdf_Duffy08_conc_params.
+                           *   The parameterization is in terms of the hydro mass.
+                           *   \par
+                           *   Type: double *. Default: None.
+                           */
+    hmpdf_bar_conc_params, /*!< The concentration parameters for the baryonic component.
+                            *   If passed, also those for the DM component must be given.
+                            *   Same format as #hmpdf_Duffy08_conc_params.
+                            *   The parameterization is in terms of the hydro mass.
+                            *   \par
+                            *   Type: double *. Default: None.
                             */
     hmpdf_N_phi, /*!< Number of pixel-separation sample points in covariance matrix calculation.
                   *   \par
@@ -477,12 +484,12 @@ typedef enum
                         *   \par
                         *   Type: int. Default: 1.
                         */
-    hmpdf_map_seed, /*! If this option is set, the resulting simplified simulations (maps) will
-                     *  have this random seed.
-                     *  This means that, given equal map dimensions, the maps will have all halos
-                     *  in identical positions.
-                     *  \par
-                     *  Type: int. Default: None.
+    hmpdf_map_seed, /*!< If this option is set, the resulting simplified simulations (maps) will
+                     *   have this random seed.
+                     *   This means that, given equal map dimensions, the maps will have all halos
+                     *   in identical positions.
+                     *   \par
+                     *   Type: int. Default: None.
                      */
     hmpdf_end_configs, /*!< required last argument in hmpdf_init_fct(), the convenience macro
                         *   hmpdf_init() takes care of that.

@@ -41,6 +41,16 @@ typedef struct//{{{
 
     hmpdf_mass_resc_f mass_resc;
     void *mass_resc_params;
+
+    // for printing profiles to file
+    int tot_profiles_N;
+    char **tot_profiles_fnames;
+    double *tot_profiles_where;
+    int tot_profiles_Nr;
+    double *tot_profiles_r;
+
+    // populated later
+    int *tot_profiles_indices;
 }//}}}
 profiles_t;
 
