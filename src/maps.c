@@ -137,7 +137,7 @@ new_map_ws(hmpdf_obj *d, int idx, map_ws **out)
     ws->rng = NULL;
     ws->p_r2c = NULL;
 
-    if (idx == 0)
+    if (idx == 0 && d->f->has_z_dependent)
     {
         ws->for_fft = 1;
         ws->ldmap = d->m->Nside+2;
@@ -636,7 +636,7 @@ loop_no_z_dependence(hmpdf_obj *d)
             for (long kk=0; kk<d->m->Nside; kk++)
             {
                 d->m->map_real[jj*d->m->ldmap + kk]
-                    += d->m->ws[ii]->map[jj*d->m->Nside+kk];
+                    += d->m->ws[ii]->map[jj*d->m->ws[ii]->ldmap+kk];
             }
         }
     }
