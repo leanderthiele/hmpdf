@@ -1,11 +1,10 @@
 # make these work for both my remotes and my local
 user=$(shell whoami)
 ifeq ($(user),leander)
-  PATHTOCLASS = /usr/local/class_public-3.0.1
-  PATHTOFFTW = /usr/local/fftw-3.3.9
+  PATHTOCLASS = /Users/leander/class_public
 else
   PATHTOCLASS = /home/lthiele/class_public
-  PATHTOFFTW = /usr/local/fftw/gcc/3.3.4
+  PATHTOFFTW = /usr/local/fftw/gcc/3.3.4/api
 endif
 
 CC = gcc
@@ -21,7 +20,7 @@ INCLUDE += -I$(PATHTOCLASS)/include \
            -I$(PATHTOCLASS)/external/HyRec2020 \
            -I$(PATHTOCLASS)/external/RecfastCLASS \
            -I$(PATHTOCLASS)/external/heating \
-           -I$(PATHTOFFTW)/api
+           -I$(PATHTOFFTW)
 
 LINKER = -L$(PATHTOCLASS)
 LINKER += -lclass -lgsl -lgslcblas -lm -lfftw3
@@ -39,7 +38,7 @@ $(SHARED): $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
 	$(CC) -shared -o $(SODIR)/$@ $^ $(LINKER) $(OMPFLAGS)
 
 $(ARCHIVE): $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
-	ar -r -o $(OUTDIR)/$@ $^
+	ar -r $(OUTDIR)/$@ $^
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(OPTFLAGS) $(OMPFLAGS) -o $@ $<

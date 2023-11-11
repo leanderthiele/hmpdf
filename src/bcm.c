@@ -87,7 +87,7 @@ init_bcm(hmpdf_obj *d)
     // find the radius closest(ish) to R200c -- this is not super important and only
     // a small optimization in the computation of xi
     for (d->bcm->R200c_idx=0; d->bcm->radii[d->bcm->R200c_idx]<1.0; d->bcm->R200c_idx++);
-    
+
     // allocate the workspaces
     SAFEALLOC(d->bcm->ws, malloc(d->Ncores * sizeof(bcm_ws *)));
     for (int ii=0; ii<d->Ncores; ii++)
